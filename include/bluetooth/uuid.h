@@ -428,6 +428,10 @@ struct bt_uuid_128 {
  */
 #define BT_UUID_VOCS \
 	BT_UUID_DECLARE_16(BT_UUID_VOCS_VAL)
+/** @def BT_UUID_CCID
+ *  @brief Content Control ID
+ */
+#define BT_UUID_CCID                      BT_UUID_DECLARE_16(0x8fb5)
 /** @def BT_UUID_GATT_PRIMARY_VAL
  *  @brief GATT Primary Service UUID value
  */
