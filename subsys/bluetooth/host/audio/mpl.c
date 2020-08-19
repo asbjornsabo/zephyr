@@ -2444,6 +2444,14 @@ uint8_t mpl_media_state_get(void)
 	return pl.state;
 }
 
+#if defined(CONFIG_BT_DEBUG_MCS) && defined(CONFIG_BT_TESTING)
+void mpl_test_media_state_set(uint8_t state)
+{
+	pl.state = state;
+	mpl_media_state_cb(pl.state);
+}
+#endif /* CONFIG_BT_DEBUG_MCS && CONFIG_BT_TESTING */
+
 void mpl_operation_set(struct mpl_op_t operation)
 {
 	struct mpl_op_ntf_t ntf;

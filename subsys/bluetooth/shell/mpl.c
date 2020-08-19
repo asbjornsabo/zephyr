@@ -30,6 +30,18 @@ extern const struct shell *ctx_shell;
 
 #if defined(CONFIG_BT_MCS)
 
+#if defined(CONFIG_BT_DEBUG_MCS) && defined(CONFIG_BT_TESTING)
+int cmd_mpl_test_set_media_state(const struct shell *shell, size_t argc,
+				  char *argv[])
+{
+	uint8_t state = strtol(argv[1], NULL, 0);
+
+	mpl_test_media_state_set(state);
+
+	return 0;
+}
+#endif /* CONFIG_BT_DEBUG_MCS && CONFIG_BT_TESTING */
+
 int cmd_mpl_init(const struct shell *shell, size_t argc, char *argv[])
 {
 	int err = mpl_init();
@@ -166,6 +178,11 @@ static int cmd_mpl(const struct shell *shell, size_t argc, char **argv)
 }
 
 SHELL_STATIC_SUBCMD_SET_CREATE(mpl_cmds,
+#if defined(CONFIG_BT_DEBUG_MCS) && defined(CONFIG_BT_TESTING)
+	SHELL_CMD_ARG(test_set_media_state, NULL,
+		      "Set the media player state (test) <state>",
+		      cmd_mpl_test_set_media_state, 2, 0),
+#endif /* CONFIG_BT_DEBUG_MCS && CONFIG_BT_TESTING */
 	SHELL_CMD_ARG(init, NULL, NULL,
 		      cmd_mpl_init, 1, 0),
 	SHELL_CMD_ARG(track_changed_cb, NULL, NULL,

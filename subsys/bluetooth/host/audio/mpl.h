@@ -296,6 +296,9 @@ void mpl_playing_order_cb(uint8_t order);
 uint16_t mpl_playing_orders_supported_get(void);
 
 uint8_t mpl_media_state_get(void);
+#if defined(CONFIG_BT_DEBUG_MCS) && defined(CONFIG_BT_TESTING)
+void mpl_test_media_state_set(uint8_t state);
+#endif /* CONFIG_BT_DEBUG_MCS && CONFIG_BT_TESTING */
 void mpl_media_state_cb(uint8_t state);
 
 void mpl_operation_set(struct mpl_op_t operation);
