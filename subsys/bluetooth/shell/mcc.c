@@ -923,6 +923,31 @@ int cmd_mcc_test_set_scp_iop_invalid_type(const struct shell *shell,
 
 	return result;
 }
+
+int cmd_mcc_test_set_scp_invalid_sci_len(const struct shell *shell,
+					 size_t argc, char *argv[])
+{
+	/* Reproduce a search that caused hard fault when sent from peer */
+	/* in IOP testing */
+
+	int result;
+	struct mpl_search_t search;
+
+	char offending_search[9] = {6, 1, 't', 'r', 'a', 'c', 'k', 0, 1 };
+
+	search.len = 9;
+	memcpy(&search.search, offending_search, search.len);
+
+	shell_print(shell, "Search string: ");
+	shell_hexdump(shell, (uint8_t *)&search.search, search.len);
+
+	result = bt_mcc_set_scp(default_conn, search);
+	if (result) {
+		shell_print(shell, "Fail: %d", result);
+	}
+
+	return result;
+}
 #endif /* CONFIG_BT_DEBUG_MCC && CONFIG_BT_TESTING */
 
 int cmd_mcc_read_search_results_obj_id(const struct shell *shell, size_t argc,
@@ -1258,6 +1283,9 @@ SHELL_STATIC_SUBCMD_SET_CREATE(mcc_cmds,
 	SHELL_CMD_ARG(test_set_scp_iop_invalid_type, NULL,
 		      "Set search - IOP test, invalid type value (test)",
 		      cmd_mcc_test_set_scp_iop_invalid_type, 1, 0),
+	SHELL_CMD_ARG(test_set_scp_invalid_sci_len, NULL,
+		      "Set search - invalid sci length (test)",
+		      cmd_mcc_test_set_scp_invalid_sci_len, 1, 0),
 #endif /* CONFIG_BT_DEBUG_MCC && CONFIG_BT_TESTING */
 	SHELL_CMD_ARG(read_search_results_obj_id, NULL, NULL,
 		      cmd_mcc_read_search_results_obj_id, 1, 0),
