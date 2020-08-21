@@ -2309,15 +2309,35 @@ int32_t mpl_track_position_get(void)
 
 void mpl_track_position_set(int32_t position)
 {
-	if (position < 0) {
-		pl.track_pos = 0;
-	} else if (position > pl.group->track->duration) {
-		pl.track_pos = pl.group->track->duration;
+	int32_t old_pos = pl.track_pos;
+	int32_t new_pos;
+
+	if (position >= 0) {
+		if (position > pl.group->track->duration) {
+			/* Do not go beyond end of track */
+			new_pos = pl.group->track->duration;
+		} else {
+			new_pos = position;
+		}
 	} else {
-		pl.track_pos = position;
+		/* Negative position, handle as offset from _end_ of track */
+		/* (Note minus sign below) */
+		if (position < -pl.group->track->duration) {
+			new_pos = 0;
+		} else {
+			/* (Remember position is negative) */
+			new_pos = pl.group->track->duration + position;
+		}
 	}
+
 	BT_DBG("Pos. given: %d, resulting pos.: %d (duration is %d)",
-	       position, pl.track_pos, pl.group->track->duration);
+	       position, new_pos, pl.group->track->duration);
+
+	if (new_pos != old_pos) {
+		/* Set new position and notify it */
+		pl.track_pos = new_pos;
+		mpl_track_position_cb(new_pos);
+	}
 }
 
 int8_t mpl_playback_speed_get(void)
