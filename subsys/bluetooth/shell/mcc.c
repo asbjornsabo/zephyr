@@ -901,6 +901,29 @@ int cmd_mcc_set_scp_ioptest(const struct shell *shell, size_t argc,
 	return result;
 }
 
+#if defined(CONFIG_BT_DEBUG_MCC) && defined(CONFIG_BT_TESTING)
+int cmd_mcc_test_set_scp_iop_invalid_type(const struct shell *shell,
+					  size_t argc, char *argv[])
+{
+	int result;
+	struct mpl_search_t search;
+
+	search.search[0] = 2;
+	search.search[1] = (char)14; /* Invalid type value */
+	search.search[2] = 't';  /* Anything */
+	search.len = 3;
+
+	shell_print(shell, "Search string: ");
+	shell_hexdump(shell, (uint8_t *)&search.search, search.len);
+
+	result = bt_mcc_set_scp(default_conn, search);
+	if (result) {
+		shell_print(shell, "Fail: %d", result);
+	}
+
+	return result;
+}
+#endif /* CONFIG_BT_DEBUG_MCC && CONFIG_BT_TESTING */
 
 int cmd_mcc_read_search_results_obj_id(const struct shell *shell, size_t argc,
 				       char *argv[])
@@ -1231,6 +1254,11 @@ SHELL_STATIC_SUBCMD_SET_CREATE(mcc_cmds,
 	SHELL_CMD_ARG(set_scp_ioptest, NULL,
 		      "Set search - IOP test round as input",
 		      cmd_mcc_set_scp_ioptest, 2, 0),
+#if defined(CONFIG_BT_DEBUG_MCC) && defined(CONFIG_BT_TESTING)
+	SHELL_CMD_ARG(test_set_scp_iop_invalid_type, NULL,
+		      "Set search - IOP test, invalid type value (test)",
+		      cmd_mcc_test_set_scp_iop_invalid_type, 1, 0),
+#endif /* CONFIG_BT_DEBUG_MCC && CONFIG_BT_TESTING */
 	SHELL_CMD_ARG(read_search_results_obj_id, NULL, NULL,
 		      cmd_mcc_read_search_results_obj_id, 1, 0),
 #endif /* CONFIG_BT_OTC */
