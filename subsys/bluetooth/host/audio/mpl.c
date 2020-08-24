@@ -6,6 +6,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+#include <sys/util.h>
+
 #include "mpl.h"
 #include "uint48_util.h"
 #include "ots.h"
@@ -247,7 +249,8 @@ static struct mpl_mediaplayer_t pl = {
 	.playback_speed_param	  = PLAYBACK_SPEED_PARAM_DEFAULT,
 	.seeking_speed_factor	  = MPL_SEEKING_SPEED_FACTOR_ZERO,
 	.playing_order		  = MPL_PLAYING_ORDER_INORDER_REPEAT,
-	.playing_orders_supported = MPL_PLAYING_ORDER_INORDER_REPEAT,
+	.playing_orders_supported = MPL_PLAYING_ORDERS_SUPPORTED_INORDER_ONCE | \
+				    MPL_PLAYING_ORDERS_SUPPORTED_INORDER_REPEAT,
 	.operations_supported	  = 0x001fffff, /* All opcodes */
 #ifdef CONFIG_BT_OTS
 	.search_results_id	  = 0,
@@ -2458,7 +2461,9 @@ uint8_t mpl_playing_order_get(void)
 
 void mpl_playing_order_set(uint8_t order)
 {
-	pl.playing_order = order;
+	if (BIT(order - 1) & pl.playing_orders_supported) {
+		pl.playing_order = order;
+	}
 }
 
 uint16_t mpl_playing_orders_supported_get(void)
