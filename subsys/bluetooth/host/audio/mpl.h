@@ -287,6 +287,10 @@ void mpl_group_id_cb(uint64_t id);
 
 uint64_t mpl_parent_group_id_get(void);
 void mpl_parent_group_id_cb(uint64_t id);
+#if defined(CONFIG_BT_DEBUG_MCS) && defined(CONFIG_BT_TESTING)
+/* For  IOP testing - set current group to be it's own parent */
+void mpl_test_unset_parent_group(void);
+#endif /* CONFIG_BT_DEBUG_MCS && CONFIG_BT_TESTING */
 #endif /* CONFIG_BT_OTS */
 
 uint8_t mpl_playing_order_get(void);

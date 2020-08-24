@@ -2422,6 +2422,13 @@ uint64_t mpl_parent_group_id_get(void)
 {
 	return pl.group->parent->id;
 }
+#if defined(CONFIG_BT_DEBUG_MCS) && defined(CONFIG_BT_TESTING)
+void mpl_test_unset_parent_group(void)
+{
+	BT_DBG("Setting current group to be it's own parent");
+	pl.group->parent = pl.group;
+}
+#endif /* CONFIG_BT_DEBUG_MCS && CONFIG_BT_TESTING */
 #endif /* CONFIG_BT_OTS */
 
 uint8_t mpl_playing_order_get(void)

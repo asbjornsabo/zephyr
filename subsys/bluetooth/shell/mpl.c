@@ -40,6 +40,16 @@ int cmd_mpl_test_set_media_state(const struct shell *shell, size_t argc,
 
 	return 0;
 }
+
+#ifdef CONFIG_BT_OTS
+int cmd_mpl_test_unset_parent_group(const struct shell *shell, size_t argc,
+				    char *argv[])
+{
+	mpl_test_unset_parent_group();
+
+	return 0;
+}
+#endif /* CONFIG_BT_OTS */
 #endif /* CONFIG_BT_DEBUG_MCS && CONFIG_BT_TESTING */
 
 int cmd_mpl_init(const struct shell *shell, size_t argc, char *argv[])
@@ -182,6 +192,11 @@ SHELL_STATIC_SUBCMD_SET_CREATE(mpl_cmds,
 	SHELL_CMD_ARG(test_set_media_state, NULL,
 		      "Set the media player state (test) <state>",
 		      cmd_mpl_test_set_media_state, 2, 0),
+#if CONFIG_BT_OTS
+	SHELL_CMD_ARG(test_unset_parent_group, NULL,
+		      "Set current group to be its own parent (test)",
+		      cmd_mpl_test_unset_parent_group, 1, 0),
+#endif /* CONFIG_BT_OTS */
 #endif /* CONFIG_BT_DEBUG_MCS && CONFIG_BT_TESTING */
 	SHELL_CMD_ARG(init, NULL, NULL,
 		      cmd_mpl_init, 1, 0),
