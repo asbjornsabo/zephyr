@@ -2525,6 +2525,11 @@ static void parse_search(struct mpl_search_t search)
 			break;
 		}
 		sci.type = (uint8_t)search.search[index++];
+		if (sci.type <  MPL_SEARCH_TYPE_TRACK_NAME ||
+		    sci.type > MPL_SEARCH_TYPE_ONLY_GROUPS) {
+			search_failed = true;
+			break;
+		}
 		memcpy(&sci.param, &search.search[index], sci.len - 1);
 		index += sci.len - 1;
 
