@@ -321,6 +321,13 @@ void mpl_search_results_id_cb(uint64_t id);
 
 uint8_t mpl_content_ctrl_id_get(void);
 
+#if CONFIG_BT_DEBUG_MCS
+/* Output the mediaplayer's state information */
+void mpl_debug_dump_state(void);
+#endif /* CONFIG_BT_DEBUG_MCS */
+
+struct ots_svc_inst_t *bt_mcs_get_ots(void);
+
 #ifdef __cplusplus
 }
 #endif

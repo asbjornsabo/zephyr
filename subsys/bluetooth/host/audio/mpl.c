@@ -2549,3 +2549,87 @@ uint8_t mpl_content_ctrl_id_get(void)
 {
 	return pl.content_ctrl_id;
 }
+
+#if CONFIG_BT_DEBUG_MCS
+void mpl_debug_dump_state(void)
+{
+#if CONFIG_BT_OTS
+	char t[UINT48_STR_LEN];
+	struct mpl_group_t *group;
+	struct mpl_track_t *track;
+#endif /* CONFIG_BT_OTS */
+
+	BT_DBG("Mediaplayer name: %s", log_strdup(pl.name));
+
+#if CONFIG_BT_OTS
+	u64_to_uint48array_str(pl.icon_id, t);
+	BT_DBG("Icon ID: 0x%s", log_strdup(t));
+#endif /* CONFIG_BT_OTS */
+
+	BT_DBG("Icon URI: %s", log_strdup(pl.icon_uri));
+	BT_DBG("Track position: %d", pl.track_pos);
+	BT_DBG("Media state: %d", pl.state);
+	BT_DBG("Playback speed parameter: %d", pl.playback_speed_param);
+	BT_DBG("Seeking speed factor: %d", pl.seeking_speed_factor);
+	BT_DBG("Playing order: %d", pl.playing_order);
+	BT_DBG("Playing orders supported: 0x%x", pl.playing_orders_supported);
+	BT_DBG("Operations supported: %d", pl.operations_supported);
+	BT_DBG("Content control ID: %d", pl.content_ctrl_id);
+
+#if CONFIG_BT_OTS
+	u64_to_uint48array_str(pl.group->id, t);
+	BT_DBG("Current group: 0x%s", log_strdup(t));
+
+	u64_to_uint48array_str(pl.group->parent->id, t);
+	BT_DBG("Current group's parent: 0x%s", log_strdup(t));
+
+	u64_to_uint48array_str(pl.group->track->id, t);
+	BT_DBG("Current track: 0x%s", log_strdup(t));
+
+	if (pl.group->track->next) {
+		u64_to_uint48array_str(pl.group->track->next->id, t);
+		BT_DBG("Next track: 0x%s", log_strdup(t));
+	} else {
+		BT_DBG("No next track");
+	}
+
+	if (pl.search_results_id) {
+		u64_to_uint48array_str(pl.search_results_id, t);
+		BT_DBG("Search results: 0x%s", log_strdup(t));
+	} else {
+		BT_DBG("No search results");
+	}
+
+	BT_DBG("Groups and tracks:");
+	group = pl.group;
+
+	while (group->prev != NULL) {
+		group = group->prev;
+	}
+
+	while (group) {
+		u64_to_uint48array_str(group->id, t);
+		BT_DBG("Group: 0x%s, %s", log_strdup(t),
+		       log_strdup(group->title));
+
+		u64_to_uint48array_str(group->parent->id, t);
+		BT_DBG("\tParent: 0x%s, %s", log_strdup(t),
+		       log_strdup(group->parent->title));
+
+		track = group->track;
+		while (track->prev != NULL) {
+			track = track->prev;
+		}
+
+		while (track) {
+			u64_to_uint48array_str(track->id, t);
+			BT_DBG("\tTrack: 0x%s, %s, duration: %d", log_strdup(t),
+			       log_strdup(track->title), track->duration);
+			track = track->next;
+		}
+
+		group = group->next;
+	}
+#endif /* CONFIG_BT_OTS */
+}
+#endif /* CONFIG_BT_DEBUG_MCS */
