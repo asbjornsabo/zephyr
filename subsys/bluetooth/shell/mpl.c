@@ -52,6 +52,16 @@ int cmd_mpl_test_unset_parent_group(const struct shell *shell, size_t argc,
 #endif /* CONFIG_BT_OTS */
 #endif /* CONFIG_BT_DEBUG_MCS && CONFIG_BT_TESTING */
 
+#if defined(CONFIG_BT_DEBUG_MCS)
+int cmd_mpl_debug_dump_state(const struct shell *shell, size_t argc,
+			     char *argv[])
+{
+	mpl_debug_dump_state();
+
+	return 0;
+}
+#endif /* CONFIG_BT_DEBUG_MCS */
+
 int cmd_mpl_init(const struct shell *shell, size_t argc, char *argv[])
 {
 	int err = mpl_init();
@@ -198,6 +208,11 @@ SHELL_STATIC_SUBCMD_SET_CREATE(mpl_cmds,
 		      cmd_mpl_test_unset_parent_group, 1, 0),
 #endif /* CONFIG_BT_OTS */
 #endif /* CONFIG_BT_DEBUG_MCS && CONFIG_BT_TESTING */
+#if defined(CONFIG_BT_DEBUG_MCS)
+	SHELL_CMD_ARG(debug_dump_state, NULL,
+		      "Dump media player's state as debug output (debug)",
+		      cmd_mpl_debug_dump_state, 1, 0),
+#endif /* CONFIG_BT_DEBUG_MCC */
 	SHELL_CMD_ARG(init, NULL, NULL,
 		      cmd_mpl_init, 1, 0),
 	SHELL_CMD_ARG(track_changed_cb, NULL, NULL,
