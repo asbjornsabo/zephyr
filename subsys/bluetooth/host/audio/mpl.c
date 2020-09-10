@@ -24,8 +24,10 @@
 #define PLAYBACK_SPEED_PARAM_DEFAULT MPL_PLAYBACK_SPEED_UNITY
 
 /* Temporary hardcoded setup for groups, tracks and segements */
-/* A parent group, with a number of groups, one of which has */
-/* a number of tracks, one of which has a number of segments */
+/* There is one parent group, which is the parent of a number of groups. */
+/* The groups have a number of tracks.  */
+/* (There is only one level of groups, there are no groups of groups.) */
+/* The first track of the first group has track segments, other tracks not. */
 
 /* Track segments */
 static struct mpl_tseg_t seg_2;
