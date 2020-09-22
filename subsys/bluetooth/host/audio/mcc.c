@@ -2224,6 +2224,8 @@ int on_icon_content(struct bt_conn *conn, uint32_t offset, uint32_t len,
 	BT_INFO("Received Media Player Icon content, %i bytes at offset %i",
 		len, offset);
 
+	BT_HEXDUMP_DBG(data_p, len, "Icon content");
+
 	return BT_OTC_CONTINUE;
 }
 
@@ -2263,6 +2265,8 @@ int on_track_content(struct bt_conn *conn, uint32_t offset, uint32_t len,
 	BT_INFO("Received Current Track content, %i bytes at offset %i",
 		len, offset);
 
+	BT_HEXDUMP_DBG(data_p, len, "Track content");
+
 	return BT_OTC_CONTINUE;
 }
 
@@ -2272,6 +2276,8 @@ int on_next_track_content(struct bt_conn *conn, uint32_t offset, uint32_t len,
 {
 	BT_INFO("Received Next Track content, %i bytes at offset %i",
 		len, offset);
+
+	BT_HEXDUMP_DBG(data_p, len, "Track content");
 
 	return BT_OTC_CONTINUE;
 }
