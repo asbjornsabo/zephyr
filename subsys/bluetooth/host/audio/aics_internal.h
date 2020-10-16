@@ -33,7 +33,15 @@
 
 #define AICS_VCS_INDEX(i)                       (i)
 
-#define AICS_INST_COUNT VCS_COUNT
+#if CONFIG_BT_MICS
+#define MICS_COUNT CONFIG_BT_MICS_AICS_INSTANCE_COUNT
+#else
+#define MICS_COUNT 0
+#endif
+
+#define AICS_MICS_INDEX(i)                      (i + VCS_COUNT)
+
+#define AICS_INST_COUNT (MICS_COUNT + VCS_COUNT)
 
 /* AICS client macros */
 #if CONFIG_BT_VCS_CLIENT
@@ -43,8 +51,15 @@
 #endif
 
 #define AICS_CLI_VCS_CLIENT_INDEX(i)                   (i)
+#if CONFIG_BT_MICS_CLIENT
+#define MICS_CLIENT_COUNT CONFIG_BT_MICS_CLIENT_MAX_AICS_INST
+#else
+#define MICS_CLIENT_COUNT 0
+#endif
 
-#define AICS_CLIENT_INST_COUNT VCS_CLIENT_COUNT
+#define AICS_CLI_MICS_CLIENT_INDEX(i)                  (i + VCS_CLIENT_COUNT)
+
+#define AICS_CLIENT_INST_COUNT (MICS_CLIENT_COUNT + VCS_CLIENT_COUNT)
 
 #define AICS_INPUT_MODE_IMMUTABLE(mode) \
 	((mode) == AICS_MODE_MANUAL_ONLY || (mode) == AICS_MODE_AUTO_ONLY)

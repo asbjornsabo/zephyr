@@ -35,6 +35,14 @@ zephyr_library_sources_ifdef(
   csip.c
   )
 zephyr_library_sources_ifdef(
+  CONFIG_BT_MICS
+  bass.c
+  )
+zephyr_library_sources_ifdef(
+  CONFIG_BT_MICS_CLIENT
+  bass_client.c
+  )
+zephyr_library_sources_ifdef(
   CONFIG_BT_BASS
   bass.c
   )
