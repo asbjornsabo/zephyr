@@ -12,9 +12,9 @@
 #include <stdlib.h>
 #include <bluetooth/mcc.h>
 
-#include "uint48_util.h"
-#include "mcc_shell.h"
-#include "otc.h"
+#include "../host/audio/uint48_util.h"
+#include "mcc.h"
+#include "../host/audio/otc.h"
 
 #define BT_DBG_ENABLED IS_ENABLED(CONFIG_BT_DEBUG_MCS)
 #define LOG_MODULE_NAME bt_mcc_shell
@@ -1135,6 +1135,109 @@ int cmd_mcc_ots_select_prev(const struct shell *shell, size_t argc,
 	}
 	return result;
 }
+
+static int cmd_mcc(const struct shell *shell, size_t argc, char **argv)
+{
+	shell_error(shell, "%s unknown parameter: %s", argv[0], argv[1]);
+
+	return -ENOEXEC;
+}
+
+SHELL_STATIC_SUBCMD_SET_CREATE(mcc_cmds,
+	SHELL_CMD_ARG(init, NULL, "Initialize client",
+		      cmd_mcc_init, 1, 0),
+	SHELL_CMD_ARG(discover_mcs, NULL,
+		      "Discover Media Control Service [subscribe]",
+		      cmd_mcc_discover_mcs, 1, 0),
+	SHELL_CMD_ARG(read_player_name, NULL, NULL,
+		      cmd_mcc_read_player_name, 1, 0),
+	SHELL_CMD_ARG(read_icon_obj_id, NULL, NULL,
+		      cmd_mcc_read_icon_obj_id, 1, 0),
+	SHELL_CMD_ARG(read_icon_uri, NULL, NULL,
+		      cmd_mcc_read_icon_uri, 1, 0),
+	SHELL_CMD_ARG(read_track_title, NULL, NULL,
+		      cmd_mcc_read_track_title, 1, 0),
+	SHELL_CMD_ARG(read_track_duration, NULL, NULL,
+		      cmd_mcc_read_track_duration, 1, 0),
+	SHELL_CMD_ARG(read_track_position, NULL, NULL,
+		      cmd_mcc_read_track_position, 1, 0),
+	SHELL_CMD_ARG(set_track_position, NULL, NULL,
+		      cmd_mcc_set_track_position, 2, 0),
+	SHELL_CMD_ARG(read_playback_speed, NULL, NULL,
+		      cmd_mcc_read_playback_speed, 1, 0),
+	SHELL_CMD_ARG(set_playback_speed, NULL, NULL,
+		      cmd_mcc_set_playback_speed, 2, 0),
+	SHELL_CMD_ARG(read_seeking_speed, NULL, NULL,
+		      cmd_mcc_read_seeking_speed, 1, 0),
+	SHELL_CMD_ARG(read_track_segments_obj_id, NULL, NULL,
+		      cmd_mcc_read_track_segments_obj_id, 1, 0),
+	SHELL_CMD_ARG(read_current_track_obj_id, NULL, NULL,
+		      cmd_mcc_read_current_track_obj_id, 1, 0),
+	SHELL_CMD_ARG(read_next_track_obj_id, NULL, NULL,
+		      cmd_mcc_read_next_track_obj_id, 1, 0),
+	SHELL_CMD_ARG(read_current_group_obj_id, NULL, NULL,
+		      cmd_mcc_read_current_group_obj_id, 1, 0),
+	SHELL_CMD_ARG(read_parent_group_obj_id, NULL, NULL,
+		      cmd_mcc_read_parent_group_obj_id, 1, 0),
+	SHELL_CMD_ARG(read_playing_order, NULL, NULL,
+		      cmd_mcc_read_playing_order, 1, 0),
+	SHELL_CMD_ARG(set_playing_order, NULL, NULL,
+		      cmd_mcc_set_playing_order, 2, 0),
+	SHELL_CMD_ARG(read_playing_orders_supported, NULL, NULL,
+		      cmd_mcc_read_playing_orders_supported, 1, 0),
+	SHELL_CMD_ARG(read_media_state, NULL, NULL,
+		      cmd_mcc_read_media_state, 1, 0),
+	SHELL_CMD_ARG(set_cp, NULL, "Set opcode/operation",
+		      cmd_mcc_set_cp, 2, 1),
+	SHELL_CMD_ARG(read_opcodes_supported, NULL, NULL,
+		      cmd_mcc_read_opcodes_supported, 1, 0),
+	SHELL_CMD_ARG(set_scp_raw, NULL, "Set search - raw search as input",
+		      cmd_mcc_set_scp_raw, 2, 0),
+	SHELL_CMD_ARG(set_scp_ioptest, NULL,
+		      "Set search - IOP test round as input",
+		      cmd_mcc_set_scp_ioptest, 2, 0),
+	SHELL_CMD_ARG(read_search_results_obj_id, NULL, NULL,
+		      cmd_mcc_read_search_results_obj_id, 1, 0),
+	SHELL_CMD_ARG(read_content_control_id, NULL, NULL,
+		      cmd_mcc_read_content_control_id, 1, 0),
+	SHELL_CMD_ARG(ots_read_features, NULL, NULL,
+		      cmd_mcc_otc_read_features, 1, 0),
+	SHELL_CMD_ARG(ots_oacp_read, NULL, "read current object",
+		      cmd_mcc_otc_read, 1, 0),
+	SHELL_CMD_ARG(ots_read_metadata, NULL, "read current object's metadata",
+		      cmd_mcc_otc_read_metadata, 1, 0),
+	SHELL_CMD_ARG(ots_select, NULL, "Select an object, by its ID",
+		      cmd_mcc_otc_select, 2, 0),
+	SHELL_CMD_ARG(ots_read_icon_object, NULL, "Read Icon Object",
+		      cmd_mcc_otc_read_icon_object, 1, 0),
+	SHELL_CMD_ARG(ots_read_track_segments_object, NULL,
+		      "Read Track Segments Object",
+		      cmd_mcc_otc_read_track_segments_object, 1, 0),
+	SHELL_CMD_ARG(ots_read_current_track_object, NULL,
+		      "Read Current Track Object",
+		      cmd_mcc_otc_read_current_track_object, 1, 0),
+	SHELL_CMD_ARG(ots_read_next_track_object, NULL,
+		      "Read Next Track Object",
+		      cmd_mcc_otc_read_next_track_object, 1, 0),
+	SHELL_CMD_ARG(ots_read_current_group_object, NULL,
+		      "Read Current Group Object",
+		      cmd_mcc_otc_read_current_group_object, 1, 0),
+	SHELL_CMD_ARG(ots_read_parent_group_object, NULL,
+		      "Read Parent Group Object",
+		      cmd_mcc_otc_read_parent_group_object, 1, 0),
+	SHELL_CMD_ARG(ots_select_first, NULL, "Select first object",
+		      cmd_mcc_otc_select_first, 1, 0),
+	SHELL_CMD_ARG(ots_select_last, NULL, "Select last object",
+		      cmd_mcc_otc_select_last, 1, 0),
+	SHELL_CMD_ARG(ots_select_next, NULL, "Select next object",
+		      cmd_mcc_otc_select_next, 1, 0),
+	SHELL_CMD_ARG(ots_select_previous, NULL, "Select previous object",
+		      cmd_mcc_otc_select_prev, 1, 0),
+	SHELL_SUBCMD_SET_END
+);
+
+SHELL_CMD_ARG_REGISTER(mcc, &mcc_cmds, "MCC commands",
+		       cmd_mcc, 1, 1);
 
 #ifdef __cplusplus
 }

@@ -16,7 +16,7 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 
-#include "otc.h"
+#include "../host/audio/otc.h"
 
 #ifdef __cplusplus
 extern "C" {
