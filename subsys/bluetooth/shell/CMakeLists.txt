@@ -26,7 +26,6 @@ zephyr_library_sources_ifdef(
   iso.c
   )
 zephyr_library_sources_ifdef(
-<<<<<<< HEAD
   CONFIG_BT_CSIS
   csis.c
   )
