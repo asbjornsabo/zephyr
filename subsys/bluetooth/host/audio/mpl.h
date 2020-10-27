@@ -157,27 +157,27 @@ extern "C" {
 
 /* Track segments */
 struct mpl_tseg_t {
-	uint8_t               name_len;
+	uint8_t            name_len;
 	char		   name[CONFIG_BT_MCS_SEGMENT_NAME_MAX];
-	int32_t              pos;
+	int32_t            pos;
 	struct mpl_tseg_t *prev;
 	struct mpl_tseg_t *next;
 };
 
 /* Tracks */
 struct mpl_track_t {
-	uint64_t                id;
+	uint64_t             id;
 	char                 title[CONFIG_BT_MCS_TRACK_TITLE_MAX];
-	int32_t                duration;
+	int32_t              duration;
 	struct mpl_tseg_t   *segment;
-	uint64_t                segments_id;
+	uint64_t             segments_id;
 	struct mpl_track_t  *prev;
 	struct mpl_track_t  *next;
 };
 
 /* Groups */
 struct mpl_group_t {
-	uint64_t         id;
+	uint64_t             id;
 	char                 title[CONFIG_BT_MCS_GROUP_TITLE_MAX];
 	struct mpl_track_t  *track;
 	struct mpl_group_t  *parent;
@@ -188,18 +188,18 @@ struct mpl_group_t {
 /** @brief Media Player */
 struct mpl_mediaplayer_t {
 	char                name[CONFIG_BT_MCS_MEDIA_PLAYER_NAME_MAX];
-	uint64_t               icon_id;
+	uint64_t            icon_id;
 	char                icon_uri[CONFIG_BT_MCS_ICON_URI_MAX];
 	struct mpl_group_t *group;
-	int32_t               track_pos;
-	uint8_t                state;
-	int8_t                playback_speed_param;
-	int8_t                seeking_speed_factor;
-	uint8_t                playing_order;
-	uint16_t               playing_orders_supported;
-	uint32_t               operations_supported;
-	uint64_t               search_results_id;
-	uint8_t                content_ctrl_id;
+	int32_t             track_pos;
+	uint8_t             state;
+	int8_t              playback_speed_param;
+	int8_t              seeking_speed_factor;
+	uint8_t             playing_order;
+	uint16_t            playing_orders_supported;
+	uint32_t            operations_supported;
+	uint64_t            search_results_id;
+	uint8_t             content_ctrl_id;
 };
 
 
