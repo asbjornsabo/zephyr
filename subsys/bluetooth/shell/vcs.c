@@ -162,22 +162,24 @@ static int cmd_vcs_init(
 {
 	int result;
 	struct bt_vcs_init vcs_init;
+	char input_desc[CONFIG_BT_VCS_AICS_INSTANCE_COUNT][16];
+	char output_desc[CONFIG_BT_VCS_VOCS_INSTANCE_COUNT][16];
 
 	memset(&vcs_init, 0, sizeof(vcs_init));
 
 	for (int i = 0; i < ARRAY_SIZE(vcs_init.vocs_init); i++) {
 		vcs_init.vocs_init[i].location_writable = true;
 		vcs_init.vocs_init[i].desc_writable = true;
-		snprintf(vcs_init.vocs_init[i].output_desc,
-			 sizeof(vcs_init.vocs_init[i].output_desc),
+		snprintf(output_desc[i], sizeof(output_desc[i]),
 			 "Output %d", i + 1);
+		vcs_init.vocs_init[i].output_desc = output_desc[i];
 	}
 
 	for (int i = 0; i < ARRAY_SIZE(vcs_init.aics_init); i++) {
 		vcs_init.aics_init[i].desc_writable = true;
-		snprintf(vcs_init.aics_init[i].input_desc,
-			 sizeof(vcs_init.aics_init[i].input_desc),
-			 "Input %d", i + 1);
+		snprintf(input_desc[i], sizeof(input_desc[i]),
+			 "Output %d", i + 1);
+		vcs_init.aics_init[i].input_desc = input_desc[i];
 	}
 
 	result = bt_vcs_init(&vcs_init);

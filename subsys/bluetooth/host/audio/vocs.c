@@ -283,6 +283,13 @@ int bt_vocs_init(struct bt_vocs *vocs, struct bt_vocs_init *init)
 		strncpy(vocs->output_desc, init->output_desc,
 			sizeof(vocs->output_desc));
 
+		if (IS_ENABLED(CONFIG_BT_DEBUG_VOCS) &&
+		    strncmp(vocs->output_desc, init->output_desc,
+			    sizeof(vocs->output_desc))) {
+			BT_DBG("Output desc clipped to %s",
+			       log_strdup(vocs->output_desc));
+		}
+
 		for (int i = 0; i < vocs->service_p->attr_count; i++) {
 			attr = &vocs->service_p->attrs[i];
 

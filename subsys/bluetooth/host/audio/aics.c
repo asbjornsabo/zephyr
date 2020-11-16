@@ -366,6 +366,12 @@ int bt_aics_init(struct bt_aics *aics, struct bt_aics_init *init)
 
 		strncpy(aics->input_desc, init->input_desc,
 			sizeof(aics->input_desc));
+		if (IS_ENABLED(CONFIG_BT_DEBUG_AICS) &&
+		    strncmp(aics->input_desc, init->input_desc,
+			    sizeof(aics->input_desc))) {
+			BT_DBG("Input desc clipped to %s",
+			       log_strdup(aics->input_desc));
+		}
 
 		for (int i = 0; i < aics->service_p->attr_count; i++) {
 			attr = &aics->service_p->attrs[i];

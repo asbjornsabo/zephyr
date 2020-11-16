@@ -91,7 +91,7 @@ struct bt_aics_init {
 	bool desc_writable;
 
 	/** Initial audio input description */
-	char input_desc[CONFIG_BT_AICS_MAX_INPUT_DESCRIPTION_SIZE];
+	char *input_desc;
 };
 
 /** @brief Get the service declaration attribute.

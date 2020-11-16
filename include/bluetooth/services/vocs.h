@@ -55,7 +55,7 @@ struct bt_vocs_init {
 	int16_t offset;
 
 	/** Initial audio output description */
-	char output_desc[CONFIG_BT_VOCS_MAX_OUTPUT_DESCRIPTION_SIZE];
+	char *output_desc;
 
 	/** Boolean to set whether the description is writable by clients */
 	bool desc_writable;
