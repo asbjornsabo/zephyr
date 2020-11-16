@@ -252,8 +252,8 @@ static int vocs_init(const struct device *unused)
 	return 0;
 }
 
-DEVICE_INIT(bt_vocs, "bt_vocs", &vocs_init, NULL, NULL, APPLICATION,
-	    CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
+DEVICE_DEFINE(bt_vocs, "bt_vocs", &vocs_init, NULL, NULL, NULL,
+	      APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEVICE, NULL);
 
 void *bt_vocs_svc_decl_get(struct bt_vocs *vocs)
 {

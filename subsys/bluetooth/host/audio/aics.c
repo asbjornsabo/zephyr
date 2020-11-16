@@ -327,8 +327,8 @@ static int aics_init(const struct device *unused)
 	return 0;
 }
 
-DEVICE_INIT(bt_aics, "bt_aics", &aics_init, NULL, NULL, APPLICATION,
-	    CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
+DEVICE_DEFINE(bt_aics, "bt_aics", &aics_init, NULL, NULL, NULL,
+	      APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEVICE, NULL);
 
 
 void *bt_aics_svc_decl_get(struct bt_aics *aics)
