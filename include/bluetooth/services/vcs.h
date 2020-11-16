@@ -26,6 +26,14 @@
 extern "C" {
 #endif
 
+#if defined(CONFIG_BT_VCS)
+#define VCS_VOCS_CNT CONFIG_BT_VCS_VOCS_INSTANCE_COUNT
+#define VCS_AICS_CNT CONFIG_BT_VCS_AICS_INSTANCE_COUNT
+#else
+#define VCS_VOCS_CNT 0
+#define VCS_AICS_CNT 0
+#endif /* CONFIG_BT_VCS */
+
 /* VCS Error codes */
 #define VCS_ERR_INVALID_COUNTER             0x80
 #define VCS_ERR_OP_NOT_SUPPORTED            0x81
@@ -33,10 +41,10 @@ extern "C" {
 /** @brief Initializing structure for Volume Control Service */
 struct bt_vcs_init {
 	/** Initializing structure for Volume Offset Control Services */
-	struct bt_vocs_init vocs_init[CONFIG_BT_VCS_VOCS_INSTANCE_COUNT];
+	struct bt_vocs_init vocs_init[VCS_VOCS_CNT];
 
 	/** Initializing structure for Audio Input Control Services */
-	struct bt_aics_init aics_init[CONFIG_BT_VCS_AICS_INSTANCE_COUNT];
+	struct bt_aics_init aics_init[VCS_AICS_CNT];
 };
 
 /** @brief Initialize the Volume Control Service
