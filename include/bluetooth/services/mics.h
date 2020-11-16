@@ -26,6 +26,12 @@
 extern "C" {
 #endif
 
+#if defined(CONFIG_BT_MICS)
+#define MICS_AICS_CNT CONFIG_BT_MICS_AICS_INSTANCE_COUNT
+#else
+#define MICS_AICS_CNT 0
+#endif /* CONFIG_BT_MICS */
+
 /* Application error codes */
 #define BT_MICS_ERR_MUTE_DISABLED               0x80
 #define BT_MICS_ERR_VAL_OUT_OF_RANGE            0x81
@@ -33,7 +39,7 @@ extern "C" {
 /** @brief Initializing structure for Microphone Input Control Service */
 struct bt_mics_init {
 	/** Initializing structure for Audio Input Control Services */
-	struct bt_aics_init aics_init[CONFIG_BT_MICS_AICS_INSTANCE_COUNT];
+	struct bt_aics_init aics_init[MICS_AICS_CNT];
 };
 
 /** @brief Initialize the Microphone Input Control Service
