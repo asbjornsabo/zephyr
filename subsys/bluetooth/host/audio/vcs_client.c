@@ -936,6 +936,7 @@ static uint8_t vcs_discover_func(struct bt_conn *conn,
 			}
 		}
 #else
+		cur_vcs_inst = NULL;
 		if (vcs_client_cb && vcs_client_cb->discover) {
 			vcs_client_cb->discover(conn, err, 0, 0);
 		}
