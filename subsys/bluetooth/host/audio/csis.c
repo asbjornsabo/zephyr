@@ -556,8 +556,8 @@ static int bt_csis_init(const struct device *unused)
 	return res;
 }
 
-DEVICE_INIT(bt_csis, "bt_csis", &bt_csis_init, NULL, NULL,
-	    APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
+DEVICE_DEFINE(bt_csis, "bt_csis", &bt_csis_init, NULL, NULL, NULL,
+	      APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEVICE, NULL);
 
 static int csis_update_psri(void)
 {
