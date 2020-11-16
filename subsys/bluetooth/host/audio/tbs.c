@@ -1854,8 +1854,8 @@ static int bt_tbs_init(const struct device *unused)
 	return 0;
 }
 
-DEVICE_INIT(bt_tbs, "bt_tbs", &bt_tbs_init, NULL, NULL,
-	    APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
+DEVICE_DEFINE(bt_tbs, "bt_tbs", &bt_tbs_init, NULL, NULL, NULL,
+	      APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEVICE, NULL);
 
 
 /***************************** Profile API *****************************/
