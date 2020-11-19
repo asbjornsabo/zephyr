@@ -1226,7 +1226,7 @@ SHELL_STATIC_SUBCMD_SET_CREATE(mcc_cmds,
 		      cmd_mcc_init, 1, 0),
 	SHELL_CMD_ARG(discover_mcs, NULL,
 		      "Discover Media Control Service [subscribe]",
-		      cmd_mcc_discover_mcs, 1, 0),
+		      cmd_mcc_discover_mcs, 1, 1),
 	SHELL_CMD_ARG(read_player_name, NULL, "Read Media Player Name",
 		      cmd_mcc_read_player_name, 1, 0),
 #ifdef CONFIG_BT_OTC
