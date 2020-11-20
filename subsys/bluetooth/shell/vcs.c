@@ -178,7 +178,7 @@ static int cmd_vcs_init(
 	for (int i = 0; i < ARRAY_SIZE(vcs_init.aics_init); i++) {
 		vcs_init.aics_init[i].desc_writable = true;
 		snprintf(input_desc[i], sizeof(input_desc[i]),
-			 "Output %d", i + 1);
+			 "Input %d", i + 1);
 		vcs_init.aics_init[i].input_desc = input_desc[i];
 	}
 
