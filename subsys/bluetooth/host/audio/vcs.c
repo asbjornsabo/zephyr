@@ -202,7 +202,7 @@ static ssize_t write_vcs_control(struct bt_conn *conn,
 				    vcs_inst.service_p->attrs,
 				    &vcs_inst.flags, sizeof(vcs_inst.flags));
 
-		if (vcs_inst.cb && vcs_inst.cb->state) {
+		if (vcs_inst.cb && vcs_inst.cb->flags) {
 			vcs_inst.cb->flags(NULL, 0, vcs_inst.flags);
 		}
 	}
@@ -251,29 +251,28 @@ static ssize_t read_flags(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 static struct bt_gatt_attr vcs_attrs[] = { BT_VCS_SERVICE_DEFINITION };
 static struct bt_gatt_service vcs_svc;
 
-int bt_vcs_init(struct bt_vcs_init *init)
+static int prepare_vocs_inst(struct bt_vcs_init *init)
 {
 	int err;
-	int i;
 	int j;
-
-	vcs_svc = (struct bt_gatt_service)BT_GATT_SERVICE(vcs_attrs);
+	int i;
 
 	for (j = 0, i = 0; i < ARRAY_SIZE(vcs_attrs); i++) {
-		if (!bt_uuid_cmp(vcs_attrs[i].uuid, BT_UUID_GATT_INCLUDE)) {
+		if (!bt_uuid_cmp(vcs_attrs[i].uuid, BT_UUID_GATT_INCLUDE) &&
+		    !vcs_attrs[i].user_data) {
 			vcs_inst.vocs_insts[j] = bt_vocs_free_instance_get();
 
 			if (!vcs_inst.vocs_insts[j]) {
 				BT_DBG("Could not get free VOCS instances[%u]",
-				       j);
+				j);
 				return -ENOMEM;
 			}
 
 			err = bt_vocs_init(vcs_inst.vocs_insts[j],
-					   init ? &init->vocs_init[j] : NULL);
+					init ? &init->vocs_init[j] : NULL);
 			if (err) {
 				BT_DBG("Could not init VOCS instance[%u]: %d",
-				       j, err);
+				j, err);
 				return err;
 			}
 
@@ -287,8 +286,21 @@ int bt_vcs_init(struct bt_vcs_init *init)
 		}
 	}
 
+	__ASSERT(j == CONFIG_BT_VCS_VOCS_INSTANCE_COUNT,
+		 "Invalid VOCS instance count");
+
+	return 0;
+}
+
+static int prepare_aics_inst(struct bt_vcs_init *init)
+{
+	int err;
+	int j;
+	int i;
+
 	for (j = 0, i = 0; i < ARRAY_SIZE(vcs_attrs); i++) {
-		if (!bt_uuid_cmp(vcs_attrs[i].uuid, BT_UUID_GATT_INCLUDE)) {
+		if (!bt_uuid_cmp(vcs_attrs[i].uuid, BT_UUID_GATT_INCLUDE) &&
+		    !vcs_attrs[i].user_data) {
 			vcs_inst.aics_insts[j] = bt_aics_free_instance_get();
 
 			if (!vcs_inst.aics_insts[j]) {
@@ -309,9 +321,39 @@ int bt_vcs_init(struct bt_vcs_init *init)
 				bt_aics_svc_decl_get(vcs_inst.aics_insts[j]);
 			j++;
 
+			BT_DBG("AICS P %p", vcs_attrs[i].user_data);
+
 			if (j == CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
 				break;
 			}
+		}
+	}
+
+	__ASSERT(j == CONFIG_BT_VCS_AICS_INSTANCE_COUNT,
+		 "Invalid AICS instance count");
+
+	return 0;
+}
+
+int bt_vcs_init(struct bt_vcs_init *init)
+{
+	int err;
+
+	vcs_svc = (struct bt_gatt_service)BT_GATT_SERVICE(vcs_attrs);
+
+	if (CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0) {
+		err = prepare_vocs_inst(init);
+
+		if (err) {
+			return err;
+		}
+	}
+
+	if (CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0) {
+		err = prepare_aics_inst(init);
+
+		if (err) {
+			return err;
 		}
 	}
 
@@ -388,10 +430,12 @@ int bt_vcs_volume_step_set(uint8_t volume_step)
 #if defined(CONFIG_BT_VCS)
 	if (volume_step > 0) {
 		vcs_inst.volume_step = volume_step;
+		return 0;
 	} else {
 		return -EINVAL;
 	}
 #endif /* CONFIG_BT_VCS */
+
 	return -EOPNOTSUPP;
 }
 
@@ -426,7 +470,7 @@ int bt_vcs_flags_get(struct bt_conn *conn)
 
 #if defined(CONFIG_BT_VCS)
 	if (!conn) {
-		if (vcs_inst.cb && vcs_inst.cb->state) {
+		if (vcs_inst.cb && vcs_inst.cb->flags) {
 			vcs_inst.cb->flags(NULL, 0, vcs_inst.flags);
 		}
 
