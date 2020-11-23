@@ -12,9 +12,18 @@ extern enum bst_result_t bst_result;
 static uint8_t expected_passes = 1;
 static uint8_t passes;
 
+#if defined(CONFIG_BT_VOCS)
+#define VOCS_DESC_SIZE CONFIG_BT_VOCS_MAX_OUTPUT_DESCRIPTION_SIZE
+#else
+#define VOCS_DESC_SIZE 0
+#endif /* CONFIG_BT_VOCS */
+
 static volatile uint8_t g_volume;
 static volatile uint8_t g_mute;
 static volatile uint8_t g_flags;
+static volatile int16_t g_vocs_offset;
+static volatile uint8_t g_vocs_location;
+static char g_vocs_desc[VOCS_DESC_SIZE];
 static volatile bool g_cb;
 
 static void vcs_state_cb(
@@ -47,13 +56,58 @@ static void vcs_flags_cb(struct bt_conn *conn, int err, uint8_t flags)
 	}
 }
 
+static void vocs_state_cb(struct bt_conn *conn, uint8_t vocs_index, int err,
+			  int16_t offset)
+{
+	if (err) {
+		FAIL("VOCS state cb err (%d)", err);
+		return;
+	}
+
+	g_vocs_offset = offset;
+
+	if (!conn) {
+		g_cb = true;
+	}
+}
+
+static void vocs_location_cb(struct bt_conn *conn, uint8_t vocs_index, int err,
+			     uint8_t location)
+{
+	if (err) {
+		FAIL("VOCS location cb err (%d)", err);
+		return;
+	}
+
+	g_vocs_location = location;
+
+	if (!conn) {
+		g_cb = true;
+	}
+}
+
+static void vocs_description_cb(struct bt_conn *conn, uint8_t vocs_index,
+				int err, char *description)
+{
+	if (err) {
+		FAIL("VOCS description cb err (%d)", err);
+		return;
+	}
+
+	strcpy(g_vocs_desc, description);
+
+	if (!conn) {
+		g_cb = true;
+	}
+}
+
 static struct bt_vcs_cb_t vcs_cb = {
 	.state = vcs_state_cb,
 	.flags = vcs_flags_cb,
 	.vocs_cb = {
-		.state = NULL,
-		.location = NULL,
-		.description = NULL
+		.state = vocs_state_cb,
+		.location = vocs_location_cb,
+		.description = vocs_description_cb
 	},
 	.aics_cb  = {
 		.state = NULL,
@@ -63,6 +117,81 @@ static struct bt_vcs_cb_t vcs_cb = {
 		.description = NULL
 	}
 };
+
+static int test_vocs_standalone(void)
+{
+	int err;
+	uint8_t vocs_index = 0;
+	uint8_t expected_location;
+	int16_t expected_offset;
+	char expected_description[VOCS_DESC_SIZE];
+
+	printk("Getting VOCS state\n");
+	g_cb = false;
+	err = bt_vcs_vocs_state_get(NULL, vocs_index);
+	if (err) {
+		FAIL("Could not get VOCS state (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(g_cb);
+	printk("VOCS state get\n");
+
+	printk("Getting VOCS location\n");
+	g_cb = false;
+	err = bt_vcs_vocs_location_get(NULL, vocs_index);
+	if (err) {
+		FAIL("Could not get VOCS location (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(g_cb);
+	printk("VOCS location get\n");
+
+	printk("Getting VOCS description\n");
+	g_cb = false;
+	err = bt_vcs_vocs_description_get(NULL, vocs_index);
+	if (err) {
+		FAIL("Could not get VOCS description (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(g_cb);
+	printk("VOCS description get\n");
+
+	printk("Setting VOCS location\n");
+	expected_location = g_vocs_location + 1;
+	err = bt_vcs_vocs_location_set(NULL, vocs_index, expected_location);
+	if (err) {
+		FAIL("Could not set VOCS location (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(expected_location == g_vocs_location);
+	printk("VOCS location set\n");
+
+	printk("Setting VOCS state\n");
+	expected_offset = g_vocs_offset + 1;
+	err = bt_vcs_vocs_state_set(NULL, vocs_index, expected_offset);
+	if (err) {
+		FAIL("Could not set VOCS state (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(expected_offset == g_vocs_offset);
+	printk("VOCS state set\n");
+
+	printk("Setting VOCS description\n");
+	strncpy(expected_description, "New Output Description",
+		sizeof(expected_description));
+	g_cb = false;
+	err = bt_vcs_vocs_description_set(NULL, vocs_index,
+					  expected_description);
+	if (err) {
+		FAIL("Could not set VOCS description (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(g_cb && !strncmp(expected_description, g_vocs_desc,
+				  sizeof(expected_description)));
+	printk("VOCS description set\n");
+
+	return err;
+}
 
 static void test_standalone(void)
 {
@@ -228,6 +357,12 @@ static void test_standalone(void)
 	}
 	WAIT_FOR(expected_volume == g_volume);
 	printk("VCS volume set\n");
+
+	if (CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0) {
+		if (test_vocs_standalone()) {
+			return;
+		}
+	}
 
 	PASS("VCS passed\n");
 }
