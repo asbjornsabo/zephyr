@@ -263,54 +263,55 @@ void *bt_vocs_svc_decl_get(struct bt_vocs *vocs)
 int bt_vocs_init(struct bt_vocs *vocs, struct bt_vocs_init *init)
 {
 	int err;
+	struct bt_gatt_attr *attr;
+	struct bt_gatt_chrc *chrc;
+
+	__ASSERT(init, "VOCS init struct cannot be null");
 
 	if (vocs->initialized) {
 		return -EALREADY;
 	}
 
-	if (init) {
-		struct bt_gatt_attr *attr;
-		struct bt_gatt_chrc *chrc;
+	if (init->offset > VOCS_MAX_OFFSET || init->offset < VOCS_MIN_OFFSET) {
+		BT_DBG("Invalid offset %d", init->offset);
+		return -EINVAL;
+	}
 
-		if (init->offset > VOCS_MAX_OFFSET ||
-		    init->offset < VOCS_MIN_OFFSET) {
-			BT_DBG("Invalid offset %d", init->offset);
-			return -EINVAL;
-		}
+	vocs->location = init->location;
+	vocs->state.offset = init->offset;
+	strncpy(vocs->output_desc, init->output_desc,
+		sizeof(vocs->output_desc));
 
-		vocs->location = init->location;
-		vocs->state.offset = init->offset;
-		strncpy(vocs->output_desc, init->output_desc,
-			sizeof(vocs->output_desc));
+	if (IS_ENABLED(CONFIG_BT_DEBUG_VOCS) &&
+		strcmp(vocs->output_desc, init->output_desc)) {
+		BT_DBG("Output desc clipped to %s",
+			log_strdup(vocs->output_desc));
+	}
 
-		if (IS_ENABLED(CONFIG_BT_DEBUG_VOCS) &&
-		    strncmp(vocs->output_desc, init->output_desc,
-			    sizeof(vocs->output_desc))) {
-			BT_DBG("Output desc clipped to %s",
-			       log_strdup(vocs->output_desc));
-		}
+	/* Iterate over the attributes in AICS (starting from i = 1 to skip the
+	 * service declaration) to find the BT_UUID_VOCS_DESCRIPTION or
+	 * BT_UUID_VOCS_LOCATION and update the characteristic value (at [i]),
+	 * update those with the write permission and callback, and also update
+	 * the characteristic declaration (always found at [i - 1]) with the
+	 * BT_GATT_CHRC_WRITE_WITHOUT_RESP property.
+	 */
+	for (int i = 1; i < vocs->service_p->attr_count; i++) {
+		attr = &vocs->service_p->attrs[i];
 
-		for (int i = 0; i < vocs->service_p->attr_count; i++) {
-			attr = &vocs->service_p->attrs[i];
-
-			if (init->location_writable &&
-			    !bt_uuid_cmp(attr->uuid, BT_UUID_VOCS_LOCATION)) {
-				/* Update attr and chrc to be writable */
-				chrc = vocs->service_p->attrs[i - 1].user_data;
-				attr->write = write_location;
-				attr->perm |= BT_GATT_PERM_WRITE_ENCRYPT;
-				chrc->properties |=
-					BT_GATT_CHRC_WRITE_WITHOUT_RESP;
-			} else if (init->desc_writable &&
-				   !bt_uuid_cmp(attr->uuid,
-						BT_UUID_VOCS_DESCRIPTION)) {
-				/* Update attr and chrc to be writable */
-				chrc = vocs->service_p->attrs[i - 1].user_data;
-				attr->write = write_output_desc;
-				attr->perm |= BT_GATT_PERM_WRITE_ENCRYPT;
-				chrc->properties |=
-					BT_GATT_CHRC_WRITE_WITHOUT_RESP;
-			}
+		if (init->location_writable &&
+		    !bt_uuid_cmp(attr->uuid, BT_UUID_VOCS_LOCATION)) {
+			/* Update attr and chrc to be writable */
+			chrc = vocs->service_p->attrs[i - 1].user_data;
+			attr->write = write_location;
+			attr->perm |= BT_GATT_PERM_WRITE_ENCRYPT;
+			chrc->properties |= BT_GATT_CHRC_WRITE_WITHOUT_RESP;
+		} else if (init->desc_writable &&
+			   !bt_uuid_cmp(attr->uuid, BT_UUID_VOCS_DESCRIPTION)) {
+			/* Update attr and chrc to be writable */
+			chrc = vocs->service_p->attrs[i - 1].user_data;
+			attr->write = write_output_desc;
+			attr->perm |= BT_GATT_PERM_WRITE_ENCRYPT;
+			chrc->properties |= BT_GATT_CHRC_WRITE_WITHOUT_RESP;
 		}
 	}
 
