@@ -35,4 +35,7 @@ Execute ./bs_2G4_phy_v1 -v=${VERBOSITY_LEVEL} -s=${SIMULATION_ID} \
 for PROCESS_ID in $PROCESS_IDS; do
   wait $PROCESS_ID || let "EXIT_CODE=$?"
 done
+
+#sleep 0.1
+
 exit $EXIT_CODE #the last exit code != 0

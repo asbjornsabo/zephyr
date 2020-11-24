@@ -18,12 +18,27 @@ static uint8_t passes;
 #define VOCS_DESC_SIZE 0
 #endif /* CONFIG_BT_VOCS */
 
+#if defined(CONFIG_BT_AICS)
+#define AICS_DESC_SIZE CONFIG_BT_AICS_MAX_INPUT_DESCRIPTION_SIZE
+#else
+#define AICS_DESC_SIZE 0
+#endif /* CONFIG_BT_AICS */
+
 static volatile uint8_t g_volume;
 static volatile uint8_t g_mute;
 static volatile uint8_t g_flags;
 static volatile int16_t g_vocs_offset;
 static volatile uint8_t g_vocs_location;
 static char g_vocs_desc[VOCS_DESC_SIZE];
+static volatile int8_t g_aics_gain;
+static volatile uint8_t g_aics_input_mute;
+static volatile uint8_t g_aics_mode;
+static volatile uint8_t g_aics_input_type;
+static volatile uint8_t g_aics_units;
+static volatile uint8_t g_aics_gain_max;
+static volatile uint8_t g_aics_gain_min;
+static volatile bool g_aics_active = 1;
+static char g_aics_desc[AICS_DESC_SIZE];
 static volatile bool g_cb;
 
 static void vcs_state_cb(
@@ -101,6 +116,86 @@ static void vocs_description_cb(struct bt_conn *conn, uint8_t vocs_index,
 	}
 }
 
+static void aics_state_cb(struct bt_conn *conn, uint8_t aics_index, int err,
+			  int8_t gain, uint8_t mute, uint8_t mode)
+{
+	if (err) {
+		FAIL("AICS state cb err (%d)", err);
+		return;
+	}
+
+	g_aics_gain = gain;
+	g_aics_input_mute = mute;
+	g_aics_mode = mode;
+
+	if (!conn) {
+		g_cb = true;
+	}
+}
+
+static void aics_gain_setting_cb(struct bt_conn *conn, uint8_t aics_index,
+				 int err, uint8_t units, int8_t minimum,
+				 int8_t maximum)
+{
+	if (err) {
+		FAIL("AICS gain setting cb err (%d)", err);
+		return;
+	}
+
+	g_aics_units = units;
+	g_aics_gain_min = minimum;
+	g_aics_gain_max = maximum;
+
+	if (!conn) {
+		g_cb = true;
+	}
+}
+
+static void aics_input_type_cb(struct bt_conn *conn, uint8_t aics_index,
+			       int err, uint8_t input_type)
+{
+	if (err) {
+		FAIL("AICS input type cb err (%d)", err);
+		return;
+	}
+
+	g_aics_input_type = input_type;
+
+	if (!conn) {
+		g_cb = true;
+	}
+}
+
+static void aics_status_cb(struct bt_conn *conn, uint8_t aics_index, int err,
+			   bool active)
+{
+	if (err) {
+		FAIL("AICS status cb err (%d)", err);
+		return;
+	}
+
+	g_aics_active = active;
+
+	if (!conn) {
+		g_cb = true;
+	}
+}
+
+static void aics_description_cb(struct bt_conn *conn, uint8_t aics_index,
+				int err, char *description)
+{
+	if (err) {
+		FAIL("AICS description cb err (%d)", err);
+		return;
+	}
+
+	strcpy(g_aics_desc, description);
+
+	if (!conn) {
+		g_cb = true;
+	}
+}
+
 static struct bt_vcs_cb_t vcs_cb = {
 	.state = vcs_state_cb,
 	.flags = vcs_flags_cb,
@@ -110,13 +205,161 @@ static struct bt_vcs_cb_t vcs_cb = {
 		.description = vocs_description_cb
 	},
 	.aics_cb  = {
-		.state = NULL,
-		.gain_setting = NULL,
-		.type = NULL,
-		.status = NULL,
-		.description = NULL
+		.state = aics_state_cb,
+		.gain_setting = aics_gain_setting_cb,
+		.type = aics_input_type_cb,
+		.status = aics_status_cb,
+		.description = aics_description_cb
 	}
 };
+
+static int test_aics_standalone(void)
+{
+	int err;
+	uint8_t aics_index = 0;
+	int8_t expected_gain;
+	uint8_t expected_input_mute;
+	uint8_t expected_mode;
+	uint8_t expected_input_type;
+	bool expected_aics_active;
+	char expected_aics_desc[AICS_DESC_SIZE];
+
+	printk("Deactivating AICS\n");
+	expected_aics_active = false;
+	err = bt_vcs_aics_deactivate(aics_index);
+	if (err) {
+		FAIL("Could not deactivate AICS (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(expected_aics_active == g_aics_active);
+	printk("AICS deactivated\n");
+
+	printk("Activating AICS\n");
+	expected_aics_active = true;
+	err = bt_vcs_aics_activate(aics_index);
+	if (err) {
+		FAIL("Could not activate AICS (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(expected_aics_active == g_aics_active);
+	printk("AICS activated\n");
+
+	printk("Getting AICS state\n");
+	g_cb = false;
+	err = bt_vcs_aics_state_get(NULL, aics_index);
+	if (err) {
+		FAIL("Could not get AICS state (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(g_cb);
+	printk("AICS state get\n");
+
+	printk("Getting AICS gain setting\n");
+	g_cb = false;
+	err = bt_vcs_aics_gain_setting_get(NULL, aics_index);
+	if (err) {
+		FAIL("Could not get AICS gain setting (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(g_cb);
+	printk("AICS gain setting get\n");
+
+	printk("Getting AICS input type\n");
+	expected_input_type = AICS_INPUT_TYPE_DIGITAL;
+	err = bt_vcs_aics_type_get(NULL, aics_index);
+	if (err) {
+		FAIL("Could not get AICS input type (err %d)\n", err);
+		return err;
+	}
+	/* Expect and wait for input_type from init */
+	WAIT_FOR(expected_input_type == g_aics_input_type);
+	printk("AICS input type get\n");
+
+	printk("Getting AICS status\n");
+	g_cb = false;
+	err = bt_vcs_aics_status_get(NULL, aics_index);
+	if (err) {
+		FAIL("Could not get AICS status (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(g_cb);
+	printk("AICS status get\n");
+
+	printk("Getting AICS description\n");
+	g_cb = false;
+	err = bt_vcs_aics_description_get(NULL, aics_index);
+	if (err) {
+		FAIL("Could not get AICS description (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(g_cb);
+	printk("AICS description get\n");
+
+	printk("Setting AICS mute\n");
+	expected_input_mute = AICS_STATE_MUTED;
+	err = bt_vcs_aics_mute(NULL, aics_index);
+	if (err) {
+		FAIL("Could not set AICS mute (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(expected_input_mute == g_aics_input_mute);
+	printk("AICS mute set\n");
+
+	printk("Setting AICS unmute\n");
+	expected_input_mute = AICS_STATE_UNMUTED;
+	err = bt_vcs_aics_unmute(NULL, aics_index);
+	if (err) {
+		FAIL("Could not set AICS unmute (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(expected_input_mute == g_aics_input_mute);
+	printk("AICS unmute set\n");
+
+	printk("Setting AICS auto mode\n");
+	expected_mode = AICS_MODE_AUTO;
+	err = bt_vcs_aics_automatic_gain_set(NULL, aics_index);
+	if (err) {
+		FAIL("Could not set AICS auto mode (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(expected_mode == g_aics_mode);
+	printk("AICS auto mode set\n");
+
+	printk("Setting AICS manual mode\n");
+	expected_mode = AICS_MODE_MANUAL;
+	err = bt_vcs_aics_manual_gain_set(NULL, aics_index);
+	if (err) {
+		FAIL("Could not set AICS manual mode (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(expected_mode == g_aics_mode);
+	printk("AICS manual mode set\n");
+
+	printk("Setting AICS gain\n");
+	expected_gain = g_aics_gain_max - 1;
+	err = bt_vcs_aics_gain_set(NULL, aics_index, expected_gain);
+	if (err) {
+		FAIL("Could not set AICS gain (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(expected_gain == g_aics_gain);
+	printk("AICS gain set\n");
+
+	printk("Setting AICS Description\n");
+	strncpy(expected_aics_desc, "New Input Description",
+		sizeof(expected_aics_desc));
+	g_cb = false;
+	err = bt_vcs_aics_description_set(NULL, aics_index, expected_aics_desc);
+	if (err) {
+		FAIL("Could not set AICS Description (err %d)\n", err);
+		return err;
+	}
+	WAIT_FOR(g_cb && !strncmp(expected_aics_desc, g_aics_desc,
+				  sizeof(expected_aics_desc)));
+	printk("AICS Description set\n");
+
+	return 0;
+}
 
 static int test_vocs_standalone(void)
 {
@@ -226,6 +469,12 @@ static void test_standalone(void)
 		snprintf(input_desc[i], sizeof(input_desc[i]),
 			 "Input %d", i + 1);
 		vcs_init.aics_init[i].input_desc = input_desc[i];
+		vcs_init.aics_init[i].input_type = AICS_INPUT_TYPE_DIGITAL;
+		vcs_init.aics_init[i].input_state = g_aics_active;
+		vcs_init.aics_init[i].mode = AICS_MODE_MANUAL;
+		vcs_init.aics_init[i].units = 1;
+		vcs_init.aics_init[i].min_gain = 0;
+		vcs_init.aics_init[i].max_gain = 100;
 	}
 
 	err = bt_vcs_init(&vcs_init);
@@ -360,6 +609,12 @@ static void test_standalone(void)
 
 	if (CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0) {
 		if (test_vocs_standalone()) {
+			return;
+		}
+	}
+
+	if (CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0) {
+		if (test_aics_standalone()) {
 			return;
 		}
 	}
