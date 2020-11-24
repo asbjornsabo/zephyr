@@ -540,15 +540,15 @@ int bt_aics_input_status_get(uint8_t index)
 int bt_aics_input_unmute(uint8_t index)
 {
 	struct bt_gatt_attr attr;
-	struct aics_gain_control_t cp;
+	struct aics_control_t cp;
 	int err;
 
 	if (index >= ARRAY_SIZE(aics_insts)) {
 		return -ERANGE;
 	}
 
-	cp.cp.opcode = AICS_OPCODE_UNMUTE;
-	cp.cp.counter = aics_insts[index].state.change_counter;
+	cp.opcode = AICS_OPCODE_UNMUTE;
+	cp.counter = aics_insts[index].state.change_counter;
 
 	attr.user_data = &aics_insts[index];
 
@@ -560,15 +560,15 @@ int bt_aics_input_unmute(uint8_t index)
 int bt_aics_input_mute(uint8_t index)
 {
 	struct bt_gatt_attr attr;
-	struct aics_gain_control_t cp;
+	struct aics_control_t cp;
 	int err;
 
 	if (index >= ARRAY_SIZE(aics_insts)) {
 		return -ERANGE;
 	}
 
-	cp.cp.opcode = AICS_OPCODE_MUTE;
-	cp.cp.counter = aics_insts[index].state.change_counter;
+	cp.opcode = AICS_OPCODE_MUTE;
+	cp.counter = aics_insts[index].state.change_counter;
 
 	attr.user_data = &aics_insts[index];
 
@@ -580,15 +580,15 @@ int bt_aics_input_mute(uint8_t index)
 int bt_aics_manual_input_gain_set(uint8_t index)
 {
 	struct bt_gatt_attr attr;
-	struct aics_gain_control_t cp;
+	struct aics_control_t cp;
 	int err;
 
 	if (index >= ARRAY_SIZE(aics_insts)) {
 		return -ERANGE;
 	}
 
-	cp.cp.opcode = AICS_OPCODE_SET_MANUAL;
-	cp.cp.counter = aics_insts[index].state.change_counter;
+	cp.opcode = AICS_OPCODE_SET_MANUAL;
+	cp.counter = aics_insts[index].state.change_counter;
 
 	attr.user_data = &aics_insts[index];
 
@@ -600,15 +600,15 @@ int bt_aics_manual_input_gain_set(uint8_t index)
 int bt_aics_automatic_input_gain_set(uint8_t index)
 {
 	struct bt_gatt_attr attr;
-	struct aics_gain_control_t cp;
+	struct aics_control_t cp;
 	int err;
 
 	if (index >= ARRAY_SIZE(aics_insts)) {
 		return -ERANGE;
 	}
 
-	cp.cp.opcode = AICS_OPCODE_SET_AUTO;
-	cp.cp.counter = aics_insts[index].state.change_counter;
+	cp.opcode = AICS_OPCODE_SET_AUTO;
+	cp.counter = aics_insts[index].state.change_counter;
 
 	attr.user_data = &aics_insts[index];
 
@@ -664,7 +664,7 @@ int bt_aics_input_description_set(uint8_t index, const char *description)
 
 	attr.user_data = &aics_insts[index];
 
-	err = write_input_desc(NULL, &attr, &description, strlen(description),
+	err = write_input_desc(NULL, &attr, description, strlen(description),
 			       0, 0);
 
 	return err > 0 ? 0 : err;
