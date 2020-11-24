@@ -339,45 +339,77 @@ void *bt_aics_svc_decl_get(struct bt_aics *aics)
 int bt_aics_init(struct bt_aics *aics, struct bt_aics_init *init)
 {
 	int err;
+	struct bt_gatt_attr *attr;
+	struct bt_gatt_chrc *chrc;
+
+	__ASSERT(init, "AICS init struct cannot be null");
 
 	if (aics->initialized) {
 		return -EALREADY;
 	}
 
-	if (init) {
-		struct bt_gatt_attr *attr;
-		struct bt_gatt_chrc *chrc;
+	if (init->mute > AICS_STATE_MUTE_DISABLED) {
+		BT_DBG("Invalid AICS mute value: %u", init->mute);
+		return -EINVAL;
+	}
 
-		if (init->mute > AICS_STATE_MUTE_DISABLED ||
-		    init->mode > AICS_MODE_AUTO ||
-		    (init->input_type > AICS_INPUT_TYPE_NETWORK &&
-			init->input_type != AICS_INPUT_TYPE_OTHER)) {
-			return -EINVAL;
-		}
+	if (init->mode > AICS_MODE_AUTO) {
+		BT_DBG("Invalid AICS mode value: %u", init->mode);
+		return -EINVAL;
+	}
 
-		aics->state.gain = init->gain;
-		aics->state.mute = init->mute;
-		aics->state.mode = init->mode;
-		aics->gain_settings.units = init->units;
-		aics->gain_settings.minimum = init->min_gain;
-		aics->gain_settings.maximum = init->max_gain;
-		aics->type = init->input_type;
-		aics->status = init->input_state;
+	if (init->input_type > AICS_INPUT_TYPE_NETWORK &&
+	    init->input_type != AICS_INPUT_TYPE_OTHER) {
+		BT_DBG("Invalid AICS input type value: %u", init->input_type);
+		return -EINVAL;
+	}
 
-		strncpy(aics->input_desc, init->input_desc,
-			sizeof(aics->input_desc));
-		if (IS_ENABLED(CONFIG_BT_DEBUG_AICS) &&
-		    strncmp(aics->input_desc, init->input_desc,
-			    sizeof(aics->input_desc))) {
-			BT_DBG("Input desc clipped to %s",
-			       log_strdup(aics->input_desc));
-		}
+	if (init->units == 0) {
+		BT_DBG("AICS units value shall not be 0");
+		return -EINVAL;
+	}
 
-		for (int i = 0; i < aics->service_p->attr_count; i++) {
+	if (!(init->min_gain <= init->max_gain)) {
+		BT_DBG("AICS min gain (%d) shall be lower than or equal to "
+		       "max gain (%d)", init->min_gain, init->max_gain);
+		return -EINVAL;
+	}
+
+	if (init->gain < init->min_gain || init->gain > init->max_gain) {
+		BT_DBG("AICS gain (%d) shall be not lower than min gain (%d) "
+		       "or higher than max gain (%d)",
+		       init->gain, init->min_gain, init->max_gain);
+		return -EINVAL;
+	}
+
+	aics->state.gain = init->gain;
+	aics->state.mute = init->mute;
+	aics->state.mode = init->mode;
+	aics->gain_settings.units = init->units;
+	aics->gain_settings.minimum = init->min_gain;
+	aics->gain_settings.maximum = init->max_gain;
+	aics->type = init->input_type;
+	aics->status = init->input_state ? 1 : 0;
+
+	strncpy(aics->input_desc, init->input_desc, sizeof(aics->input_desc));
+	if (IS_ENABLED(CONFIG_BT_DEBUG_AICS) &&
+	    strcmp(aics->input_desc, init->input_desc)) {
+		BT_DBG("Input desc clipped to %s",
+			log_strdup(aics->input_desc));
+	}
+
+	/* Iterate over the attributes in AICS (starting from i = 1 to skip the
+	 * service declaration) to find the BT_UUID_AICS_DESCRIPTION and update
+	 * the characteristic value (at [i]), update that with the write
+	 * permission and callback, and also update the characteristic
+	 * declaration (always found at [i - 1]) with the
+	 * BT_GATT_CHRC_WRITE_WITHOUT_RESP property.
+	 */
+	if (init->desc_writable) {
+		for (int i = 1; i < aics->service_p->attr_count; i++) {
 			attr = &aics->service_p->attrs[i];
 
-			if (init->desc_writable &&
-			    !bt_uuid_cmp(attr->uuid,
+			if (!bt_uuid_cmp(attr->uuid,
 					 BT_UUID_AICS_DESCRIPTION)) {
 				/* Update attr and chrc to be writable */
 				chrc = aics->service_p->attrs[i - 1].user_data;

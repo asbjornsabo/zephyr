@@ -180,6 +180,12 @@ static int cmd_vcs_init(
 		snprintf(input_desc[i], sizeof(input_desc[i]),
 			 "Input %d", i + 1);
 		vcs_init.aics_init[i].input_desc = input_desc[i];
+		vcs_init.aics_init[i].input_type = AICS_INPUT_TYPE_LOCAL;
+		vcs_init.aics_init[i].input_state = true;
+		vcs_init.aics_init[i].mode = AICS_MODE_MANUAL;
+		vcs_init.aics_init[i].units = 1;
+		vcs_init.aics_init[i].min_gain = -100;
+		vcs_init.aics_init[i].max_gain = 100;
 	}
 
 	result = bt_vcs_init(&vcs_init);
