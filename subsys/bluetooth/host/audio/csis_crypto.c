@@ -10,6 +10,7 @@
 #include <tinycrypt/aes.h>
 #include <tinycrypt/cmac_mode.h>
 #include <tinycrypt/ccm_mode.h>
+#include <sys/byteorder.h>
 
 #define BT_DBG_ENABLED IS_ENABLED(CONFIG_BT_DEBUG_CSIS_CRYPTO)
 #define LOG_MODULE_NAME bt_csis_crypto
@@ -36,6 +37,16 @@ static int aes_cmac(const uint8_t key[16], const uint8_t *in, size_t in_len,
 	}
 
 	return 0;
+}
+
+static void xor_128(const uint8_t a[16], const uint8_t b[16], uint8_t out[16])
+{
+	size_t len = 16;
+	/* TODO: Identical to the xor_128 from smp.c: Move to util */
+
+	while (len--) {
+		*out++ = *a++ ^ *b++;
+	}
 }
 
 int bt_csis_sih(const uint8_t sirk[16], const uint32_t r, uint32_t *out)
@@ -149,4 +160,46 @@ static int s1(const uint8_t *m, size_t m_size, uint8_t out[16])
 	BT_DBG("out %s", bt_hex(out, 16));
 
 	return err;
+}
+
+int bt_csis_sef(const uint8_t k[16], const uint8_t sirk[BT_CSIP_SET_SIRK_SIZE],
+		uint8_t out_sirk[BT_CSIP_SET_SIRK_SIZE])
+{
+	const uint8_t m[] = {'S', 'I', 'R', 'K', 'e', 'n', 'c'};
+	const uint8_t p[] = {'c', 's', 'i', 's'};
+	uint8_t s1_out[16];
+	uint8_t k1_out[16];
+	uint8_t k1_tmp[16];
+	int err;
+
+	/*
+	 * sef(K, SIRK) = k1(K, s1("SIRKenc"), "csis") ^ SIRK
+	 */
+
+	BT_DBG("k %s", bt_hex(k, 16));
+	BT_DBG("SIRK %s", bt_hex(sirk, BT_CSIP_SET_SIRK_SIZE));
+
+	err = s1(m, sizeof(m), s1_out);
+	if (err) {
+		return err;
+	}
+
+	BT_DBG("s1 result %s", bt_hex(s1_out, sizeof(s1_out)));
+
+	/* Swap because aes_cmac is big endian and we are little endian */
+	sys_memcpy_swap(k1_tmp, k, 16);
+
+	err = k1(k1_tmp, 16, s1_out, p, sizeof(p), k1_out);
+	if (err) {
+		return err;
+	}
+
+	/* Swap result back to little endian */
+	sys_mem_swap(k1_out, 16);
+	BT_DBG("k1 result %s", bt_hex(k1_out, sizeof(k1_out)));
+
+	xor_128(k1_out, sirk, out_sirk);
+	BT_DBG("out %s", bt_hex(out_sirk, 16));
+
+	return 0;
 }
