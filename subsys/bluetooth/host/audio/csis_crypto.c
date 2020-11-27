@@ -123,3 +123,30 @@ static int k1(const uint8_t *n, size_t n_size, const uint8_t salt[16],
 
 	return err;
 }
+
+/**
+ * @brief s1 SALT generation function
+ *
+ * @param m      A non-zero length octet array or ASCII encoded string
+ * @param m_size Size of @p m.
+ * @param out    16-byte output buffer.
+ * @return int 0 on success, any other value indicates a failure.
+ */
+static int s1(const uint8_t *m, size_t m_size, uint8_t out[16])
+{
+	uint8_t zero[16];
+	int err;
+
+	/*
+	 * s1(M) = AES-CMAC_zero(M)
+	 */
+
+	BT_DBG("m %s", bt_hex(m, m_size));
+
+	memset(zero, 0, sizeof(zero));
+
+	err = aes_cmac(zero, m, m_size, out);
+	BT_DBG("out %s", bt_hex(out, 16));
+
+	return err;
+}
