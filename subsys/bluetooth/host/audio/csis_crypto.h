@@ -50,4 +50,31 @@ int bt_csis_sih(const uint8_t sirk[16], const uint32_t r, uint32_t *out);
  */
 int bt_csis_sef(const uint8_t k[16], const uint8_t sirk[BT_CSIP_SET_SIRK_SIZE],
 		uint8_t out_sirk[BT_CSIP_SET_SIRK_SIZE]);
+
+/**
+ * @brief SIRK decryption function sdf
+ *
+ * The SIRK decryption function sdf is used by the client to decrypt the SIRK
+ * with a key K. The value of K depends on the transport on which the pairing
+ * between the client and the server was performed.
+ *
+ * If the pairing was performed on BR/EDR, K is equal to the Link Key shared by
+ * the server and the client.
+ *    K = Link Key.
+ *
+ * If the pairing was performed on LE, the 64 LSBs of K correspond to the 64
+ * LSBs of the IRK that the server sent to the client during the Phase 3
+ * (Transport Specific Key Distribution) of the pairing procedure (see Volume 3,
+ * Part H, Section 2.1 in [2]), and the 64 MSBs of K correspond to the 64 MSBs
+ * of the LTK shared by the server and client. That is,
+ *    K = LTK_64-127 || IRK_0-63
+ *
+ * @param k         16-byte key.
+ * @param sirk      The encrypted SIRK.
+ * @param out_sirk  The decrypted SIRK.
+ * @return int 0 on success, any other value indicates a failure.
+ */
+int bt_csis_sdf(const uint8_t k[16],
+		const uint8_t enc_sirk[BT_CSIP_SET_SIRK_SIZE],
+		uint8_t out_sirk[BT_CSIP_SET_SIRK_SIZE]);
 #endif /* ZEPHYR_INCLUDE_BLUETOOTH_AUDIO_CSIS_CRYPTO_ */

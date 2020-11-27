@@ -203,3 +203,19 @@ int bt_csis_sef(const uint8_t k[16], const uint8_t sirk[BT_CSIP_SET_SIRK_SIZE],
 
 	return 0;
 }
+
+int bt_csis_sdf(const uint8_t k[16],
+		const uint8_t enc_sirk[BT_CSIP_SET_SIRK_SIZE],
+		uint8_t out_sirk[BT_CSIP_SET_SIRK_SIZE])
+{
+	/* SIRK encryption is currently symmetric, which means that we can
+	 * simply apply the sef function to decrypt it.
+	 */
+
+	/*
+	 * sdf(K, EncSIRK) = k1(K, s1("SIRKenc"), "csis") ^ EncSIRK
+	 */
+
+	BT_DBG("Running SDF as SEF");
+	return bt_csis_sef(k, enc_sirk, out_sirk);
+}
