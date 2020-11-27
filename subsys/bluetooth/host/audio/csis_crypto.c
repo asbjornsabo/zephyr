@@ -3,13 +3,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-#include "sih.h"
+#include "csis_crypto.h"
 
-#define BT_DBG_ENABLED IS_ENABLED(CONFIG_BT_DEBUG_SIH)
-#define LOG_MODULE_NAME bt_sih
+#define BT_DBG_ENABLED IS_ENABLED(CONFIG_BT_DEBUG_CSIS_CRYPTO)
+#define LOG_MODULE_NAME bt_csis_crypto
 #include "common/log.h"
 
-int sih(const uint8_t sirk[16], const uint32_t r, uint32_t *out)
+int bt_csis_sih(const uint8_t sirk[16], const uint32_t r, uint32_t *out)
 {
 	uint8_t res[16];
 	int err;

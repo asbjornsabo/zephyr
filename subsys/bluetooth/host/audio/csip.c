@@ -27,7 +27,7 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include "csip.h"
-#include "sih.h"
+#include "csis_crypto.h"
 #define BT_DBG_ENABLED IS_ENABLED(CONFIG_BT_DEBUG_CSIP)
 #define LOG_MODULE_NAME bt_csip
 #include "common/log.h"
@@ -616,7 +616,7 @@ static bool is_set_member(struct bt_data *data)
 	uint32_t calculated_hash;
 
 	BT_DBG("hash: 0x%06x, prand 0x%06x", hash, prand);
-	err = sih(cur_set.set_sirk.value, prand, &calculated_hash);
+	err = bt_csis_sih(cur_set.set_sirk.value, prand, &calculated_hash);
 	if (err) {
 		return false;
 	}

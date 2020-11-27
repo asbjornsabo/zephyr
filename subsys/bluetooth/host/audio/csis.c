@@ -18,7 +18,7 @@
 #include <bluetooth/gatt.h>
 #include "csis.h"
 #include "csip.h"
-#include "sih.h"
+#include "csis_crypto.h"
 
 #define BT_CSIS_SIH_PRAND_SIZE          3
 #define BT_CSIS_SIH_HASH_SIZE           3
@@ -587,7 +587,7 @@ static int csis_update_psri(void)
 		return res;
 	}
 #endif
-	res = sih(csis_inst.set_sirk.value, prand, &hash);
+	res = bt_csis_sih(csis_inst.set_sirk.value, prand, &hash);
 	if (res) {
 		BT_WARN("Could not generate new PSRI");
 		return res;
