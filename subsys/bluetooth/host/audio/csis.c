@@ -16,9 +16,13 @@
 #include <bluetooth/bluetooth.h>
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
+#include <bluetooth/buf.h>
 #include "csis.h"
 #include "csip.h"
 #include "csis_crypto.h"
+#include "../conn_internal.h"
+#include "../hci_core.h"
+#include "../keys.h"
 
 #define BT_CSIS_SIH_PRAND_SIZE          3
 #define BT_CSIS_SIH_HASH_SIZE           3
@@ -179,6 +183,41 @@ static void notify_clients(struct bt_conn *excluded_client)
 	bt_conn_foreach(BT_CONN_TYPE_ALL, notify_client, excluded_client);
 }
 
+static int sirk_encrypt(struct bt_conn *conn,
+			const struct bt_csip_set_sirk_t *sirk,
+			struct bt_csip_set_sirk_t *enc_sirk)
+{
+	int err;
+	uint8_t k[16];
+
+	if (IS_ENABLED(CONFIG_BT_CSIS_TEST_ENC_SIRK)) {
+		/* test_k is from the sample data from A.2 in the CSIS spec */
+		uint8_t test_k[] = {0x1c, 0x01, 0xea, 0xf6,
+				    0x50, 0x7d, 0x43, 0x71,
+				    0x6f, 0x69, 0x48, 0xd4,
+				    0x9b, 0x1b, 0x6e, 0x67};
+		BT_DBG("Encrypting test SIRK");
+		memcpy(k, test_k, sizeof(k));
+	} else {
+#if defined(CONFIG_BT_PRIVACY)
+		memcpy(k, bt_dev.irk, 8);
+#else
+		memset(k, 0, 8);
+#endif /* CONFIG_BT_PRIVACY */
+		memcpy(k + 8, conn->le.keys->ltk.val + 8, 8);
+	}
+
+	err = bt_csis_sef(k, sirk->value, enc_sirk->value);
+
+	if (err) {
+		return err;
+	}
+
+	enc_sirk->type = BT_CSIP_SIRK_TYPE_ENCRYPTED;
+
+	return 0;
+}
+
 static int generate_sirk(uint32_t seed, uint8_t sirk_dest[16])
 {
 	int err;
@@ -222,13 +261,50 @@ static ssize_t read_set_sirk(struct bt_conn *conn,
 			     const struct bt_gatt_attr *attr,
 			     void *buf, uint16_t len, uint16_t offset)
 {
-	BT_DBG("Set sirk %sencrypted", csis_inst.set_sirk.type ? "not " : "");
-	BT_HEXDUMP_DBG(&csis_inst.set_sirk.value,
-		       sizeof(csis_inst.set_sirk.value),
-		       "Set SIRK");
+	struct bt_csip_set_sirk_t enc_sirk;
+	struct bt_csip_set_sirk_t *sirk;
+
+	if (csis_cbs && csis_cbs->sirk_read_req) {
+		uint8_t cb_rsp;
+
+		/* Ask higher layer for what SIRK to return, if any */
+		cb_rsp = csis_cbs->sirk_read_req(conn);
+
+		if (cb_rsp == BT_CSIS_READ_SIRK_REQ_RSP_ACCEPT) {
+			sirk = &csis_inst.set_sirk;
+		} else if (cb_rsp == BT_CSIS_READ_SIRK_REQ_RSP_ACCEPT_ENC) {
+			int err;
+
+			err = sirk_encrypt(conn,
+						&csis_inst.set_sirk,
+						&enc_sirk);
+			if (err) {
+				BT_ERR("Could not encrypt SIRK: %d",
+					err);
+				return BT_GATT_ERR(BT_ATT_ERR_UNLIKELY);
+			}
+
+			sirk = &enc_sirk;
+			BT_HEXDUMP_DBG(enc_sirk.value, sizeof(enc_sirk.value),
+				       "Encrypted Set SIRK");
+		} else if (cb_rsp == BT_CSIS_READ_SIRK_REQ_RSP_REJECT) {
+			return BT_GATT_ERR(BT_CSIP_ERROR_SIRK_ACCESS_REJECTED);
+		} else if (cb_rsp == BT_CSIS_READ_SIRK_REQ_RSP_OOB_ONLY) {
+			return BT_GATT_ERR(BT_CSIP_ERROR_SIRK_OOB_ONLY);
+		} else {
+			BT_ERR("Invalid callback response: %u", cb_rsp);
+			return BT_GATT_ERR(BT_ATT_ERR_UNLIKELY);
+		}
+	} else {
+		sirk = &csis_inst.set_sirk;
+	}
+
+	BT_DBG("Set sirk %sencrypted",
+	       sirk->type ==  BT_CSIP_SIRK_TYPE_PLAIN ? "not " : "");
+	BT_HEXDUMP_DBG(csis_inst.set_sirk.value,
+		       sizeof(csis_inst.set_sirk.value), "Set SIRK");
 	return bt_gatt_attr_read(conn, attr, buf, len, offset,
-				 &csis_inst.set_sirk,
-				 sizeof(csis_inst.set_sirk));
+				 sirk, sizeof(*sirk));
 }
 
 static void set_sirk_cfg_changed(const struct bt_gatt_attr *attr,
@@ -538,8 +614,7 @@ BT_GATT_SERVICE_DEFINE(csis_svc, BT_CSIS_SERVICE_DEFINITION);
 
 static int bt_csis_init(const struct device *unused)
 {
-	/* TODO: Consider deferring init to when it's actually needed (lazy) */
-	int res;
+	int res = 0;
 
 	bt_conn_cb_register(&conn_callbacks);
 	bt_conn_auth_cb_register(&auth_callbacks);
@@ -551,10 +626,27 @@ static int bt_csis_init(const struct device *unused)
 	csis_inst.set_size = CONFIG_BT_CSIS_SET_SIZE;
 	csis_inst.set_lock = BT_CSIP_RELEASE_VALUE;
 	csis_inst.set_sirk.type = BT_CSIP_SIRK_TYPE_PLAIN;
-	res = generate_sirk(CONFIG_BT_CSIS_SET_SIRK_SEED,
-			    csis_inst.set_sirk.value);
-	if (res) {
-		BT_DBG("Sirk generation failed for instance");
+
+	if (IS_ENABLED(CONFIG_BT_CSIS_TEST_SIH_SIRK)) {
+		uint8_t test_sirk[] = {
+			0xb8, 0x03, 0xea, 0xc6, 0xaf, 0xbb, 0x65, 0xa2,
+			0x5a, 0x41, 0xf1, 0x53, 0x05, 0x68, 0x8e, 0x83
+		};
+
+		memcpy(csis_inst.set_sirk.value, test_sirk, sizeof(test_sirk));
+	} else if (IS_ENABLED(CONFIG_BT_CSIS_TEST_ENC_SIRK)) {
+		uint8_t test_sirk[] = {
+			0xcd, 0xcc, 0x72, 0xdd, 0x86, 0x8c, 0xcd, 0xce,
+			0x22, 0xfd, 0xa1, 0x21, 0x09, 0x7d, 0x7d, 0x45,
+		};
+
+		memcpy(csis_inst.set_sirk.value, test_sirk, sizeof(test_sirk));
+	} else {
+		res = generate_sirk(CONFIG_BT_CSIS_SET_SIRK_SEED,
+				csis_inst.set_sirk.value);
+		if (res) {
+			BT_DBG("Sirk generation failed for instance");
+		}
 	}
 
 #if defined(CONFIG_BT_EXT_ADV)
@@ -573,20 +665,17 @@ static int csis_update_psri(void)
 	uint32_t prand;
 	uint32_t hash;
 
-#if IS_ENABLED(CONFIG_BT_CSIS_TEST_SIRK)
-	prand = 0x69f563;
-	static uint8_t test_sirk[] = {
-		0xb8, 0x03, 0xea, 0xc6, 0xaf, 0xbb, 0x65, 0xa2,
-		0x5a, 0x41, 0xf1, 0x53, 0x05, 0x68, 0x8e, 0x83
-	};
-	memcpy(csis_inst.set_sirk.value, test_sirk, sizeof(test_sirk));
-#else
-	res = generate_prand(&prand);
-	if (res) {
-		BT_WARN("Could not generate new prand");
-		return res;
+	if (IS_ENABLED(CONFIG_BT_CSIS_TEST_SIH_SIRK)) {
+		prand = 0x69f563;
+	} else {
+		res = generate_prand(&prand);
+
+		if (res) {
+			BT_WARN("Could not generate new prand");
+			return res;
+		}
 	}
-#endif
+
 	res = bt_csis_sih(csis_inst.set_sirk.value, prand, &hash);
 	if (res) {
 		BT_WARN("Could not generate new PSRI");

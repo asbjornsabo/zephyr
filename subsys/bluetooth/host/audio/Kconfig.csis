@@ -19,11 +19,17 @@ config BT_CSIS
 
 if BT_CSIS
 
-config BT_CSIS_TEST_SIRK
-	bool "Coordinated Set Identification Service Test SIRK"
-	default n
+config BT_CSIS_TEST_SIH_SIRK
+	bool "Coordinated Set Identification Service Test SIH SIRK"
 	help
-	  Enabled the use of the test SIRK and prand. Should not be used for
+	  Enable the use of the test SIH SIRK and prand. Should not be used for
+	  production builds.
+
+config BT_CSIS_TEST_ENC_SIRK
+	bool "Coordinated Set Identification Service Test Encryption SIRK"
+	depends on !BT_CSIS_TEST_SIH_SIRK
+	help
+	  Enable the use of the test encryption SIRK. Should not be used for
 	  production builds.
 
 config BT_CSIS_SET_SIZE
