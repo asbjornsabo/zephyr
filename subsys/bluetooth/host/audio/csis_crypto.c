@@ -67,7 +67,14 @@ int bt_csis_sih(const uint8_t sirk[16], const uint32_t r, uint32_t *out)
 
 	BT_DBG("r' %s", bt_hex(res, 16));
 
-	err = bt_encrypt_le(sirk, res, res);
+	if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) {
+		/* r' should be the "lowest" 3 bytes */
+		sys_mem_swap(res, 16);
+		err = bt_encrypt_be(sirk, res, res);
+	} else {
+		err = bt_encrypt_le(sirk, res, res);
+	}
+
 	if (err) {
 		return err;
 	}
@@ -81,7 +88,13 @@ int bt_csis_sih(const uint8_t sirk[16], const uint32_t r, uint32_t *out)
 
 	BT_DBG("res %s", bt_hex(res, 16));
 	BT_DBG("sih %s", bt_hex(res, 3));
-	memcpy(out, res, 3);
+
+	/* Result is the lowest 3 bytes */
+	if (__BYTE_ORDER__ == __ORDER_BIG_ENDIAN__) {
+		memcpy(out, res + 13, 3);
+	} else {
+		memcpy(out, res, 3);
+	}
 
 	return 0;
 }
@@ -186,16 +199,24 @@ int bt_csis_sef(const uint8_t k[16], const uint8_t sirk[BT_CSIP_SET_SIRK_SIZE],
 
 	BT_DBG("s1 result %s", bt_hex(s1_out, sizeof(s1_out)));
 
-	/* Swap because aes_cmac is big endian and we are little endian */
-	sys_memcpy_swap(k1_tmp, k, 16);
+	if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) {
+		/* Swap because aes_cmac is big endian
+		 * and we are little endian
+		 */
+		sys_memcpy_swap(k1_tmp, k, 16);
+	} else {
+		memcpy(k1_tmp, k, 16);
+	}
 
 	err = k1(k1_tmp, 16, s1_out, p, sizeof(p), k1_out);
 	if (err) {
 		return err;
 	}
 
-	/* Swap result back to little endian */
-	sys_mem_swap(k1_out, 16);
+	if (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__) {
+		/* Swap result back to little endian */
+		sys_mem_swap(k1_out, 16);
+	}
 	BT_DBG("k1 result %s", bt_hex(k1_out, sizeof(k1_out)));
 
 	xor_128(k1_out, sirk, out_sirk);
