@@ -335,9 +335,9 @@ static int cmd_vcs_vocs_state_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index > CONFIG_BT_VCS_VOCS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			    CONFIG_BT_VCS_VOCS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -354,9 +354,9 @@ static int cmd_vcs_vocs_location_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index > CONFIG_BT_VCS_VOCS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			    CONFIG_BT_VCS_VOCS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -376,9 +376,9 @@ static int cmd_vcs_vocs_location_set(
 	int index = strtol(argv[1], NULL, 0);
 	int location = strtol(argv[2], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index > CONFIG_BT_VCS_VOCS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			    CONFIG_BT_VCS_VOCS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 	if (location > UINT16_MAX || location < 0) {
@@ -403,9 +403,9 @@ static int cmd_vcs_vocs_offset_set(
 	int index = strtol(argv[1], NULL, 0);
 	int offset = strtol(argv[2], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index > CONFIG_BT_VCS_VOCS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			    CONFIG_BT_VCS_VOCS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -429,9 +429,9 @@ static int cmd_vcs_vocs_output_description_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index > CONFIG_BT_VCS_VOCS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			    CONFIG_BT_VCS_VOCS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -450,9 +450,9 @@ static int cmd_vcs_vocs_output_description_set(
 	int index = strtol(argv[1], NULL, 0);
 	char *description = argv[2];
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index > CONFIG_BT_VCS_VOCS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			    CONFIG_BT_VCS_VOCS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -471,9 +471,9 @@ static int cmd_vcs_aics_input_state_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index >  CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			     CONFIG_BT_VCS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -491,9 +491,9 @@ static int cmd_vcs_aics_gain_setting_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index >  CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			     CONFIG_BT_VCS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -511,9 +511,9 @@ static int cmd_vcs_aics_input_type_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index >  CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			     CONFIG_BT_VCS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -531,9 +531,9 @@ static int cmd_vcs_aics_input_status_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index >  CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			     CONFIG_BT_VCS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -551,9 +551,9 @@ static int cmd_vcs_aics_input_unmute(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index >  CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			     CONFIG_BT_VCS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -571,9 +571,9 @@ static int cmd_vcs_aics_input_mute(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index >  CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			     CONFIG_BT_VCS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -591,9 +591,9 @@ static int cmd_vcs_aics_manual_input_gain_set(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index >  CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			     CONFIG_BT_VCS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -611,9 +611,9 @@ static int cmd_vcs_aics_automatic_input_gain_set(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index >  CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			     CONFIG_BT_VCS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -632,9 +632,9 @@ static int cmd_vcs_aics_gain_set(
 	int index = strtol(argv[1], NULL, 0);
 	int gain = strtol(argv[2], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index >  CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			     CONFIG_BT_VCS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -658,9 +658,9 @@ static int cmd_vcs_aics_input_description_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index >  CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			     CONFIG_BT_VCS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -679,9 +679,9 @@ static int cmd_vcs_aics_input_description_set(
 	int index = strtol(argv[1], NULL, 0);
 	char *description = argv[2];
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
+	if (index >  CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+			     CONFIG_BT_VCS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
