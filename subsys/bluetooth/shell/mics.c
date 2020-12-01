@@ -225,9 +225,9 @@ static inline int cmd_mics_aics_input_state_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
+	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_CLIENT_MAX_AICS_INST, index);
+			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -244,9 +244,9 @@ static inline int cmd_mics_aics_gain_setting_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
+	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_CLIENT_MAX_AICS_INST, index);
+			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -263,9 +263,9 @@ static inline int cmd_mics_aics_input_type_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
+	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_CLIENT_MAX_AICS_INST, index);
+			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -282,9 +282,9 @@ static inline int cmd_mics_aics_input_status_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
+	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_CLIENT_MAX_AICS_INST, index);
+			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -301,9 +301,9 @@ static inline int cmd_mics_aics_input_unmute(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
+	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_CLIENT_MAX_AICS_INST, index);
+			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -320,9 +320,9 @@ static inline int cmd_mics_aics_input_mute(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
+	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_CLIENT_MAX_AICS_INST, index);
+			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -339,9 +339,9 @@ static inline int cmd_mics_aics_manual_input_gain_set(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
+	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_CLIENT_MAX_AICS_INST, index);
+			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -358,9 +358,9 @@ static inline int cmd_mics_aics_automatic_input_gain_set(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
+	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_CLIENT_MAX_AICS_INST, index);
+			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -378,9 +378,9 @@ static inline int cmd_mics_aics_gain_set(
 	int index = strtol(argv[1], NULL, 0);
 	int gain = strtol(argv[2], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
+	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_CLIENT_MAX_AICS_INST, index);
+			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -403,9 +403,9 @@ static inline int cmd_mics_aics_input_description_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
+	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_CLIENT_MAX_AICS_INST, index);
+			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
@@ -423,9 +423,9 @@ static inline int cmd_mics_aics_input_description_set(
 	int index = strtol(argv[1], NULL, 0);
 	char *description = argv[2];
 
-	if (index > CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
+	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
 		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_CLIENT_MAX_AICS_INST, index);
+			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
 		return -ENOEXEC;
 	}
 
