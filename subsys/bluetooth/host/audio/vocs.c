@@ -279,13 +279,16 @@ int bt_vocs_init(struct bt_vocs *vocs, struct bt_vocs_init *init)
 
 	vocs->location = init->location;
 	vocs->state.offset = init->offset;
-	strncpy(vocs->output_desc, init->output_desc,
-		sizeof(vocs->output_desc));
 
-	if (IS_ENABLED(CONFIG_BT_DEBUG_VOCS) &&
-		strcmp(vocs->output_desc, init->output_desc)) {
-		BT_DBG("Output desc clipped to %s",
-			log_strdup(vocs->output_desc));
+
+	if (init->output_desc) {
+		strncpy(vocs->output_desc, init->output_desc,
+			sizeof(vocs->output_desc));
+		if (IS_ENABLED(CONFIG_BT_DEBUG_VOCS) &&
+		    strcmp(vocs->output_desc, init->output_desc)) {
+			BT_DBG("Output desc clipped to %s",
+			       log_strdup(vocs->output_desc));
+		}
 	}
 
 	/* Iterate over the attributes in AICS (starting from i = 1 to skip the

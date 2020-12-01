@@ -391,11 +391,14 @@ int bt_aics_init(struct bt_aics *aics, struct bt_aics_init *init)
 	aics->type = init->input_type;
 	aics->status = init->input_state ? 1 : 0;
 
-	strncpy(aics->input_desc, init->input_desc, sizeof(aics->input_desc));
-	if (IS_ENABLED(CONFIG_BT_DEBUG_AICS) &&
-	    strcmp(aics->input_desc, init->input_desc)) {
-		BT_DBG("Input desc clipped to %s",
-			log_strdup(aics->input_desc));
+	if (init->input_desc) {
+		strncpy(aics->input_desc, init->input_desc,
+			sizeof(aics->input_desc));
+		if (IS_ENABLED(CONFIG_BT_DEBUG_AICS) &&
+		    strcmp(aics->input_desc, init->input_desc)) {
+			BT_DBG("Input desc clipped to %s",
+			       log_strdup(aics->input_desc));
+		}
 	}
 
 	/* Iterate over the attributes in AICS (starting from i = 1 to skip the
