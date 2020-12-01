@@ -27,6 +27,7 @@
 #define MICS_MUTE_MUTED			0x01
 #define MICS_MUTE_DISABLED		0x02
 
+#if defined(CONFIG_BT_MICS)
 struct mics_inst_t {
 	uint8_t mute;
 	struct bt_mics_cb_t *cb;
@@ -35,7 +36,6 @@ struct mics_inst_t {
 	struct bt_aics *aics_insts[CONFIG_BT_MICS_AICS_INSTANCE_COUNT];
 };
 
-#if defined(CONFIG_BT_MICS)
 static struct mics_inst_t mics_inst;
 
 static void mute_cfg_changed(const struct bt_gatt_attr *attr,
