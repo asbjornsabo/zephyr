@@ -28,6 +28,8 @@
 #define VCS_CP_LEN                      0x02
 #define VCS_CP_ABS_VOL_LEN              0x03
 
+#if defined(CONFIG_BT_VCS)
+
 #define VOLUME_DOWN(current_vol) \
 	((uint8_t)MAX(0, (int)current_vol - vcs_inst.volume_step))
 #define VOLUME_UP(current_vol) \
@@ -47,8 +49,6 @@ struct vcs_inst_t {
 	struct bt_vocs *vocs_insts[CONFIG_BT_VCS_VOCS_INSTANCE_COUNT];
 	struct bt_aics *aics_insts[CONFIG_BT_VCS_AICS_INSTANCE_COUNT];
 };
-
-#if defined(CONFIG_BT_VCS)
 
 static struct vcs_inst_t vcs_inst = {
 	.state.volume = 100,
