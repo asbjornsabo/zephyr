@@ -128,7 +128,7 @@ static int cmd_mics_init(
 	result = bt_mics_init(&mics_init);
 
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 		return result;
 	}
 	shell_print(shell, "MICS initialized", result);
@@ -143,7 +143,7 @@ static inline int cmd_mics_mute_get(
 	int result = bt_mics_mute_get(NULL);
 
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -154,7 +154,7 @@ static inline int cmd_mics_mute(
 	int result = bt_mics_mute(NULL);
 
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -165,7 +165,7 @@ static inline int cmd_mics_unmute(
 	int result = bt_mics_unmute(NULL);
 
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -176,7 +176,7 @@ static inline int cmd_mics_mute_disable(
 	int result = bt_mics_mute_disable();
 
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -195,7 +195,7 @@ static inline int cmd_mics_aics_deactivate(
 
 	result = bt_mics_aics_deactivate(index);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -214,7 +214,7 @@ static inline int cmd_mics_aics_activate(
 
 	result = bt_mics_aics_activate(index);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -233,7 +233,7 @@ static inline int cmd_mics_aics_input_state_get(
 
 	result = bt_mics_aics_state_get(NULL, index);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -252,7 +252,7 @@ static inline int cmd_mics_aics_gain_setting_get(
 
 	result = bt_mics_aics_gain_setting_get(NULL, index);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -271,7 +271,7 @@ static inline int cmd_mics_aics_input_type_get(
 
 	result = bt_mics_aics_type_get(NULL, index);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -290,7 +290,7 @@ static inline int cmd_mics_aics_input_status_get(
 
 	result = bt_mics_aics_status_get(NULL, index);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -309,7 +309,7 @@ static inline int cmd_mics_aics_input_unmute(
 
 	result = bt_mics_aics_unmute(NULL, index);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -328,7 +328,7 @@ static inline int cmd_mics_aics_input_mute(
 
 	result = bt_mics_aics_mute(NULL, index);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -347,7 +347,7 @@ static inline int cmd_mics_aics_manual_input_gain_set(
 
 	result = bt_mics_aics_manual_gain_set(NULL, index);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -366,7 +366,7 @@ static inline int cmd_mics_aics_automatic_input_gain_set(
 
 	result = bt_mics_aics_automatic_gain_set(NULL, index);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -392,7 +392,7 @@ static inline int cmd_mics_aics_gain_set(
 
 	result = bt_mics_aics_gain_set(NULL, index, gain);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -411,7 +411,7 @@ static inline int cmd_mics_aics_input_description_get(
 
 	result = bt_mics_aics_description_get(NULL, index);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 }
@@ -431,7 +431,7 @@ static inline int cmd_mics_aics_input_description_set(
 
 	result = bt_mics_aics_description_set(NULL, index, description);
 	if (result) {
-		shell_print(shell, "Fail: %d", result);
+		shell_error(shell, "Fail: %d", result);
 	}
 	return result;
 
