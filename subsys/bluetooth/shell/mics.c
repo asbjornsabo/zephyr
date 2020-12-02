@@ -102,11 +102,40 @@ static struct bt_mics_cb_t mics_cbs = {
 	}
 };
 
-static inline void mics_shell_init(void)
+static int cmd_mics_init(
+	const struct shell *shell, size_t argc, char **argv)
 {
-	bt_mics_server_cb_register(&mics_cbs);
-}
+	int result;
+	struct bt_mics_init mics_init;
+	char input_desc[CONFIG_BT_MICS_AICS_INSTANCE_COUNT][16];
 
+	memset(&mics_init, 0, sizeof(mics_init));
+
+
+	for (int i = 0; i < ARRAY_SIZE(mics_init.aics_init); i++) {
+		mics_init.aics_init[i].desc_writable = true;
+		snprintf(input_desc[i], sizeof(input_desc[i]),
+			 "Input %d", i + 1);
+		mics_init.aics_init[i].input_desc = input_desc[i];
+		mics_init.aics_init[i].input_type = AICS_INPUT_TYPE_LOCAL;
+		mics_init.aics_init[i].input_state = true;
+		mics_init.aics_init[i].mode = AICS_MODE_MANUAL;
+		mics_init.aics_init[i].units = 1;
+		mics_init.aics_init[i].min_gain = -100;
+		mics_init.aics_init[i].max_gain = 100;
+	}
+
+	result = bt_mics_init(&mics_init);
+
+	if (result) {
+		shell_print(shell, "Fail: %d", result);
+		return result;
+	}
+	shell_print(shell, "MICS initialized", result);
+
+	bt_mics_server_cb_register(&mics_cbs);
+	return result;
+}
 
 static inline int cmd_mics_mute_get(
 	const struct shell *shell, size_t argc, char **argv)
@@ -422,6 +451,9 @@ static inline int cmd_mics(
 }
 
 SHELL_STATIC_SUBCMD_SET_CREATE(mics_cmds,
+	SHELL_CMD_ARG(init, NULL,
+		      "Initialize the service and register callbacks",
+		      cmd_mics_init, 1, 0),
 	SHELL_CMD_ARG(mute_get, NULL,
 		      "Get the mute state",
 		      cmd_mics_mute_get, 1, 0),
