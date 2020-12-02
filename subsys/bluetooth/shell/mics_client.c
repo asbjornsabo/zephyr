@@ -10,6 +10,7 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/services/mics.h>
 #include <shell/shell.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "bt.h"
@@ -169,7 +170,7 @@ static void bt_mics_aics_description_cb(struct bt_conn *conn,
 	}
 }
 
-struct bt_mics_cb_t mics_cbs = {
+static struct bt_mics_cb_t mics_cbs = {
 	.init = bt_mics_discover_cb,
 	.mute_write = bt_mics_mute_write_cb,
 
@@ -585,7 +586,6 @@ SHELL_STATIC_SUBCMD_SET_CREATE(mics_client_cmds,
 		      "<inst_index> <description>",
 		      cmd_mics_client_aics_input_description_set, 3, 0),
 	SHELL_SUBCMD_SET_END
-);
 );
 
 SHELL_CMD_ARG_REGISTER(mics_client, &mics_client_cmds,

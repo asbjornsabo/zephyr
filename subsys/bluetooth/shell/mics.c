@@ -10,6 +10,7 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/services/mics.h>
 #include <shell/shell.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "bt.h"
@@ -88,7 +89,7 @@ static void bt_mics_aics_description_cb(struct bt_conn *conn,
 	}
 }
 
-struct bt_mics_cb_t mics_cbs = {
+static struct bt_mics_cb_t mics_cbs = {
 	.mute = bt_mics_mute_cb,
 
 	/* Audio Input Control Service */

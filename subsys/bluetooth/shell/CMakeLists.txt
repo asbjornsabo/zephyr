@@ -35,11 +35,11 @@ zephyr_library_sources_ifdef(
   )
 zephyr_library_sources_ifdef(
   CONFIG_BT_MICS
-  bass.c
+  mics.c
   )
 zephyr_library_sources_ifdef(
   CONFIG_BT_MICS_CLIENT
-  bass_client.c
+  mics_client.c
   )
 zephyr_library_sources_ifdef(
   CONFIG_BT_BASS
