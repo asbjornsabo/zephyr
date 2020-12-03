@@ -283,7 +283,9 @@ int bt_vocs_init(struct bt_vocs *vocs, struct bt_vocs_init *init)
 
 	if (init->output_desc) {
 		strncpy(vocs->output_desc, init->output_desc,
-			sizeof(vocs->output_desc));
+			sizeof(vocs->output_desc) - 1);
+		/* strncpy may not always null-terminate */
+		vocs->output_desc[sizeof(vocs->output_desc) - 1] = '\0';
 		if (IS_ENABLED(CONFIG_BT_DEBUG_VOCS) &&
 		    strcmp(vocs->output_desc, init->output_desc)) {
 			BT_DBG("Output desc clipped to %s",

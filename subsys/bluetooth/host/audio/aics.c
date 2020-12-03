@@ -393,7 +393,9 @@ int bt_aics_init(struct bt_aics *aics, struct bt_aics_init *init)
 
 	if (init->input_desc) {
 		strncpy(aics->input_desc, init->input_desc,
-			sizeof(aics->input_desc));
+			sizeof(aics->input_desc) - 1);
+		/* strncpy may not always null-terminate */
+		aics->input_desc[sizeof(aics->input_desc) - 1] = '\0';
 		if (IS_ENABLED(CONFIG_BT_DEBUG_AICS) &&
 		    strcmp(aics->input_desc, init->input_desc)) {
 			BT_DBG("Input desc clipped to %s",
