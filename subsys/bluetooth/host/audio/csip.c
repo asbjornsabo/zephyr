@@ -220,15 +220,22 @@ static uint8_t sirk_notify_func(struct bt_conn *conn,
 
 			/* Assuming not connected to other set devices */
 			if (sirk->type == BT_CSIP_SIRK_TYPE_ENCRYPTED) {
-				int err;
+				if (IS_ENABLED(
+					CONFIG_BT_CSIP_ENC_SIRK_SUPPORT)) {
+					int err;
 
-				BT_HEXDUMP_DBG(sirk->value, sizeof(*sirk),
-					       "Encrypted Set SIRK");
-				err = sirk_decrypt(conn, sirk,
-						   &cur_set.set_sirk);
-				if (err) {
-					BT_ERR("Could not decrypt SIRK %d",
-					       err);
+					BT_HEXDUMP_DBG(sirk->value,
+						       sizeof(*sirk),
+						       "Encrypted Set SIRK");
+					err = sirk_decrypt(conn, sirk,
+							   &cur_set.set_sirk);
+					if (err) {
+						BT_ERR("Could not decrypt "
+						       "SIRK %d", err);
+					}
+				} else {
+					BT_DBG("Encrypted SIRK not supported");
+					return BT_GATT_ITER_CONTINUE;
 				}
 			} else {
 				memcpy(&cur_set.set_sirk, data, length);
@@ -960,22 +967,32 @@ static uint8_t csip_discover_sets_read_set_sirk_cb(
 				? "not " : "");
 			/* Assuming not connected to other set devices */
 			if (sirk->type == BT_CSIP_SIRK_TYPE_ENCRYPTED) {
-				int err;
+				if (IS_ENABLED(
+					CONFIG_BT_CSIP_ENC_SIRK_SUPPORT)) {
+					int err;
 
-				BT_HEXDUMP_DBG(sirk->value, sizeof(sirk->value),
-					       "Encrypted Set SIRK");
-				err = sirk_decrypt(conn, sirk, set_sirk);
-				if (err) {
-					BT_ERR("Could not decrypt SIRK %d",
-					       err);
+					BT_HEXDUMP_DBG(sirk->value,
+						       sizeof(sirk->value),
+						       "Encrypted Set SIRK");
+					err = sirk_decrypt(conn, sirk,
+							   set_sirk);
+					if (err) {
+						BT_ERR("Could not decrypt "
+						       "SIRK %d", err);
+					}
+				} else {
+					BT_WARN("Encrypted SIRK not supported");
+					set_sirk = NULL;
 				}
 			} else {
 				memcpy(set_sirk, data, length);
 			}
 
-			BT_HEXDUMP_DBG(set_sirk->value,
-				       sizeof(set_sirk->value),
-				       "Set SIRK");
+			if (set_sirk) {
+				BT_HEXDUMP_DBG(set_sirk->value,
+					       sizeof(set_sirk->value),
+					       "Set SIRK");
+			}
 		} else {
 			BT_DBG("Invalid length");
 		}

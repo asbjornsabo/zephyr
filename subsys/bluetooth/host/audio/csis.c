@@ -272,7 +272,8 @@ static ssize_t read_set_sirk(struct bt_conn *conn,
 
 		if (cb_rsp == BT_CSIS_READ_SIRK_REQ_RSP_ACCEPT) {
 			sirk = &csis_inst.set_sirk;
-		} else if (cb_rsp == BT_CSIS_READ_SIRK_REQ_RSP_ACCEPT_ENC) {
+		} else if (IS_ENABLED(CONFIG_BT_CSIS_ENC_SIRK_SUPPORT) &&
+			   cb_rsp == BT_CSIS_READ_SIRK_REQ_RSP_ACCEPT_ENC) {
 			int err;
 
 			err = sirk_encrypt(conn,
@@ -283,7 +284,6 @@ static ssize_t read_set_sirk(struct bt_conn *conn,
 					err);
 				return BT_GATT_ERR(BT_ATT_ERR_UNLIKELY);
 			}
-
 			sirk = &enc_sirk;
 			BT_HEXDUMP_DBG(enc_sirk.value, sizeof(enc_sirk.value),
 				       "Encrypted Set SIRK");
