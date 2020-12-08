@@ -109,6 +109,10 @@ static int cmd_mics_init(
 	struct bt_mics_init mics_init;
 	char input_desc[CONFIG_BT_MICS_AICS_INSTANCE_COUNT][16];
 
+	if (!ctx_shell) {
+		ctx_shell = shell;
+	}
+
 	memset(&mics_init, 0, sizeof(mics_init));
 
 
