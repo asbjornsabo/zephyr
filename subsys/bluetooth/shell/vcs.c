@@ -165,6 +165,10 @@ static int cmd_vcs_init(
 	char input_desc[CONFIG_BT_VCS_AICS_INSTANCE_COUNT][16];
 	char output_desc[CONFIG_BT_VCS_VOCS_INSTANCE_COUNT][16];
 
+	if (!ctx_shell) {
+		ctx_shell = shell;
+	}
+
 	memset(&vcs_init, 0, sizeof(vcs_init));
 
 	for (int i = 0; i < ARRAY_SIZE(vcs_init.vocs_init); i++) {
