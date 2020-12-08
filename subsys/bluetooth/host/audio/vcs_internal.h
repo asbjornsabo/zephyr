@@ -54,25 +54,25 @@ int bt_vcs_client_vocs_set_output_description(struct bt_conn *conn,
 					      struct bt_vocs *inst,
 					      const char *description);
 int bt_vcs_client_aics_read_input_state(struct bt_conn *conn,
-					uint8_t aics_index);
+					struct bt_aics *inst);
 int bt_vcs_client_aics_read_gain_setting(struct bt_conn *conn,
-					 uint8_t aics_index);
+					 struct bt_aics *inst);
 int bt_vcs_client_aics_read_input_type(struct bt_conn *conn,
-				       uint8_t aics_index);
+				       struct bt_aics *inst);
 int bt_vcs_client_aics_read_input_status(struct bt_conn *conn,
-					 uint8_t aics_index);
-int bt_vcs_client_aics_input_unmute(struct bt_conn *conn, uint8_t aics_index);
-int bt_vcs_client_aics_input_mute(struct bt_conn *conn, uint8_t aics_index);
+					 struct bt_aics *inst);
+int bt_vcs_client_aics_input_unmute(struct bt_conn *conn, struct bt_aics *inst);
+int bt_vcs_client_aics_input_mute(struct bt_conn *conn, struct bt_aics *inst);
 int bt_vcs_client_aics_set_manual_input_gain(struct bt_conn *conn,
-					     uint8_t aics_index);
+					     struct bt_aics *inst);
 int bt_vcs_client_aics_set_automatic_input_gain(struct bt_conn *conn,
-						uint8_t aics_index);
-int bt_vcs_client_aics_set_gain(struct bt_conn *conn, uint8_t aics_index,
+						struct bt_aics *inst);
+int bt_vcs_client_aics_set_gain(struct bt_conn *conn, struct bt_aics *inst,
 				int8_t gain);
 int bt_vcs_client_aics_read_input_description(struct bt_conn *conn,
-					      uint8_t aics_index);
+					      struct bt_aics *inst);
 int bt_vcs_client_aics_set_input_description(struct bt_conn *conn,
-					     uint8_t aics_index,
+					     struct bt_aics *inst,
 					     const char *description);
 
 bool bt_vcs_client_valid_inst(struct bt_vocs *vocs);

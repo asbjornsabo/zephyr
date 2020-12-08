@@ -176,22 +176,30 @@ int bt_mics_init(struct bt_mics_init *init)
 	return err;
 }
 
-int bt_mics_aics_deactivate(uint8_t aics_index)
+int bt_mics_aics_deactivate(struct bt_aics *inst)
 {
-	if (aics_index >= CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
+	if (!inst) {
 		return -EINVAL;
 	}
 
-	return bt_aics_deactivate(AICS_MICS_INDEX(aics_index));
+	if (CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0) {
+		return bt_aics_deactivate(inst);
+	}
+
+	return -EOPNOTSUPP;
 }
 
-int bt_mics_aics_activate(uint8_t aics_index)
+int bt_mics_aics_activate(struct bt_aics *inst)
 {
-	if (aics_index >= CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
+	if (!inst) {
 		return -EINVAL;
 	}
 
-	return bt_aics_activate(AICS_MICS_INDEX(aics_index));
+	if (CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0) {
+		return bt_aics_activate(inst);
+	}
+
+	return -EOPNOTSUPP;
 }
 
 
@@ -211,10 +219,12 @@ void bt_mics_server_cb_register(struct bt_mics_cb_t *cb)
 	if (CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0) {
 		for (int i = 0; i < CONFIG_BT_MICS_AICS_INSTANCE_COUNT; i++) {
 			if (cb) {
-				err = bt_aics_cb_register(AICS_MICS_INDEX(i),
-							&mics_inst.cb->aics_cb);
+				err = bt_aics_cb_register(
+					mics_inst.aics_insts[i],
+					&mics_inst.cb->aics_cb);
 			} else {
-				err = bt_aics_cb_register(i, NULL);
+				err = bt_aics_cb_register(
+					mics_inst.aics_insts[i], NULL);
 			}
 
 			if (err) {
@@ -307,178 +317,181 @@ int bt_mics_mute_get(struct bt_conn *conn)
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_aics_state_get(struct bt_conn *conn, uint8_t aics_index)
+int bt_mics_aics_state_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_mics_client_aics_input_state_get(conn, aics_index);
+		return bt_mics_client_aics_input_state_get(conn, inst);
 	}
 #endif /* CONFIG_BT_MICS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_input_state_get(AICS_MICS_INDEX(aics_index));
+		return bt_aics_input_state_get(
+			inst);
 	}
 #endif /* CONFIG_BT_MICS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_aics_gain_setting_get(struct bt_conn *conn, uint8_t aics_index)
+int bt_mics_aics_gain_setting_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_mics_client_aics_gain_setting_get(conn, aics_index);
+		return bt_mics_client_aics_gain_setting_get(conn, inst);
 	}
 #endif /* CONFIG_BT_MICS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_gain_setting_get(AICS_MICS_INDEX(aics_index));
+		return bt_aics_gain_setting_get(
+			inst);
 	}
 #endif /* CONFIG_BT_MICS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_aics_type_get(struct bt_conn *conn, uint8_t aics_index)
+int bt_mics_aics_type_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_mics_client_aics_input_type_get(conn, aics_index);
+		return bt_mics_client_aics_input_type_get(conn, inst);
 	}
 #endif /* CONFIG_BT_MICS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_input_type_get(AICS_MICS_INDEX(aics_index));
+		return bt_aics_input_type_get(inst);
 	}
 #endif /* CONFIG_BT_MICS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_aics_status_get(struct bt_conn *conn, uint8_t aics_index)
+int bt_mics_aics_status_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_mics_client_aics_input_status_get(conn, aics_index);
+		return bt_mics_client_aics_input_status_get(conn, inst);
 	}
 #endif /* CONFIG_BT_MICS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_input_status_get(AICS_MICS_INDEX(aics_index));
+		return bt_aics_input_status_get(
+			inst);
 	}
 #endif /* CONFIG_BT_MICS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
-int bt_mics_aics_unmute(struct bt_conn *conn, uint8_t aics_index)
+int bt_mics_aics_unmute(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_mics_client_aics_input_unmute(conn, aics_index);
+		return bt_mics_client_aics_input_unmute(conn, inst);
 	}
 #endif /* CONFIG_BT_MICS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_input_unmute(AICS_MICS_INDEX(aics_index));
+		return bt_aics_input_unmute(inst);
 	}
 #endif /* CONFIG_BT_MICS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_aics_mute(struct bt_conn *conn, uint8_t aics_index)
+int bt_mics_aics_mute(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_mics_client_aics_input_mute(conn, aics_index);
+		return bt_mics_client_aics_input_mute(conn, inst);
 	}
 #endif /* CONFIG_BT_MICS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_input_mute(AICS_MICS_INDEX(aics_index));
+		return bt_aics_input_mute(inst);
 	}
 #endif /* CONFIG_BT_MICS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_aics_manual_gain_set(struct bt_conn *conn, uint8_t aics_index)
+int bt_mics_aics_manual_gain_set(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
 		return bt_mics_client_aics_manual_input_gain_set(conn,
-								 aics_index);
+								 inst);
 	}
 #endif /* CONFIG_BT_MICS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
 		return bt_aics_manual_input_gain_set(
-			AICS_MICS_INDEX(aics_index));
+			inst);
 	}
 #endif /* CONFIG_BT_MICS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_aics_automatic_gain_set(struct bt_conn *conn, uint8_t aics_index)
+int bt_mics_aics_automatic_gain_set(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
 		return bt_mics_client_aics_automatic_input_gain_set(conn,
-								    aics_index);
+								    inst);
 	}
 #endif /* CONFIG_BT_MICS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
 		return bt_aics_automatic_input_gain_set(
-			AICS_MICS_INDEX(aics_index));
+			inst);
 	}
 #endif /* CONFIG_BT_MICS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_aics_gain_set(struct bt_conn *conn, uint8_t aics_index, int8_t gain)
+int bt_mics_aics_gain_set(struct bt_conn *conn, struct bt_aics *inst, int8_t gain)
 {
 #if CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_mics_client_aics_gain_set(conn, aics_index, gain);
+		return bt_mics_client_aics_gain_set(conn, inst, gain);
 	}
 #endif /* CONFIG_BT_MICS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_gain_set(AICS_MICS_INDEX(aics_index), gain);
+		return bt_aics_gain_set(inst, gain);
 	}
 #endif /* CONFIG_BT_MICS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_aics_description_get(struct bt_conn *conn, uint8_t aics_index)
+int bt_mics_aics_description_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
 		return bt_mics_client_aics_input_description_get(conn,
-								 aics_index);
+								 inst);
 	}
 #endif /* CONFIG_BT_MICS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
 		return bt_aics_input_description_get(
-			AICS_MICS_INDEX(aics_index));
+			inst);
 	}
 #endif /* CONFIG_BT_MICS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_aics_description_set(struct bt_conn *conn, uint8_t aics_index,
+int bt_mics_aics_description_set(struct bt_conn *conn, struct bt_aics *inst,
 				 const char *description)
 {
 #if CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
 		return bt_mics_client_aics_input_description_set(conn,
-								 aics_index,
+								 inst,
 								 description);
 	}
 #endif /* CONFIG_BT_MICS_CLIENT_MAX_AICS_INST */
@@ -486,7 +499,7 @@ int bt_mics_aics_description_set(struct bt_conn *conn, uint8_t aics_index,
 #if CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
 		return bt_aics_input_description_set(
-			AICS_MICS_INDEX(aics_index), description);
+			inst, description);
 	}
 #endif /* CONFIG_BT_MICS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;

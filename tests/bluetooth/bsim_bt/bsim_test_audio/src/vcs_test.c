@@ -120,7 +120,7 @@ static void vocs_description_cb(struct bt_conn *conn, struct bt_vocs *inst,
 	}
 }
 
-static void aics_state_cb(struct bt_conn *conn, uint8_t aics_index, int err,
+static void aics_state_cb(struct bt_conn *conn, struct bt_aics *inst, int err,
 			  int8_t gain, uint8_t mute, uint8_t mode)
 {
 	if (err) {
@@ -137,7 +137,7 @@ static void aics_state_cb(struct bt_conn *conn, uint8_t aics_index, int err,
 	}
 }
 
-static void aics_gain_setting_cb(struct bt_conn *conn, uint8_t aics_index,
+static void aics_gain_setting_cb(struct bt_conn *conn, struct bt_aics *inst,
 				 int err, uint8_t units, int8_t minimum,
 				 int8_t maximum)
 {
@@ -155,7 +155,7 @@ static void aics_gain_setting_cb(struct bt_conn *conn, uint8_t aics_index,
 	}
 }
 
-static void aics_input_type_cb(struct bt_conn *conn, uint8_t aics_index,
+static void aics_input_type_cb(struct bt_conn *conn, struct bt_aics *inst,
 			       int err, uint8_t input_type)
 {
 	if (err) {
@@ -170,7 +170,7 @@ static void aics_input_type_cb(struct bt_conn *conn, uint8_t aics_index,
 	}
 }
 
-static void aics_status_cb(struct bt_conn *conn, uint8_t aics_index, int err,
+static void aics_status_cb(struct bt_conn *conn, struct bt_aics *inst, int err,
 			   bool active)
 {
 	if (err) {
@@ -185,7 +185,7 @@ static void aics_status_cb(struct bt_conn *conn, uint8_t aics_index, int err,
 	}
 }
 
-static void aics_description_cb(struct bt_conn *conn, uint8_t aics_index,
+static void aics_description_cb(struct bt_conn *conn, struct bt_aics *inst,
 				int err, char *description)
 {
 	if (err) {
@@ -220,7 +220,6 @@ static struct bt_vcs_cb_t vcs_cb = {
 static int test_aics_standalone(void)
 {
 	int err;
-	uint8_t aics_index = 0;
 	int8_t expected_gain;
 	uint8_t expected_input_mute;
 	uint8_t expected_mode;
@@ -230,7 +229,7 @@ static int test_aics_standalone(void)
 
 	printk("Deactivating AICS\n");
 	expected_aics_active = false;
-	err = bt_vcs_aics_deactivate(aics_index);
+	err = bt_vcs_aics_deactivate(vcs.aics[0]);
 	if (err) {
 		FAIL("Could not deactivate AICS (err %d)\n", err);
 		return err;
@@ -240,7 +239,7 @@ static int test_aics_standalone(void)
 
 	printk("Activating AICS\n");
 	expected_aics_active = true;
-	err = bt_vcs_aics_activate(aics_index);
+	err = bt_vcs_aics_activate(vcs.aics[0]);
 	if (err) {
 		FAIL("Could not activate AICS (err %d)\n", err);
 		return err;
@@ -250,7 +249,7 @@ static int test_aics_standalone(void)
 
 	printk("Getting AICS state\n");
 	g_cb = false;
-	err = bt_vcs_aics_state_get(NULL, aics_index);
+	err = bt_vcs_aics_state_get(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not get AICS state (err %d)\n", err);
 		return err;
@@ -260,7 +259,7 @@ static int test_aics_standalone(void)
 
 	printk("Getting AICS gain setting\n");
 	g_cb = false;
-	err = bt_vcs_aics_gain_setting_get(NULL, aics_index);
+	err = bt_vcs_aics_gain_setting_get(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not get AICS gain setting (err %d)\n", err);
 		return err;
@@ -270,7 +269,7 @@ static int test_aics_standalone(void)
 
 	printk("Getting AICS input type\n");
 	expected_input_type = AICS_INPUT_TYPE_DIGITAL;
-	err = bt_vcs_aics_type_get(NULL, aics_index);
+	err = bt_vcs_aics_type_get(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not get AICS input type (err %d)\n", err);
 		return err;
@@ -281,7 +280,7 @@ static int test_aics_standalone(void)
 
 	printk("Getting AICS status\n");
 	g_cb = false;
-	err = bt_vcs_aics_status_get(NULL, aics_index);
+	err = bt_vcs_aics_status_get(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not get AICS status (err %d)\n", err);
 		return err;
@@ -291,7 +290,7 @@ static int test_aics_standalone(void)
 
 	printk("Getting AICS description\n");
 	g_cb = false;
-	err = bt_vcs_aics_description_get(NULL, aics_index);
+	err = bt_vcs_aics_description_get(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not get AICS description (err %d)\n", err);
 		return err;
@@ -301,7 +300,7 @@ static int test_aics_standalone(void)
 
 	printk("Setting AICS mute\n");
 	expected_input_mute = AICS_STATE_MUTED;
-	err = bt_vcs_aics_mute(NULL, aics_index);
+	err = bt_vcs_aics_mute(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not set AICS mute (err %d)\n", err);
 		return err;
@@ -311,7 +310,7 @@ static int test_aics_standalone(void)
 
 	printk("Setting AICS unmute\n");
 	expected_input_mute = AICS_STATE_UNMUTED;
-	err = bt_vcs_aics_unmute(NULL, aics_index);
+	err = bt_vcs_aics_unmute(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not set AICS unmute (err %d)\n", err);
 		return err;
@@ -321,7 +320,7 @@ static int test_aics_standalone(void)
 
 	printk("Setting AICS auto mode\n");
 	expected_mode = AICS_MODE_AUTO;
-	err = bt_vcs_aics_automatic_gain_set(NULL, aics_index);
+	err = bt_vcs_aics_automatic_gain_set(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not set AICS auto mode (err %d)\n", err);
 		return err;
@@ -331,7 +330,7 @@ static int test_aics_standalone(void)
 
 	printk("Setting AICS manual mode\n");
 	expected_mode = AICS_MODE_MANUAL;
-	err = bt_vcs_aics_manual_gain_set(NULL, aics_index);
+	err = bt_vcs_aics_manual_gain_set(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not set AICS manual mode (err %d)\n", err);
 		return err;
@@ -341,7 +340,7 @@ static int test_aics_standalone(void)
 
 	printk("Setting AICS gain\n");
 	expected_gain = g_aics_gain_max - 1;
-	err = bt_vcs_aics_gain_set(NULL, aics_index, expected_gain);
+	err = bt_vcs_aics_gain_set(NULL, vcs.aics[0], expected_gain);
 	if (err) {
 		FAIL("Could not set AICS gain (err %d)\n", err);
 		return err;
@@ -353,7 +352,7 @@ static int test_aics_standalone(void)
 	strncpy(expected_aics_desc, "New Input Description",
 		sizeof(expected_aics_desc));
 	g_cb = false;
-	err = bt_vcs_aics_description_set(NULL, aics_index, expected_aics_desc);
+	err = bt_vcs_aics_description_set(NULL, vcs.aics[0], expected_aics_desc);
 	if (err) {
 		FAIL("Could not set AICS Description (err %d)\n", err);
 		return err;

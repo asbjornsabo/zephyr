@@ -125,11 +125,11 @@ struct bt_aics *bt_aics_free_instance_get(void);
 /** @brief Callback function for writes.
  *
  *  @param conn        Connection to peer device, or NULL if local server write.
- *  @param index       The service index (as there may be multiple).
+ *  @param inst        The service pointer (as there may be multiple).
  *  @param err         Error value. 0 on success, GATT error on fail.
  */
 typedef void (*bt_aics_write_cb_t)(
-	struct bt_conn *conn, uint8_t index, int err);
+	struct bt_conn *conn, struct bt_aics *inst, int err);
 
 /** @brief Callback function for the input state.
  *
@@ -137,7 +137,7 @@ typedef void (*bt_aics_write_cb_t)(
  *  or if the value is changed by either the server or client.
  *
  *  @param conn         Connection to peer device, or NULL if local server read.
- *  @param aics_index   The service index (as there may be multiple).
+ *  @param inst         The service pointer (as there may be multiple).
  *  @param err          Error value. 0 on success, GATT error or ERRNO on fail.
  *                      For notifications, this will always be 0.
  *  @param gain         The gain setting value.
@@ -145,7 +145,7 @@ typedef void (*bt_aics_write_cb_t)(
  *  @param mode         The mode value.
  */
 typedef void (*bt_aics_state_cb_t)(
-	struct bt_conn *conn, uint8_t aics_index, int err, int8_t gain,
+	struct bt_conn *conn, struct bt_aics *inst, int err, int8_t gain,
 	uint8_t mute, uint8_t mode);
 
 /** @brief Callback function for the gain settings.
@@ -154,7 +154,7 @@ typedef void (*bt_aics_state_cb_t)(
  *  or if the value is changed by either the server or client.
  *
  *  @param conn         Connection to peer device, or NULL if local server read.
- *  @param aics_index   The service index (as there may be multiple).
+ *  @param inst         The service pointer (as there may be multiple).
  *  @param err          Error value. 0 on success, GATT error or ERRNO on fail.
  *                      For notifications, this will always be 0.
  *  @param units        The value that reflect the size of a single increment
@@ -164,7 +164,7 @@ typedef void (*bt_aics_state_cb_t)(
  *  @param maximum      The maximum gain allowed for the gain setting.
  */
 typedef void (*bt_aics_gain_setting_cb_t)(
-	struct bt_conn *conn, uint8_t aics_index, int err, uint8_t units,
+	struct bt_conn *conn, struct bt_aics *inst, int err, uint8_t units,
 	int8_t minimum, int8_t maximum);
 
 /** @brief Callback function for the input type.
@@ -173,13 +173,14 @@ typedef void (*bt_aics_gain_setting_cb_t)(
  *  or if the value is changed by either the server or client.
  *
  *  @param conn         Connection to peer device, or NULL if local server read.
- *  @param aics_index   The service index (as there may be multiple).
+ *  @param inst         The service pointer (as there may be multiple).
  *  @param err          Error value. 0 on success, GATT error or ERRNO on fail.
  *                      For notifications, this will always be 0.
  *  @param input_type   The input type.
  */
 typedef void (*bt_aics_input_type_cb_t)(
-	struct bt_conn *conn, uint8_t aics_index, int err, uint8_t input_type);
+	struct bt_conn *conn, struct bt_aics *inst, int err,
+	uint8_t input_type);
 
 
 /** @brief Callback function for the input status.
@@ -188,13 +189,13 @@ typedef void (*bt_aics_input_type_cb_t)(
  *  or if the value is changed by either the server or client.
  *
  *  @param conn         Connection to peer device, or NULL if local server read.
- *  @param aics_index   The service index (as there may be multiple).
+ *  @param inst         The service pointer (as there may be multiple).
  *  @param err          Error value. 0 on success, GATT error or ERRNO on fail.
  *                      For notifications, this will always be 0.
  *  @param active       Whether the instance is active or inactive.
  */
 typedef void (*bt_aics_status_cb_t)(
-	struct bt_conn *conn, uint8_t aics_index, int err, bool active);
+	struct bt_conn *conn, struct bt_aics *inst, int err, bool active);
 
 /** @brief Callback function for the description.
  *
@@ -202,13 +203,13 @@ typedef void (*bt_aics_status_cb_t)(
  *  or if the value is changed by either the server or client.
  *
  *  @param conn         Connection to peer device, or NULL if local server read.
- *  @param aics_index   The service index (as there may be multiple).
+ *  @param inst         The service pointer (as there may be multiple).
  *  @param err          Error value. 0 on success, GATT error or ERRNO on fail.
  *                      For notifications, this will always be 0.
  *  @param description  The description as a string (may have been clipped).
  */
 typedef void (*bt_aics_description_cb_t)(
-	struct bt_conn *conn, uint8_t aics_index, int err, char *description);
+	struct bt_conn *conn, struct bt_aics *inst, int err, char *description);
 
 struct bt_aics_cb {
 	bt_aics_state_cb_t                 state;

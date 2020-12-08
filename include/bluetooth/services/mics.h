@@ -172,125 +172,114 @@ int bt_mics_mute_get(struct bt_conn *conn);
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to read local server value.
- *  @param aics_index    The index of the Audio Input Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_mics_aics_state_get(struct bt_conn *conn, uint8_t aics_index);
+int bt_mics_aics_state_get(struct bt_conn *conn, struct bt_aics *inst);
 
 /** @brief Read the Audio Input Control Service gain settings.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to read local server value.
- *  @param aics_index    The index of the Audio Input Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_mics_aics_gain_setting_get(struct bt_conn *conn, uint8_t aics_index);
+int bt_mics_aics_gain_setting_get(struct bt_conn *conn, struct bt_aics *inst);
 
 /** @brief Read the Audio Input Control Service input type.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to read local server value.
- *  @param aics_index    The index of the Audio Input Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_mics_aics_type_get(struct bt_conn *conn, uint8_t aics_index);
+int bt_mics_aics_type_get(struct bt_conn *conn, struct bt_aics *inst);
 
 /** @brief Read the Audio Input Control Service input status.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to read local server value.
- *  @param aics_index    The index of the Audio Input Control Service
- *                        (as there may be multiple).
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_mics_aics_status_get(struct bt_conn *conn, uint8_t aics_index);
+int bt_mics_aics_status_get(struct bt_conn *conn, struct bt_aics *inst);
 
 /** @brief Unmute the Audio Input Control Service input.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to read local server value.
- *  @param aics_index    The index of the Audio Input Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_mics_aics_unmute(struct bt_conn *conn, uint8_t aics_index);
+int bt_mics_aics_unmute(struct bt_conn *conn, struct bt_aics *inst);
 
 /** @brief Mute the Audio Input Control Service input.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to read local server value.
- *  @param aics_index    The index of the Audio Input Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_mics_aics_mute(struct bt_conn *conn, uint8_t aics_index);
+int bt_mics_aics_mute(struct bt_conn *conn, struct bt_aics *inst);
 
 /** @brief Set input gain to manual.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to set local server value.
- *  @param aics_index    The index of the Audio Input Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_mics_aics_manual_gain_set(struct bt_conn *conn, uint8_t aics_index);
+int bt_mics_aics_manual_gain_set(struct bt_conn *conn, struct bt_aics *inst);
 
 /** @brief Set Audio Input Control Service input gain to automatic.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to set local server value.
- *  @param aics_index    The index of the Audio Input Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_mics_aics_automatic_gain_set(struct bt_conn *conn, uint8_t aics_index);
+int bt_mics_aics_automatic_gain_set(struct bt_conn *conn, struct bt_aics *inst);
 
 /** @brief Set Audio Input Control Service input gain.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to set local server value.
- *  @param aics_index    The index of the Audio Input Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *  @param gain          The gain in dB to set (-128 to 127).
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_mics_aics_gain_set(struct bt_conn *conn, uint8_t aics_index,
+int bt_mics_aics_gain_set(struct bt_conn *conn, struct bt_aics *inst,
 			  int8_t gain);
 
 /** @brief Read the Audio Input Control Service description.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to read local server value.
- *  @param aics_index    The index of the Audio Input Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_mics_aics_description_get(struct bt_conn *conn, uint8_t aics_index);
+int bt_mics_aics_description_get(struct bt_conn *conn, struct bt_aics *inst);
 
 /** @brief Set the Audio Input Control Service description.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to set local server value.
- *  @param aics_index    The index of the Audio Input Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *  @param description	 The description to set.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_mics_aics_description_set(struct bt_conn *conn, uint8_t aics_index,
+int bt_mics_aics_description_set(struct bt_conn *conn, struct bt_aics *inst,
 				 const char *description);
 
 /** @brief Deactivates a Audio Input Control Service instance.
@@ -298,11 +287,11 @@ int bt_mics_aics_description_set(struct bt_conn *conn, uint8_t aics_index,
  *  Audio Input Control Services are activated by default, but this will allow
  *  the server deactivate a Audio Input Control Service.
  *
- *  @param aics_index    The index of the Audio Input Control Service instance.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *
  *  @return 0 if success, ERRNO on failure.
  */
-int bt_mics_aics_deactivate(uint8_t aics_index);
+int bt_mics_aics_deactivate(struct bt_aics *inst);
 
 /** @brief Activates a Audio Input Control Service instance.
  *
@@ -310,11 +299,11 @@ int bt_mics_aics_deactivate(uint8_t aics_index);
  *  the server reactivate a Audio Input Control Service instance after it has
  *  been deactivated with @ref bt_mics_aics_deactivate.
  *
- *  @param aics_index    The index of the Audio Input Control Service instance.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
  *
  *  @return 0 if success, ERRNO on failure.
  */
-int bt_mics_aics_activate(uint8_t aics_index);
+int bt_mics_aics_activate(struct bt_aics *inst);
 
 /** @brief Registers the callbacks used by MICS client.
  *

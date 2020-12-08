@@ -366,22 +366,22 @@ int bt_vcs_init(struct bt_vcs_init *init)
 	return err;
 }
 
-int bt_vcs_aics_deactivate(uint8_t aics_index)
+int bt_vcs_aics_deactivate(struct bt_aics *inst)
 {
-	if (aics_index >= CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
+	if (!inst) {
 		return -EINVAL;
 	}
 
-	return bt_aics_deactivate(AICS_VCS_INDEX(aics_index));
+	return bt_aics_deactivate(inst);
 }
 
-int bt_vcs_aics_activate(uint8_t aics_index)
+int bt_vcs_aics_activate(struct bt_aics *inst)
 {
-	if (aics_index >= CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
+	if (!inst) {
 		return -EINVAL;
 	}
 
-	return bt_aics_activate(AICS_VCS_INDEX(aics_index));
+	return bt_aics_activate(inst);
 }
 
 void bt_vcs_server_cb_register(struct bt_vcs_cb_t *cb)
@@ -393,10 +393,12 @@ void bt_vcs_server_cb_register(struct bt_vcs_cb_t *cb)
 	if (IS_ENABLED(CONFIG_BT_VCS_AICS)) {
 		for (int i = 0; i < CONFIG_BT_VCS_AICS_INSTANCE_COUNT; i++) {
 			if (cb) {
-				err = bt_aics_cb_register(AICS_VCS_INDEX(i),
-							&vcs_inst.cb->aics_cb);
+				err = bt_aics_cb_register(
+					vcs_inst.aics_insts[i],
+					&vcs_inst.cb->aics_cb);
 			} else {
-				err = bt_aics_cb_register(i, NULL);
+				err = bt_aics_cb_register(
+					vcs_inst.aics_insts[i], NULL);
 			}
 
 			if (err) {
@@ -766,185 +768,187 @@ int bt_vcs_vocs_description_set(struct bt_conn *conn, struct bt_vocs *inst,
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_aics_state_get(struct bt_conn *conn, uint8_t aics_index)
+int bt_vcs_aics_state_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_vcs_client_aics_read_input_state(conn, aics_index);
+		return bt_vcs_client_aics_read_input_state(conn, inst);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_input_state_get(AICS_VCS_INDEX(aics_index));
+		return bt_aics_input_state_get(inst);
 	}
 #endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_aics_gain_setting_get(struct bt_conn *conn, uint8_t aics_index)
+int bt_vcs_aics_gain_setting_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_vcs_client_aics_read_gain_setting(conn, aics_index);
+		return bt_vcs_client_aics_read_gain_setting(conn, inst);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_gain_setting_get(AICS_VCS_INDEX(aics_index));
+		return bt_aics_gain_setting_get(
+			inst);
 	}
 #endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_aics_type_get(struct bt_conn *conn, uint8_t aics_index)
+int bt_vcs_aics_type_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_vcs_client_aics_read_input_type(conn, aics_index);
+		return bt_vcs_client_aics_read_input_type(conn, inst);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	return bt_aics_input_type_get(AICS_VCS_INDEX(aics_index));
+	return bt_aics_input_type_get(inst);
 #endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_aics_status_get(struct bt_conn *conn, uint8_t aics_index)
+int bt_vcs_aics_status_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_vcs_client_aics_read_input_status(conn, aics_index);
-	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
-
-#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	if (!conn) {
-		return bt_aics_input_status_get(AICS_VCS_INDEX(aics_index));
-	}
-#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
-	return -EOPNOTSUPP;
-}
-
-int bt_vcs_aics_unmute(struct bt_conn *conn, uint8_t aics_index)
-{
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-	if (conn) {
-		return bt_vcs_client_aics_input_unmute(conn, aics_index);
+		return bt_vcs_client_aics_read_input_status(conn, inst);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_input_unmute(AICS_VCS_INDEX(aics_index));
+		return bt_aics_input_status_get(
+			inst);
 	}
 #endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_aics_mute(struct bt_conn *conn, uint8_t aics_index)
+int bt_vcs_aics_unmute(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_vcs_client_aics_input_mute(conn, aics_index);
+		return bt_vcs_client_aics_input_unmute(conn, inst);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_input_mute(AICS_VCS_INDEX(aics_index));
+		return bt_aics_input_unmute(inst);
 	}
 #endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_aics_manual_gain_set(struct bt_conn *conn, uint8_t aics_index)
+int bt_vcs_aics_mute(struct bt_conn *conn, struct bt_aics *inst)
+{
+#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
+	if (conn) {
+		return bt_vcs_client_aics_input_mute(conn, inst);
+	}
+#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
+
+#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
+	if (!conn) {
+		return bt_aics_input_mute(inst);
+	}
+#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
+	return -EOPNOTSUPP;
+}
+
+int bt_vcs_aics_manual_gain_set(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
 		return bt_vcs_client_aics_set_manual_input_gain(conn,
-								aics_index);
+								inst);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
 		return bt_aics_manual_input_gain_set(
-			AICS_VCS_INDEX(aics_index));
+			inst);
 	}
 #endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_aics_automatic_gain_set(struct bt_conn *conn, uint8_t aics_index)
+int bt_vcs_aics_automatic_gain_set(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
 		return bt_vcs_client_aics_set_automatic_input_gain(conn,
-								   aics_index);
+								   inst);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
 		return bt_aics_automatic_input_gain_set(
-			AICS_VCS_INDEX(aics_index));
+			inst);
 	}
 #endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_aics_gain_set(struct bt_conn *conn, uint8_t aics_index, int8_t gain)
+int bt_vcs_aics_gain_set(struct bt_conn *conn, struct bt_aics *inst, int8_t gain)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
-		return bt_vcs_client_aics_set_gain(conn, aics_index, gain);
+		return bt_vcs_client_aics_set_gain(conn, inst, gain);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_gain_set(AICS_VCS_INDEX(aics_index), gain);
+		return bt_aics_gain_set(inst, gain);
 	}
 #endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_aics_description_get(struct bt_conn *conn, uint8_t aics_index)
+int bt_vcs_aics_description_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
 		return bt_vcs_client_aics_read_input_description(conn,
-								 aics_index);
+								 inst);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
 #if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
 		return bt_aics_input_description_get(
-			AICS_VCS_INDEX(aics_index));
+			inst);
 	}
 #endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_aics_description_set(struct bt_conn *conn, uint8_t aics_index,
+int bt_vcs_aics_description_set(struct bt_conn *conn, struct bt_aics *inst,
 				const char *description)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 	if (conn) {
 		return bt_vcs_client_aics_set_input_description(conn,
-								aics_index,
+								inst,
 								description);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT */
 
 #if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_aics_input_description_set(AICS_VCS_INDEX(aics_index),
-						     description);
+		return bt_aics_input_description_set(
+			inst, description);
 	}
 #endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;

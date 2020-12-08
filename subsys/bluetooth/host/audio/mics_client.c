@@ -37,7 +37,7 @@ struct mics_instance_t {
 	struct bt_gatt_read_params read_params;
 
 	uint8_t aics_inst_cnt;
-	struct aics_instance_t aics[CONFIG_BT_MICS_CLIENT_MAX_AICS_INST];
+	struct aics_client aics[CONFIG_BT_MICS_CLIENT_MAX_AICS_INST];
 };
 
 /* Callback functions */
@@ -45,7 +45,7 @@ static struct bt_mics_cb_t *mics_client_cb;
 
 static struct bt_gatt_discover_params discover_params;
 static struct mics_instance_t *cur_mics_inst;
-static struct aics_instance_t *cur_aics_inst;
+static struct aics_client *cur_aics_inst;
 
 static struct mics_instance_t mics_inst;
 static struct bt_uuid_16 uuid = BT_UUID_INIT_16(0);
@@ -122,16 +122,14 @@ static uint8_t aics_discover_func(struct bt_conn *conn,
 {
 	int err;
 	struct bt_gatt_chrc *chrc;
-	uint8_t next_idx;
+	static uint8_t next_idx;
 	uint8_t aics_cnt;
 	struct bt_gatt_subscribe_params *sub_params = NULL;
 
 	if (!attr) {
-		bt_aics_client_register(
-			cur_aics_inst,
-			AICS_CLI_MICS_CLIENT_INDEX(cur_aics_inst->index));
+		bt_aics_client_register((struct bt_aics *)cur_aics_inst);
 		aics_cnt = mics_inst.aics_inst_cnt;
-		next_idx = cur_aics_inst->index + 1;
+		next_idx++;
 		BT_DBG("Setup complete for AICS %u / %u",
 		       next_idx, mics_inst.aics_inst_cnt);
 		(void)memset(params, 0, sizeof(*params));
@@ -270,7 +268,6 @@ static uint8_t mics_discover_include_func(
 				include->start_handle;
 			mics_inst.aics[inst_idx].end_handle =
 				include->end_handle;
-			mics_inst.aics[inst_idx].index = inst_idx;
 			mics_inst.aics_inst_cnt++;
 		}
 	}
@@ -459,7 +456,7 @@ int bt_mics_discover(struct bt_conn *conn)
 		if (mics_client_cb) {
 			mics_inst.aics[i].cb = &mics_client_cb->aics_cb;
 		}
-		bt_aics_client_unregister(AICS_CLI_MICS_CLIENT_INDEX(i));
+		bt_aics_client_unregister((struct bt_aics *)&mics_inst.aics[i]);
 	}
 	discover_params.func = primary_discover_func;
 	discover_params.uuid = &uuid.uuid;
@@ -537,11 +534,10 @@ int bt_mics_client_unmute(struct bt_conn *conn)
 }
 
 int bt_mics_client_aics_input_state_get(struct bt_conn *conn,
-					uint8_t aics_index)
+					struct bt_aics *inst)
 {
 	if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_state_get(
-			conn, AICS_CLI_MICS_CLIENT_INDEX(aics_index));
+		return bt_aics_client_input_state_get(conn, inst);
 	}
 
 	BT_DBG("Not supported");
@@ -549,22 +545,20 @@ int bt_mics_client_aics_input_state_get(struct bt_conn *conn,
 }
 
 int bt_mics_client_aics_gain_setting_get(struct bt_conn *conn,
-					 uint8_t aics_index)
+					 struct bt_aics *inst)
 {
 	if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_gain_setting_get(
-			conn, AICS_CLI_MICS_CLIENT_INDEX(aics_index));
+		return bt_aics_client_gain_setting_get(conn, inst);
 	}
 
 	BT_DBG("Not supported");
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_client_aics_input_type_get(struct bt_conn *conn, uint8_t aics_index)
+int bt_mics_client_aics_input_type_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_type_get(
-			conn, AICS_CLI_MICS_CLIENT_INDEX(aics_index));
+		return bt_aics_client_input_type_get(conn, inst);
 	}
 
 	BT_DBG("Not supported");
@@ -572,34 +566,31 @@ int bt_mics_client_aics_input_type_get(struct bt_conn *conn, uint8_t aics_index)
 }
 
 int bt_mics_client_aics_input_status_get(struct bt_conn *conn,
-					 uint8_t aics_index)
+					 struct bt_aics *inst)
 {
 	if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_status_get(
-			conn, AICS_CLI_MICS_CLIENT_INDEX(aics_index));
+		return bt_aics_client_input_status_get(conn, inst);
 	}
 
 	BT_DBG("Not supported");
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_client_aics_input_unmute(struct bt_conn *conn, uint8_t aics_index)
+int bt_mics_client_aics_input_unmute(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_unmute(
-			conn, AICS_CLI_MICS_CLIENT_INDEX(aics_index));
+		return bt_aics_client_input_unmute(conn, inst);
 	}
 
 	BT_DBG("Not supported");
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_client_aics_input_mute(struct bt_conn *conn, uint8_t aics_index)
+int bt_mics_client_aics_input_mute(struct bt_conn *conn, struct bt_aics *inst)
 {
 
 	if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_mute(
-			conn, AICS_CLI_MICS_CLIENT_INDEX(aics_index));
+		return bt_aics_client_input_mute(conn, inst);
 	}
 
 	BT_DBG("Not supported");
@@ -607,11 +598,10 @@ int bt_mics_client_aics_input_mute(struct bt_conn *conn, uint8_t aics_index)
 }
 
 int bt_mics_client_aics_manual_input_gain_set(struct bt_conn *conn,
-					      uint8_t aics_index)
+					      struct bt_aics *inst)
 {
 	if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_manual_input_gain_set(
-			conn, AICS_CLI_MICS_CLIENT_INDEX(aics_index));
+		return bt_aics_client_manual_input_gain_set(conn, inst);
 	}
 
 	BT_DBG("Not supported");
@@ -619,23 +609,21 @@ int bt_mics_client_aics_manual_input_gain_set(struct bt_conn *conn,
 }
 
 int bt_mics_client_aics_automatic_input_gain_set(struct bt_conn *conn,
-						 uint8_t aics_index)
+						 struct bt_aics *inst)
 {
 	if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_automatic_input_gain_set(
-			conn, AICS_CLI_MICS_CLIENT_INDEX(aics_index));
+		return bt_aics_client_automatic_input_gain_set(conn, inst);
 	}
 
 	BT_DBG("Not supported");
 	return -EOPNOTSUPP;
 }
 
-int bt_mics_client_aics_gain_set(struct bt_conn *conn, uint8_t aics_index,
+int bt_mics_client_aics_gain_set(struct bt_conn *conn, struct bt_aics *inst,
 				 int8_t gain)
 {
 	if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_gain_set(
-			conn, AICS_CLI_MICS_CLIENT_INDEX(aics_index), gain);
+		return bt_aics_client_gain_set(conn, inst, gain);
 	}
 
 	BT_DBG("Not supported");
@@ -643,11 +631,10 @@ int bt_mics_client_aics_gain_set(struct bt_conn *conn, uint8_t aics_index,
 }
 
 int bt_mics_client_aics_input_description_get(struct bt_conn *conn,
-					      uint8_t aics_index)
+					      struct bt_aics *inst)
 {
 	if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_description_get(
-			conn, AICS_CLI_MICS_CLIENT_INDEX(aics_index));
+		return bt_aics_client_input_description_get(conn, inst);
 	}
 
 	BT_DBG("Not supported");
@@ -655,13 +642,12 @@ int bt_mics_client_aics_input_description_get(struct bt_conn *conn,
 }
 
 int bt_mics_client_aics_input_description_set(struct bt_conn *conn,
-					      uint8_t aics_index,
+					      struct bt_aics *inst,
 					      const char *description)
 {
 	if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_description_set(
-			conn, AICS_CLI_MICS_CLIENT_INDEX(aics_index),
-			description);
+		return bt_aics_client_input_description_set(conn, inst,
+							    description);
 	}
 
 	BT_DBG("Not supported");

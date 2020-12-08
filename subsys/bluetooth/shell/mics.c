@@ -26,68 +26,69 @@ static void bt_mics_mute_cb(struct bt_conn *conn, int err, uint8_t mute)
 	}
 }
 
-static void bt_mics_aics_state_cb(struct bt_conn *conn, uint8_t aics_index,
+static void bt_mics_aics_state_cb(struct bt_conn *conn, struct bt_aics *inst,
 				  int err, int8_t gain, uint8_t mute,
 				  uint8_t mode)
 {
 	if (err) {
 		shell_error(ctx_shell, "AICS state get failed (%d) for "
-			    "index %u", err, aics_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "AICS index %u state gain %d, mute %u, "
-			    "mode %u", aics_index, gain, mute, mode);
+		shell_print(ctx_shell, "AICS inst %p state gain %d, mute %u, "
+			    "mode %u", inst, gain, mute, mode);
 	}
 
 }
 static void bt_mics_aics_gain_setting_cb(struct bt_conn *conn,
-					 uint8_t aics_index, int err,
+					 struct bt_aics *inst, int err,
 					 uint8_t units, int8_t minimum,
 					 int8_t maximum)
 {
 	if (err) {
 		shell_error(ctx_shell, "AICS gain settings get failed (%d) for "
-			    "index %u", err, aics_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "AICS index %u gain settings units %u, "
-			    "min %d, max %d", aics_index, units, minimum,
+		shell_print(ctx_shell, "AICS inst %p gain settings units %u, "
+			    "min %d, max %d", inst, units, minimum,
 			    maximum);
 	}
 
 }
-static void bt_mics_aics_input_type_cb(struct bt_conn *conn, uint8_t aics_index,
+static void bt_mics_aics_input_type_cb(struct bt_conn *conn,
+				       struct bt_aics *inst,
 				       int err, uint8_t input_type)
 {
 	if (err) {
 		shell_error(ctx_shell, "AICS input type get failed (%d) for "
-			    "index %u", err, aics_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "AICS index %u input type %u",
-			    aics_index, input_type);
+		shell_print(ctx_shell, "AICS inst %p input type %u",
+			    inst, input_type);
 	}
 
 }
-static void bt_mics_aics_status_cb(struct bt_conn *conn, uint8_t aics_index,
+static void bt_mics_aics_status_cb(struct bt_conn *conn, struct bt_aics *inst,
 				   int err, bool active)
 {
 	if (err) {
 		shell_error(ctx_shell, "AICS status get failed (%d) for "
-			    "index %u", err, aics_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "AICS index %u status %s",
-			    aics_index, active ? "active" : "inactive");
+		shell_print(ctx_shell, "AICS inst %p status %s",
+			    inst, active ? "active" : "inactive");
 	}
 
 }
 static void bt_mics_aics_description_cb(struct bt_conn *conn,
-					uint8_t aics_index, int err,
+					struct bt_aics *inst, int err,
 					char *description)
 {
 	if (err) {
 		shell_error(ctx_shell, "AICS description get failed (%d) for "
-			    "index %u", err, aics_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "AICS index %u description %s",
-			    aics_index, description);
+		shell_print(ctx_shell, "AICS inst %p description %s",
+			    inst, description);
 	}
 }
 
@@ -195,13 +196,13 @@ static inline int cmd_mics_aics_deactivate(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_deactivate(index);
+	result = bt_mics_aics_deactivate(mics.aics[index]);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}
@@ -214,13 +215,13 @@ static inline int cmd_mics_aics_activate(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_activate(index);
+	result = bt_mics_aics_activate(mics.aics[index]);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}
@@ -233,13 +234,13 @@ static inline int cmd_mics_aics_input_state_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_state_get(NULL, index);
+	result = bt_mics_aics_state_get(NULL, mics.aics[index]);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}
@@ -252,13 +253,13 @@ static inline int cmd_mics_aics_gain_setting_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_gain_setting_get(NULL, index);
+	result = bt_mics_aics_gain_setting_get(NULL, mics.aics[index]);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}
@@ -271,13 +272,13 @@ static inline int cmd_mics_aics_input_type_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_type_get(NULL, index);
+	result = bt_mics_aics_type_get(NULL, mics.aics[index]);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}
@@ -290,13 +291,13 @@ static inline int cmd_mics_aics_input_status_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_status_get(NULL, index);
+	result = bt_mics_aics_status_get(NULL, mics.aics[index]);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}
@@ -309,13 +310,13 @@ static inline int cmd_mics_aics_input_unmute(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_unmute(NULL, index);
+	result = bt_mics_aics_unmute(NULL, mics.aics[index]);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}
@@ -328,13 +329,13 @@ static inline int cmd_mics_aics_input_mute(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_mute(NULL, index);
+	result = bt_mics_aics_mute(NULL, mics.aics[index]);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}
@@ -347,13 +348,13 @@ static inline int cmd_mics_aics_manual_input_gain_set(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_manual_gain_set(NULL, index);
+	result = bt_mics_aics_manual_gain_set(NULL, mics.aics[index]);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}
@@ -366,13 +367,13 @@ static inline int cmd_mics_aics_automatic_input_gain_set(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_automatic_gain_set(NULL, index);
+	result = bt_mics_aics_automatic_gain_set(NULL, mics.aics[index]);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}
@@ -386,9 +387,9 @@ static inline int cmd_mics_aics_gain_set(
 	int index = strtol(argv[1], NULL, 0);
 	int gain = strtol(argv[2], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
@@ -398,7 +399,7 @@ static inline int cmd_mics_aics_gain_set(
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_gain_set(NULL, index, gain);
+	result = bt_mics_aics_gain_set(NULL, mics.aics[index], gain);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}
@@ -411,13 +412,13 @@ static inline int cmd_mics_aics_input_description_get(
 	int result;
 	int index = strtol(argv[1], NULL, 0);
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_description_get(NULL, index);
+	result = bt_mics_aics_description_get(NULL, mics.aics[index]);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}
@@ -431,13 +432,14 @@ static inline int cmd_mics_aics_input_description_set(
 	int index = strtol(argv[1], NULL, 0);
 	char *description = argv[2];
 
-	if (index > CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_MICS_AICS_INSTANCE_COUNT, index);
+	if (index >= mics.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    mics.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_mics_aics_description_set(NULL, index, description);
+	result = bt_mics_aics_description_set(NULL, mics.aics[index],
+					      description);
 	if (result) {
 		shell_error(shell, "Fail: %d", result);
 	}

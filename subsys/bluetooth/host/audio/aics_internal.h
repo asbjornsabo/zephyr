@@ -37,15 +37,11 @@
 #define VCS_COUNT 0
 #endif
 
-#define AICS_VCS_INDEX(i)                       (i)
-
 #if CONFIG_BT_MICS
 #define MICS_COUNT CONFIG_BT_MICS_AICS_INSTANCE_COUNT
 #else
 #define MICS_COUNT 0
 #endif
-
-#define AICS_MICS_INDEX(i)                      (i + VCS_COUNT)
 
 #define AICS_INST_COUNT (MICS_COUNT + VCS_COUNT)
 
@@ -56,14 +52,11 @@
 #define VCS_CLIENT_COUNT 0
 #endif
 
-#define AICS_CLI_VCS_CLIENT_INDEX(i)                   (i)
 #if CONFIG_BT_MICS_CLIENT
 #define MICS_CLIENT_COUNT CONFIG_BT_MICS_CLIENT_MAX_AICS_INST
 #else
 #define MICS_CLIENT_COUNT 0
 #endif
-
-#define AICS_CLI_MICS_CLIENT_INDEX(i)                  (i + VCS_CLIENT_COUNT)
 
 #define AICS_CLIENT_INST_COUNT (MICS_CLIENT_COUNT + VCS_CLIENT_COUNT)
 
@@ -84,7 +77,7 @@ struct aics_gain_control_t {
 	int8_t gain_setting;
 } __packed;
 
-struct aics_instance_t {
+struct aics_client {
 	uint8_t change_counter;
 	uint8_t mode;
 	bool desc_writable;
@@ -103,7 +96,6 @@ struct aics_instance_t {
 	uint8_t subscribe_cnt;
 
 	bool busy;
-	uint8_t index;
 	uint8_t write_buf[sizeof(struct aics_gain_control_t)];
 	struct bt_gatt_write_params write_params;
 	struct bt_gatt_read_params read_params;
@@ -123,56 +115,66 @@ struct aics_gain_settings_t {
 	int8_t maximum;
 } __packed;
 
-struct bt_aics {
+struct aics_server {
 	struct aics_state_t state;
 	struct aics_gain_settings_t gain_settings;
 	bool initialized;
 	uint8_t type;
 	uint8_t status;
-	uint8_t index;
+	struct bt_aics *inst;
 	char input_desc[AICS_MAX_DESC_SIZE];
 	struct bt_aics_cb *cb;
 
 	struct bt_gatt_service *service_p;
 };
 
+/* Struct used as a common type for the api */
+struct bt_aics {
+	union {
+		struct aics_server srv;
+		struct aics_client cli;
+	};
+
+};
+
 uint8_t aics_client_notify_handler(struct bt_conn *conn,
 				   struct bt_gatt_subscribe_params *params,
 				   const void *data, uint16_t length);
 
-/* TODO: We might want to use a aics_inst pointer rather than an index to
- * handle the multiple instances. See the OTS implementation for an example
- * of doing so.
- */
-int bt_aics_client_register(struct aics_instance_t *aics_inst, uint8_t index);
-int bt_aics_client_unregister(uint8_t index);
-int bt_aics_client_input_state_get(struct bt_conn *conn, uint8_t index);
-int bt_aics_client_gain_setting_get(struct bt_conn *conn, uint8_t index);
-int bt_aics_client_input_type_get(struct bt_conn *conn, uint8_t index);
-int bt_aics_client_input_status_get(struct bt_conn *conn, uint8_t index);
-int bt_aics_client_input_unmute(struct bt_conn *conn, uint8_t index);
-int bt_aics_client_input_mute(struct bt_conn *conn, uint8_t index);
-int bt_aics_client_manual_input_gain_set(struct bt_conn *conn, uint8_t index);
+int bt_aics_client_register(struct bt_aics *inst);
+int bt_aics_client_unregister(struct bt_aics *inst);
+int bt_aics_client_input_state_get(struct bt_conn *conn, struct bt_aics *inst);
+int bt_aics_client_gain_setting_get(struct bt_conn *conn, struct bt_aics *inst);
+int bt_aics_client_input_type_get(struct bt_conn *conn, struct bt_aics *inst);
+int bt_aics_client_input_status_get(struct bt_conn *conn, struct bt_aics *inst);
+int bt_aics_client_input_unmute(struct bt_conn *conn, struct bt_aics *inst);
+int bt_aics_client_input_mute(struct bt_conn *conn, struct bt_aics *inst);
+int bt_aics_client_manual_input_gain_set(struct bt_conn *conn,
+					 struct bt_aics *inst);
 int bt_aics_client_automatic_input_gain_set(struct bt_conn *conn,
-					    uint8_t index);
-int bt_aics_client_gain_set(struct bt_conn *conn, uint8_t index, int8_t gain);
-int bt_aics_client_input_description_get(struct bt_conn *conn, uint8_t index);
-int bt_aics_client_input_description_set(struct bt_conn *conn, uint8_t index,
+					    struct bt_aics *inst);
+int bt_aics_client_gain_set(struct bt_conn *conn, struct bt_aics *inst,
+			    int8_t gain);
+int bt_aics_client_input_description_get(struct bt_conn *conn,
+					 struct bt_aics *inst);
+int bt_aics_client_input_description_set(struct bt_conn *conn,
+					 struct bt_aics *inst,
 					 const char *description);
 
-int bt_aics_deactivate(uint8_t aics_index);
-int bt_aics_activate(uint8_t aics_index);
-int bt_aics_cb_register(uint8_t index, struct bt_aics_cb *cb);
-int bt_aics_input_state_get(uint8_t aics_index);
-int bt_aics_gain_setting_get(uint8_t aics_index);
-int bt_aics_input_type_get(uint8_t aics_index);
-int bt_aics_input_status_get(uint8_t aics_index);
-int bt_aics_input_unmute(uint8_t aics_index);
-int bt_aics_input_mute(uint8_t aics_index);
-int bt_aics_manual_input_gain_set(uint8_t aics_index);
-int bt_aics_automatic_input_gain_set(uint8_t aics_index);
-int bt_aics_gain_set(uint8_t aics_index, int8_t gain);
-int bt_aics_input_description_get(uint8_t aics_index);
-int bt_aics_input_description_set(uint8_t aics_index, const char *description);
+int bt_aics_deactivate(struct bt_aics *inst);
+int bt_aics_activate(struct bt_aics *inst);
+int bt_aics_cb_register(struct bt_aics *inst, struct bt_aics_cb *cb);
+int bt_aics_input_state_get(struct bt_aics *inst);
+int bt_aics_gain_setting_get(struct bt_aics *inst);
+int bt_aics_input_type_get(struct bt_aics *inst);
+int bt_aics_input_status_get(struct bt_aics *inst);
+int bt_aics_input_unmute(struct bt_aics *inst);
+int bt_aics_input_mute(struct bt_aics *inst);
+int bt_aics_manual_input_gain_set(struct bt_aics *inst);
+int bt_aics_automatic_input_gain_set(struct bt_aics *inst);
+int bt_aics_gain_set(struct bt_aics *inst, int8_t gain);
+int bt_aics_input_description_get(struct bt_aics *inst);
+int bt_aics_input_description_set(struct bt_aics *inst,
+				  const char *description);
 
 #endif /* ZEPHYR_INCLUDE_BLUETOOTH_AUDIO_AICS_INTERNAL_ */

@@ -89,59 +89,63 @@ static void vol_set_cb(struct bt_conn *conn, int err)
 	}
 }
 
-static void bt_vcs_aics_set_gain_cb(struct bt_conn *conn, uint8_t index,
+static void bt_vcs_aics_set_gain_cb(struct bt_conn *conn, struct bt_aics *inst,
 				    int err)
 {
 	if (err) {
-		shell_error(ctx_shell, "Set gain failed (%d) for index %u",
-			    err, index);
+		shell_error(ctx_shell, "Set gain failed (%d) for inst %p",
+			    err, inst);
 	} else {
-		shell_print(ctx_shell, "Gain set for index %u", index);
+		shell_print(ctx_shell, "Gain set for inst %p", inst);
 	}
 }
 
-static void bt_vcs_aics_unmute_cb(struct bt_conn *conn, uint8_t index, int err)
+static void bt_vcs_aics_unmute_cb(struct bt_conn *conn, struct bt_aics *inst,
+				  int err)
 {
 	if (err) {
-		shell_error(ctx_shell, "Unmute failed (%d) for index %u",
-			    err, index);
+		shell_error(ctx_shell, "Unmute failed (%d) for inst %p",
+			    err, inst);
 	} else {
-		shell_print(ctx_shell, "Unmuted index %u", index);
+		shell_print(ctx_shell, "Unmuted inst %p", inst);
 	}
 }
 
-static void bt_vcs_aics_mute_cb(struct bt_conn *conn, uint8_t index, int err)
+static void bt_vcs_aics_mute_cb(struct bt_conn *conn, struct bt_aics *inst,
+				int err)
 {
 	if (err) {
-		shell_error(ctx_shell, "Mute failed (%d) for index %u",
-			    err, index);
+		shell_error(ctx_shell, "Mute failed (%d) for inst %p",
+			    err, inst);
 	} else {
-		shell_print(ctx_shell, "Muted index %u", index);
+		shell_print(ctx_shell, "Muted inst %p", inst);
 	}
 }
 
-static void bt_vcs_aics_set_manual_mode_cb(struct bt_conn *conn, uint8_t index,
-				       int err)
-{
-	if (err) {
-		shell_error(ctx_shell,
-			    "Set manual mode failed (%d) for index %u",
-			    err, index);
-	} else {
-		shell_print(ctx_shell, "Manuel mode set for index %u", index);
-	}
-}
-
-static void bt_vcs_aics_automatic_mode_cb(struct bt_conn *conn, uint8_t index,
-				      int err)
+static void bt_vcs_aics_set_manual_mode_cb(struct bt_conn *conn,
+					   struct bt_aics *inst,
+					   int err)
 {
 	if (err) {
 		shell_error(ctx_shell,
-			    "Set automatic mode failed (%d) for index %u",
-			    err, index);
+			    "Set manual mode failed (%d) for inst %p",
+			    err, inst);
 	} else {
-		shell_print(ctx_shell, "Automatic mode set for index %u",
-			    index);
+		shell_print(ctx_shell, "Manuel mode set for inst %p", inst);
+	}
+}
+
+static void bt_vcs_aics_automatic_mode_cb(struct bt_conn *conn,
+					  struct bt_aics *inst,
+					  int err)
+{
+	if (err) {
+		shell_error(ctx_shell,
+			    "Set automatic mode failed (%d) for inst %p",
+			    err, inst);
+	} else {
+		shell_print(ctx_shell, "Automatic mode set for inst %p",
+			    inst);
 	}
 }
 
@@ -164,70 +168,72 @@ static void bt_vcs_flags_cb(struct bt_conn *conn, int err, uint8_t flags)
 }
 
 #if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-static void bt_vcs_aics_state_cb(struct bt_conn *conn, uint8_t aics_index,
+static void bt_vcs_aics_state_cb(struct bt_conn *conn, struct bt_aics *inst,
 				 int err, int8_t gain, uint8_t mute,
 				 uint8_t mode)
 {
 	if (err) {
 		shell_error(ctx_shell, "AICS state get failed (%d) for "
-			    "index %u", err, aics_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "AICS index %u state gain %d, mute %u, "
-			    "mode %u", aics_index, gain, mute, mode);
+		shell_print(ctx_shell, "AICS inst %p state gain %d, mute %u, "
+			    "mode %u", inst, gain, mute, mode);
 	}
 
 }
 
 static void bt_vcs_aics_gain_setting_cb(struct bt_conn *conn,
-					uint8_t aics_index, int err,
+					struct bt_aics *inst, int err,
 					uint8_t units, int8_t minimum,
 					int8_t maximum)
 {
 	if (err) {
 		shell_error(ctx_shell, "AICS gain settings get failed (%d) for "
-			    "index %u", err, aics_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "AICS index %u gain settings units %u, "
-			    "min %d, max %d", aics_index, units, minimum,
+		shell_print(ctx_shell, "AICS inst %p gain settings units %u, "
+			    "min %d, max %d", inst, units, minimum,
 			    maximum);
 	}
 
 }
 
-static void bt_vcs_aics_input_type_cb(struct bt_conn *conn, uint8_t aics_index,
+static void bt_vcs_aics_input_type_cb(struct bt_conn *conn,
+				      struct bt_aics *inst,
 				      int err, uint8_t input_type)
 {
 	if (err) {
 		shell_error(ctx_shell, "AICS input type get failed (%d) for "
-			    "index %u", err, aics_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "AICS index %u input type %u",
-			    aics_index, input_type);
+		shell_print(ctx_shell, "AICS inst %p input type %u",
+			    inst, input_type);
 	}
 
 }
 
-static void bt_vcs_aics_status_cb(struct bt_conn *conn, uint8_t aics_index,
+static void bt_vcs_aics_status_cb(struct bt_conn *conn, struct bt_aics *inst,
 				  int err, bool active)
 {
 	if (err) {
 		shell_error(ctx_shell, "AICS status get failed (%d) for "
-			    "index %u", err, aics_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "AICS index %u status %s",
-			    aics_index, active ? "active" : "inactive");
+		shell_print(ctx_shell, "AICS inst %p status %s",
+			    inst, active ? "active" : "inactive");
 	}
 
 }
-static void bt_vcs_aics_description_cb(struct bt_conn *conn, uint8_t aics_index,
+static void bt_vcs_aics_description_cb(struct bt_conn *conn,
+				       struct bt_aics *inst,
 				       int err, char *description)
 {
 	if (err) {
 		shell_error(ctx_shell, "AICS description get failed (%d) for "
-			    "index %u", err, aics_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "AICS index %u description %s",
-			    aics_index, description);
+		shell_print(ctx_shell, "AICS inst %p description %s",
+			    inst, description);
 	}
 }
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0 */
@@ -685,13 +691,13 @@ static int cmd_vcs_client_aics_input_state_get(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_aics_state_get(default_conn, index);
+	result = bt_vcs_aics_state_get(default_conn, vcs.aics[index]);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -709,13 +715,13 @@ static int cmd_vcs_client_aics_gain_setting_get(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_aics_gain_setting_get(default_conn, index);
+	result = bt_vcs_aics_gain_setting_get(default_conn, vcs.aics[index]);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -733,13 +739,13 @@ static int cmd_vcs_client_aics_input_type_get(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_aics_type_get(default_conn, index);
+	result = bt_vcs_aics_type_get(default_conn, vcs.aics[index]);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -757,13 +763,13 @@ static int cmd_vcs_client_aics_input_status_get(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_aics_status_get(default_conn, index);
+	result = bt_vcs_aics_status_get(default_conn, vcs.aics[index]);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -781,13 +787,13 @@ static int cmd_vcs_client_aics_input_unmute(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_aics_unmute(default_conn, index);
+	result = bt_vcs_aics_unmute(default_conn, vcs.aics[index]);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -805,13 +811,13 @@ static int cmd_vcs_client_aics_input_mute(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_aics_mute(default_conn, index);
+	result = bt_vcs_aics_mute(default_conn, vcs.aics[index]);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -829,13 +835,13 @@ static int cmd_vcs_client_aics_manual_input_gain_set(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_aics_manual_gain_set(default_conn, index);
+	result = bt_vcs_aics_manual_gain_set(default_conn, vcs.aics[index]);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -853,13 +859,13 @@ static int cmd_vcs_client_aics_automatic_input_gain_set(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_aics_automatic_gain_set(default_conn, index);
+	result = bt_vcs_aics_automatic_gain_set(default_conn, vcs.aics[index]);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -878,9 +884,9 @@ static int cmd_vcs_client_aics_gain_set(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
@@ -890,7 +896,7 @@ static int cmd_vcs_client_aics_gain_set(
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_aics_gain_set(default_conn, index, gain);
+	result = bt_vcs_aics_gain_set(default_conn, vcs.aics[index], gain);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -908,13 +914,13 @@ static int cmd_vcs_client_aics_input_description_get(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_aics_description_get(default_conn, index);
+	result = bt_vcs_aics_description_get(default_conn, vcs.aics[index]);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -933,13 +939,14 @@ static int cmd_vcs_client_aics_input_description_set(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.aics_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.aics_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_aics_description_set(default_conn, index, description);
+	result = bt_vcs_aics_description_set(default_conn, vcs.aics[index],
+					     description);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
