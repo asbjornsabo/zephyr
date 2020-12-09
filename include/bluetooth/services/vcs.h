@@ -192,7 +192,6 @@ struct bt_vcs_cb_t {
  */
 int bt_vcs_discover(struct bt_conn *conn);
 
-
 /** @brief Set the VCS volume step size.
  *
  *  Set the value that the volume changes, when changed relatively with e.g.
@@ -282,72 +281,66 @@ int bt_vcs_mute(struct bt_conn *conn);
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to read local server value.
- *  @param vocs_index    The index of the Volume Offset Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the VOCS instance.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_vcs_vocs_state_get(struct bt_conn *conn, uint8_t vocs_index);
+int bt_vcs_vocs_state_get(struct bt_conn *conn, struct bt_vocs *inst);
 
 /** @brief Read the Volume Offset Control Service location.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to read local server value.
- *  @param vocs_index    The index of the Volume Offset Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the VOCS instance.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_vcs_vocs_location_get(struct bt_conn *conn, uint8_t vocs_index);
+int bt_vcs_vocs_location_get(struct bt_conn *conn, struct bt_vocs *inst);
 
 /** @brief Set the Volume Offset Control Service location.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to read local server value.
- *  @param vocs_index    The index of the Volume Offset Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the VOCS instance.
  *  @param location      The location to set.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_vcs_vocs_location_set(struct bt_conn *conn, uint8_t vocs_index,
+int bt_vcs_vocs_location_set(struct bt_conn *conn, struct bt_vocs *inst,
 			     uint8_t location);
 
 /** @brief Set the Volume Offset Control Service offset state.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to set local server value.
- *  @param vocs_index    The index of the Volume Offset Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the VOCS instance.
  *  @param offset        The offset to set (-255 to 255).
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_vcs_vocs_state_set(struct bt_conn *conn, uint8_t vocs_index,
+int bt_vcs_vocs_state_set(struct bt_conn *conn, struct bt_vocs *inst,
 			  int16_t offset);
 
 /** @brief Read the Volume Offset Control Service output description.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to read local server value.
- *  @param vocs_index    The index of the Volume Offset Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the VOCS instance.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_vcs_vocs_description_get(struct bt_conn *conn, uint8_t vocs_index);
+int bt_vcs_vocs_description_get(struct bt_conn *conn, struct bt_vocs *inst);
 
 /** @brief Set the Volume Offset Control Service description.
  *
  *  @param conn          Connection to peer device,
  *                       or NULL to set local server value.
- *  @param vocs_index    The index of the Volume Offset Control Service
- *                       (as there may be multiple).
+ *  @param inst          Pointer to the VOCS instance.
  *  @param description   The description to set. Value will be copied.
  *
  *  @return 0 on success, GATT error value on fail.
  */
-int bt_vcs_vocs_description_set(struct bt_conn *conn, uint8_t vocs_index,
+int bt_vcs_vocs_description_set(struct bt_conn *conn, struct bt_vocs *inst,
 				const char *description);
 
 /** @brief Read the Audio Input Control Service input state.

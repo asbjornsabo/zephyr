@@ -45,7 +45,6 @@ struct vcs_inst_t {
 	uint8_t volume_step;
 
 	struct bt_gatt_service *service_p;
-	/* TODO: Use instance pointers instead of indexes */
 	struct bt_vocs *vocs_insts[CONFIG_BT_VCS_VOCS_INSTANCE_COUNT];
 	struct bt_aics *aics_insts[CONFIG_BT_VCS_AICS_INSTANCE_COUNT];
 };
@@ -412,9 +411,10 @@ void bt_vcs_server_cb_register(struct bt_vcs_cb_t *cb)
 #if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
 	for (int i = 0; i < CONFIG_BT_VCS_VOCS_INSTANCE_COUNT; i++) {
 		if (cb) {
-			err = bt_vocs_cb_register(i, &vcs_inst.cb->vocs_cb);
+			err = bt_vocs_cb_register(vcs_inst.vocs_insts[i],
+						  &vcs_inst.cb->vocs_cb);
 		} else {
-			err = bt_vocs_cb_register(i, NULL);
+			err = bt_vocs_cb_register(vcs_inst.vocs_insts[i], NULL);
 		}
 
 		if (err) {
@@ -664,103 +664,104 @@ int bt_vcs_mute(struct bt_conn *conn)
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_vocs_state_get(struct bt_conn *conn, uint8_t vocs_index)
+int bt_vcs_vocs_state_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
 	if (conn) {
-		return bt_vcs_client_vocs_read_offset_state(conn, vocs_index);
+		return bt_vcs_client_vocs_read_offset_state(conn, inst);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
 
 #if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_vocs_offset_state_get(vocs_index);
+		return bt_vocs_state_get(conn, inst);
 	}
 #endif /* CONFIG_BT_VCS_VOCS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_vocs_location_get(struct bt_conn *conn, uint8_t vocs_index)
+int bt_vcs_vocs_location_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
 	if (conn) {
-		return bt_vcs_client_vocs_read_location(conn, vocs_index);
+		return bt_vcs_client_vocs_read_location(conn, inst);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
 
 #if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_vocs_location_get(vocs_index);
+		return bt_vocs_location_get(conn, inst);
 	}
 #endif /* CONFIG_BT_VCS_VOCS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_vocs_location_set(struct bt_conn *conn, uint8_t vocs_index,
+int bt_vcs_vocs_location_set(struct bt_conn *conn, struct bt_vocs *inst,
 			     uint8_t location)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
 	if (conn) {
-		return bt_vcs_client_vocs_set_location(conn, vocs_index,
+		return bt_vcs_client_vocs_set_location(conn, inst,
 						       location);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
 
 #if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_vocs_location_set(vocs_index, location);
+		return bt_vocs_location_set(conn, inst, location);
 	}
 #endif /* CONFIG_BT_VCS_VOCS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_vocs_state_set(struct bt_conn *conn, uint8_t vocs_index,
+int bt_vcs_vocs_state_set(struct bt_conn *conn, struct bt_vocs *inst,
 			  int16_t offset)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
 	if (conn) {
-		return bt_vcs_client_vocs_set_offset(conn, vocs_index, offset);
+		return bt_vcs_client_vocs_set_offset(
+			conn, inst, offset);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
 
 #if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_vocs_state_set(vocs_index, offset);
+		return bt_vocs_state_set(conn, inst, offset);
 	}
 #endif /* CONFIG_BT_VCS_VOCS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_vocs_description_get(struct bt_conn *conn, uint8_t vocs_index)
+int bt_vcs_vocs_description_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
 	if (conn) {
 		return bt_vcs_client_vocs_read_output_description(conn,
-								  vocs_index);
+								  inst);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
 
 #if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_vocs_output_description_get(vocs_index);
+		return bt_vocs_description_get(conn, inst);
 	}
 #endif /* CONFIG_BT_VCS_VOCS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_vocs_description_set(struct bt_conn *conn, uint8_t vocs_index,
+int bt_vcs_vocs_description_set(struct bt_conn *conn, struct bt_vocs *inst,
 				const char *description)
 {
 #if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
 	if (conn) {
 		return bt_vcs_client_vocs_set_output_description(
-			conn, vocs_index, description);
+			conn, inst, description);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
 
 #if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
 	if (!conn) {
-		return bt_vocs_output_description_set(vocs_index, description);
+		return bt_vocs_description_set(conn, inst, description);
 	}
 #endif /* CONFIG_BT_VCS_VOCS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;

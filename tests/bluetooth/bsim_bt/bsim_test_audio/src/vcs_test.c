@@ -73,7 +73,7 @@ static void vcs_flags_cb(struct bt_conn *conn, int err, uint8_t flags)
 	}
 }
 
-static void vocs_state_cb(struct bt_conn *conn, uint8_t vocs_index, int err,
+static void vocs_state_cb(struct bt_conn *conn, struct bt_vocs *inst, int err,
 			  int16_t offset)
 {
 	if (err) {
@@ -88,8 +88,8 @@ static void vocs_state_cb(struct bt_conn *conn, uint8_t vocs_index, int err,
 	}
 }
 
-static void vocs_location_cb(struct bt_conn *conn, uint8_t vocs_index, int err,
-			     uint8_t location)
+static void vocs_location_cb(struct bt_conn *conn, struct bt_vocs *inst,
+			     int err, uint8_t location)
 {
 	if (err) {
 		FAIL("VOCS location cb err (%d)", err);
@@ -103,7 +103,7 @@ static void vocs_location_cb(struct bt_conn *conn, uint8_t vocs_index, int err,
 	}
 }
 
-static void vocs_description_cb(struct bt_conn *conn, uint8_t vocs_index,
+static void vocs_description_cb(struct bt_conn *conn, struct bt_vocs *inst,
 				int err, char *description)
 {
 	if (err) {
@@ -366,14 +366,13 @@ static int test_aics_standalone(void)
 static int test_vocs_standalone(void)
 {
 	int err;
-	uint8_t vocs_index = 0;
 	uint8_t expected_location;
 	int16_t expected_offset;
 	char expected_description[VOCS_DESC_SIZE];
 
 	printk("Getting VOCS state\n");
 	g_cb = false;
-	err = bt_vcs_vocs_state_get(NULL, vocs_index);
+	err = bt_vcs_vocs_state_get(NULL, vcs.vocs[0]);
 	if (err) {
 		FAIL("Could not get VOCS state (err %d)\n", err);
 		return err;
@@ -383,7 +382,7 @@ static int test_vocs_standalone(void)
 
 	printk("Getting VOCS location\n");
 	g_cb = false;
-	err = bt_vcs_vocs_location_get(NULL, vocs_index);
+	err = bt_vcs_vocs_location_get(NULL, vcs.vocs[0]);
 	if (err) {
 		FAIL("Could not get VOCS location (err %d)\n", err);
 		return err;
@@ -393,7 +392,7 @@ static int test_vocs_standalone(void)
 
 	printk("Getting VOCS description\n");
 	g_cb = false;
-	err = bt_vcs_vocs_description_get(NULL, vocs_index);
+	err = bt_vcs_vocs_description_get(NULL, vcs.vocs[0]);
 	if (err) {
 		FAIL("Could not get VOCS description (err %d)\n", err);
 		return err;
@@ -403,7 +402,7 @@ static int test_vocs_standalone(void)
 
 	printk("Setting VOCS location\n");
 	expected_location = g_vocs_location + 1;
-	err = bt_vcs_vocs_location_set(NULL, vocs_index, expected_location);
+	err = bt_vcs_vocs_location_set(NULL, vcs.vocs[0], expected_location);
 	if (err) {
 		FAIL("Could not set VOCS location (err %d)\n", err);
 		return err;
@@ -413,7 +412,7 @@ static int test_vocs_standalone(void)
 
 	printk("Setting VOCS state\n");
 	expected_offset = g_vocs_offset + 1;
-	err = bt_vcs_vocs_state_set(NULL, vocs_index, expected_offset);
+	err = bt_vcs_vocs_state_set(NULL, vcs.vocs[0], expected_offset);
 	if (err) {
 		FAIL("Could not set VOCS state (err %d)\n", err);
 		return err;
@@ -425,7 +424,7 @@ static int test_vocs_standalone(void)
 	strncpy(expected_description, "New Output Description",
 		sizeof(expected_description));
 	g_cb = false;
-	err = bt_vcs_vocs_description_set(NULL, vocs_index,
+	err = bt_vcs_vocs_description_set(NULL, vcs.vocs[0],
 					  expected_description);
 	if (err) {
 		FAIL("Could not set VOCS description (err %d)\n", err);

@@ -102,39 +102,39 @@ static void bt_vcs_aics_description_cb(struct bt_conn *conn, uint8_t aics_index,
 			    aics_index, description);
 	}
 }
-static void bt_vocs_state_cb(struct bt_conn *conn, uint8_t vocs_index, int err,
-			     int16_t offset)
+static void bt_vocs_state_cb(struct bt_conn *conn, struct bt_vocs *inst,
+			     int err, int16_t offset)
 {
 	if (err) {
 		shell_error(ctx_shell, "VOCS state get failed (%d) for "
-			    "index %u", err, vocs_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "VOCS index %u offset %d",
-			    vocs_index, offset);
+		shell_print(ctx_shell, "VOCS inst %p offset %d",
+			    inst, offset);
 	}
 }
 
-static void bt_vocs_location_cb(struct bt_conn *conn, uint8_t vocs_index,
+static void bt_vocs_location_cb(struct bt_conn *conn, struct bt_vocs *inst,
 				int err, uint8_t location)
 {
 	if (err) {
 		shell_error(ctx_shell, "VOCS location get failed (%d) for "
-			    "index %u", err, vocs_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "VOCS index %u location %u",
-			    vocs_index, location);
+		shell_print(ctx_shell, "VOCS inst %p location %u",
+			    inst, location);
 	}
 }
 
-static void bt_vocs_description_cb(struct bt_conn *conn, uint8_t vocs_index,
+static void bt_vocs_description_cb(struct bt_conn *conn, struct bt_vocs *inst,
 				   int err, char *description)
 {
 	if (err) {
 		shell_error(ctx_shell, "VOCS description get failed (%d) for "
-			    "index %u", err, vocs_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "VOCS index %u description %s",
-			    vocs_index, description);
+		shell_print(ctx_shell, "VOCS inst %p description %s",
+			    inst, description);
 	}
 }
 
@@ -349,7 +349,7 @@ static int cmd_vcs_vocs_state_get(
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_vocs_state_get(NULL, index);
+	result = bt_vcs_vocs_state_get(NULL, vcs.vocs[index]);
 
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
@@ -368,7 +368,7 @@ static int cmd_vcs_vocs_location_get(
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_vocs_location_get(NULL, index);
+	result = bt_vcs_vocs_location_get(NULL, vcs.vocs[index]);
 
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
@@ -396,7 +396,7 @@ static int cmd_vcs_vocs_location_set(
 
 	}
 
-	result = bt_vcs_vocs_location_set(NULL, location, index);
+	result = bt_vcs_vocs_location_set(NULL, vcs.vocs[index], location);
 
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
@@ -423,7 +423,7 @@ static int cmd_vcs_vocs_offset_set(
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_vocs_state_set(NULL, index, offset);
+	result = bt_vcs_vocs_state_set(NULL, vcs.vocs[index], offset);
 
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
@@ -443,7 +443,7 @@ static int cmd_vcs_vocs_output_description_get(
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_vocs_description_get(NULL, index);
+	result = bt_vcs_vocs_description_get(NULL, vcs.vocs[index]);
 
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
@@ -464,7 +464,8 @@ static int cmd_vcs_vocs_output_description_set(
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_vocs_description_set(NULL, index, description);
+	result = bt_vcs_vocs_description_set(NULL, vcs.vocs[index],
+					     description);
 
 	if (result) {
 		shell_print(shell, "Fail: %d", result);

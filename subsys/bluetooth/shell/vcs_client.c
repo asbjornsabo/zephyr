@@ -145,14 +145,14 @@ static void bt_vcs_aics_automatic_mode_cb(struct bt_conn *conn, uint8_t index,
 	}
 }
 
-static void bt_vocs_set_offset_cb(struct bt_conn *conn, uint8_t vocs_index,
+static void bt_vocs_set_offset_cb(struct bt_conn *conn, struct bt_vocs *inst,
 				  int err)
 {
 	if (err) {
-		shell_error(ctx_shell, "Set offset failed (%d) for index %u",
-			    err, vocs_index);
+		shell_error(ctx_shell, "Set offset failed (%d) for inst %p",
+			    err, inst);
 	} else {
-		shell_print(ctx_shell, "Offset set for index %u", vocs_index);
+		shell_print(ctx_shell, "Offset set for inst %p", inst);
 	}
 }
 
@@ -240,39 +240,39 @@ static void bt_vcs_aics_description_cb(struct bt_conn *conn, uint8_t aics_index,
 			    aics_index, description);
 	}
 }
-static void bt_vocs_state_cb(struct bt_conn *conn, uint8_t vocs_index, int err,
-			     int16_t offset)
+static void bt_vocs_state_cb(struct bt_conn *conn, struct bt_vocs *inst,
+			     int err, int16_t offset)
 {
 	if (err) {
 		shell_error(ctx_shell, "VOCS state get failed (%d) for "
-			    "index %u", err, vocs_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "VOCS index %u offset %d",
-			    vocs_index, offset);
+		shell_print(ctx_shell, "VOCS inst %p offset %d",
+			    inst, offset);
 	}
 }
 
-static void bt_vocs_location_cb(struct bt_conn *conn, uint8_t vocs_index,
+static void bt_vocs_location_cb(struct bt_conn *conn, struct bt_vocs *inst,
 				int err, uint8_t location)
 {
 	if (err) {
 		shell_error(ctx_shell, "VOCS location get failed (%d) for "
-			    "index %u", err, vocs_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "VOCS index %u location %u",
-			    vocs_index, location);
+		shell_print(ctx_shell, "VOCS inst %p location %u",
+			    inst, location);
 	}
 }
 
-static void bt_vocs_description_cb(struct bt_conn *conn, uint8_t vocs_index,
+static void bt_vocs_description_cb(struct bt_conn *conn, struct bt_vocs *inst,
 				   int err, char *description)
 {
 	if (err) {
 		shell_error(ctx_shell, "VOCS description get failed (%d) for "
-			    "index %u", err, vocs_index);
+			    "inst %p", err, inst);
 	} else {
-		shell_print(ctx_shell, "VOCS index %u description %s",
-			    vocs_index, description);
+		shell_print(ctx_shell, "VOCS inst %p description %s",
+			    inst, description);
 	}
 }
 
@@ -517,13 +517,13 @@ static int cmd_vcs_client_vocs_state_get(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.vocs_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.vocs_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_vocs_state_get(default_conn, index);
+	result = bt_vcs_vocs_state_get(default_conn, vcs.vocs[index]);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -540,13 +540,13 @@ static int cmd_vcs_client_vocs_location_get(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.vocs_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.vocs_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_vocs_location_get(default_conn, index);
+	result = bt_vcs_vocs_location_get(default_conn, vcs.vocs[index]);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -566,9 +566,9 @@ static int cmd_vcs_client_vocs_location_set(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.vocs_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.vocs_cnt, index);
 		return -ENOEXEC;
 	}
 	if (location > UINT16_MAX || location < 0) {
@@ -578,7 +578,8 @@ static int cmd_vcs_client_vocs_location_set(
 
 	}
 
-	result = bt_vcs_vocs_location_set(default_conn, location, index);
+	result = bt_vcs_vocs_location_set(default_conn, vcs.vocs[index],
+					  location);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -597,9 +598,9 @@ static int cmd_vcs_client_vocs_offset_set(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.vocs_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.vocs_cnt, index);
 		return -ENOEXEC;
 	}
 
@@ -609,7 +610,7 @@ static int cmd_vcs_client_vocs_offset_set(
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_vocs_state_set(default_conn, index, offset);
+	result = bt_vcs_vocs_state_set(default_conn, vcs.vocs[index], offset);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -627,13 +628,13 @@ static int cmd_vcs_client_vocs_output_description_get(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.vocs_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.vocs_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_vocs_description_get(default_conn, index);
+	result = bt_vcs_vocs_description_get(default_conn, vcs.vocs[index]);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}
@@ -652,13 +653,14 @@ static int cmd_vcs_client_vocs_output_description_set(
 		return -ENOEXEC;
 	}
 
-	if (index > CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-		shell_error(shell, "Index out of range; 0-%u, was %u",
-			    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST, index);
+	if (index >= vcs.vocs_cnt) {
+		shell_error(shell, "Index shall be less than %u, was %u",
+			    vcs.vocs_cnt, index);
 		return -ENOEXEC;
 	}
 
-	result = bt_vcs_vocs_description_set(default_conn, index, description);
+	result = bt_vcs_vocs_description_set(default_conn, vcs.vocs[index],
+					     description);
 	if (result) {
 		shell_print(shell, "Fail: %d", result);
 	}

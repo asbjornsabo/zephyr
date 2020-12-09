@@ -95,23 +95,23 @@ struct bt_vocs *bt_vocs_free_instance_get(void);
  *  or if the value is changed by either the server or client.
  *
  *  @param conn         Connection to peer device, or NULL if local server read.
- *  @param vocs_index   The service index (as there may be multiple).
+ *  @param inst         The instance pointer.
  *  @param err          Error value. 0 on success, GATT error or ERRNO on fail.
  *                      For notifications, this will always be 0.
  *  @param offset       The offset value.
  */
 typedef void (*bt_vocs_state_cb_t)(
-	struct bt_conn *conn, uint8_t vocs_index, int err, int16_t offset);
+	struct bt_conn *conn, struct bt_vocs *inst, int err, int16_t offset);
 
 
 /** @brief Callback function for writes.
  *
  *  @param conn        Connection to peer device, or NULL if local server write.
- *  @param vocs_index  The service index (as there may be multiple).
+ *  @param inst        The instance pointer.
  *  @param err         Error value. 0 on success, GATT error on fail.
  */
 typedef void (*bt_vocs_write_cb_t)(
-	struct bt_conn *conn, uint8_t vocs_index, int err);
+	struct bt_conn *conn, struct bt_vocs *inst, int err);
 
 /** @brief Callback function for the location.
  *
@@ -119,13 +119,13 @@ typedef void (*bt_vocs_write_cb_t)(
  *  or if the value is changed by either the server or client.
  *
  *  @param conn         Connection to peer device, or NULL if local server read.
- *  @param vocs_index   The service index (as there may be multiple).
+ *  @param inst         The instance pointer.
  *  @param err          Error value. 0 on success, GATT error or ERRNO on fail.
  *                      For notifications, this will always be 0.
  *  @param location     The location value.
  */
 typedef void (*bt_vocs_location_cb_t)(
-	struct bt_conn *conn, uint8_t vocs_index, int err, uint8_t location);
+	struct bt_conn *conn, struct bt_vocs *inst, int err, uint8_t location);
 
 /** @brief Callback function for the description.
  *
@@ -133,13 +133,13 @@ typedef void (*bt_vocs_location_cb_t)(
  *  or if the value is changed by either the server or client.
  *
  *  @param conn         Connection to peer device, or NULL if local server read.
- *  @param vocs_index   The service index (as there may be multiple).
+ *  @param inst         The instance pointer.
  *  @param err          Error value. 0 on success, GATT error or ERRNO on fail.
  *                      For notifications, this will always be 0.
  *  @param description  The description as a string.
  */
 typedef void (*bt_vocs_description_cb_t)(
-	struct bt_conn *conn, uint8_t vocs_index, int err, char *description);
+	struct bt_conn *conn, struct bt_vocs *inst, int err, char *description);
 
 struct bt_vocs_cb {
 	bt_vocs_state_cb_t              state;
@@ -149,6 +149,80 @@ struct bt_vocs_cb {
 	/* Client only */
 	bt_vocs_write_cb_t              set_offset;
 };
+
+/** @brief Read the Volume Offset Control Service offset state.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to read local server value.
+ *  @param inst          Pointer to the VOCS instance.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_vocs_state_get(struct bt_conn *conn, struct bt_vocs *inst);
+
+/** @brief Set the Volume Offset Control Service offset state.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to set local server value.
+ *  @param inst          Pointer to the VOCS instance.
+ *  @param offset        The offset to set (-255 to 255).
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_vocs_state_set(struct bt_conn *conn, struct bt_vocs *inst,
+		      int16_t offset);
+
+/** @brief Read the Volume Offset Control Service location.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to read local server value.
+ *  @param inst          Pointer to the VOCS instance.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_vocs_location_get(struct bt_conn *conn, struct bt_vocs *inst);
+
+/** @brief Set the Volume Offset Control Service location.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to read local server value.
+ *  @param inst          Pointer to the VOCS instance.
+ *  @param location      The location to set.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_vocs_location_set(struct bt_conn *conn, struct bt_vocs *inst,
+			 uint8_t location);
+
+/** @brief Read the Volume Offset Control Service output description.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to read local server value.
+ *  @param inst          Pointer to the VOCS instance.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_vocs_description_get(struct bt_conn *conn, struct bt_vocs *inst);
+
+/** @brief Set the Volume Offset Control Service description.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to set local server value.
+ *  @param inst          Pointer to the VOCS instance.
+ *  @param description   The description to set. Value will be copied.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_vocs_description_set(struct bt_conn *conn, struct bt_vocs *inst,
+				const char *description);
+/** @brief
+ *
+ *  @param inst          Pointer to the VOCS instance.
+ *  @param cb            Pointer to a callback structure.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_vocs_cb_register(struct bt_vocs *inst, struct bt_vocs_cb *cb);
 
 #ifdef __cplusplus
 }

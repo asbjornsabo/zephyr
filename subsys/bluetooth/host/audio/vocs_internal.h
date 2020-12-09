@@ -31,7 +31,7 @@ struct vocs_state_t {
 	uint8_t change_counter;
 } __packed;
 
-struct vocs_instance_t {
+struct vocs_client {
 	struct vocs_state_t state;
 	bool location_writable;
 	uint8_t location;
@@ -49,16 +49,14 @@ struct vocs_instance_t {
 	uint8_t subscribe_cnt;
 
 	bool busy;
-	uint8_t index;
 	uint8_t write_buf[sizeof(struct vocs_control_t)];
 	struct bt_gatt_write_params write_params;
 	struct bt_gatt_read_params read_params;
 };
 
-struct bt_vocs {
+struct vocs_server {
 	struct vocs_state_t state;
 	uint8_t location;
-	uint8_t index;
 	bool initialized;
 	char output_desc[VOCS_MAX_DESC_SIZE];
 	struct bt_vocs_cb *cb;
@@ -66,12 +64,11 @@ struct bt_vocs {
 	struct bt_gatt_service *service_p;
 };
 
-int bt_vocs_offset_state_get(uint8_t index);
-int bt_vocs_location_get(uint8_t index);
-int bt_vocs_location_set(uint8_t index, uint8_t location);
-int bt_vocs_state_set(uint8_t index, int16_t offset);
-int bt_vocs_output_description_get(uint8_t index);
-int bt_vocs_output_description_set(uint8_t index, const char *description);
-int bt_vocs_cb_register(uint8_t index, struct bt_vocs_cb *cb);
+struct bt_vocs {
+	union {
+		struct vocs_server srv;
+		struct vocs_client cli;
+	};
+};
 
 #endif /* ZEPHYR_INCLUDE_BLUETOOTH_AUDIO_VOCS_INTERNAL_ */

@@ -42,16 +42,18 @@ int bt_vcs_client_set_volume(struct bt_conn *conn, uint8_t volume);
 int bt_vcs_client_unmute(struct bt_conn *conn);
 int bt_vcs_client_mute(struct bt_conn *conn);
 int bt_vcs_client_vocs_read_offset_state(struct bt_conn *conn,
-					 uint8_t vocs_index);
-int bt_vcs_client_vocs_read_location(struct bt_conn *conn, uint8_t vocs_index);
-int bt_vcs_client_vocs_set_location(struct bt_conn *conn, uint8_t vocs_index,
+					 struct bt_vocs *inst);
+int bt_vcs_client_vocs_read_location(struct bt_conn *conn,
+				     struct bt_vocs *inst);
+int bt_vcs_client_vocs_set_location(struct bt_conn *conn, struct bt_vocs *inst,
 				    uint8_t location);
-int bt_vcs_client_vocs_set_offset(struct bt_conn *conn, uint8_t vocs_index,
+int bt_vcs_client_vocs_set_offset(struct bt_conn *conn,
+				  struct bt_vocs *vocs_inst,
 				  int16_t offset);
 int bt_vcs_client_vocs_read_output_description(struct bt_conn *conn,
-					       uint8_t vocs_index);
+					       struct bt_vocs *inst);
 int bt_vcs_client_vocs_set_output_description(struct bt_conn *conn,
-					      uint8_t vocs_index,
+					      struct bt_vocs *inst,
 					      const char *description);
 int bt_vcs_client_aics_read_input_state(struct bt_conn *conn,
 					uint8_t aics_index);

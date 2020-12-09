@@ -34,7 +34,7 @@ static ssize_t read_offset_state(struct bt_conn *conn,
 				 const struct bt_gatt_attr *attr,
 				 void *buf, uint16_t len, uint16_t offset)
 {
-	struct bt_vocs *inst = attr->user_data;
+	struct vocs_server *inst = attr->user_data;
 
 	BT_DBG("offset %d, counter %u",
 	       inst->state.offset, inst->state.change_counter);
@@ -53,7 +53,7 @@ static ssize_t write_location(struct bt_conn *conn,
 			      const void *buf, uint16_t len, uint16_t offset,
 			      uint8_t flags)
 {
-	struct bt_vocs *inst = attr->user_data;
+	struct vocs_server *inst = attr->user_data;
 	uint8_t location;
 
 	if (len != sizeof(inst->location)) {
@@ -70,7 +70,7 @@ static ssize_t write_location(struct bt_conn *conn,
 				    &inst->location, sizeof(inst->location));
 
 		if (inst->cb && inst->cb->location) {
-			inst->cb->location(NULL, inst->index, 0,
+			inst->cb->location(NULL, (struct bt_vocs *)inst, 0,
 					   inst->location);
 		}
 	}
@@ -82,7 +82,7 @@ static ssize_t read_location(struct bt_conn *conn,
 			     const struct bt_gatt_attr *attr,
 			     void *buf, uint16_t len, uint16_t offset)
 {
-	struct bt_vocs *inst = attr->user_data;
+	struct vocs_server *inst = attr->user_data;
 
 	BT_DBG("0x%02x", inst->location);
 	return bt_gatt_attr_read(conn, attr, buf, len, offset,
@@ -95,7 +95,7 @@ static ssize_t write_vocs_control(struct bt_conn *conn,
 				  const void *buf, uint16_t len,
 				  uint16_t offset, uint8_t flags)
 {
-	struct bt_vocs *inst = attr->user_data;
+	struct vocs_server *inst = attr->user_data;
 	const struct vocs_control_t *cp = buf;
 	bool notify = false;
 
@@ -149,7 +149,7 @@ static ssize_t write_vocs_control(struct bt_conn *conn,
 				    &inst->state, sizeof(inst->state));
 
 		if (inst->cb && inst->cb->state) {
-			inst->cb->state(NULL, inst->index, 0,
+			inst->cb->state(NULL, (struct bt_vocs *)inst, 0,
 					inst->state.offset);
 		}
 
@@ -169,7 +169,7 @@ static ssize_t write_output_desc(struct bt_conn *conn,
 				 const void *buf, uint16_t len, uint16_t offset,
 				 uint8_t flags)
 {
-	struct bt_vocs *inst = attr->user_data;
+	struct vocs_server *inst = attr->user_data;
 
 	if (len >= sizeof(inst->output_desc)) {
 		BT_DBG("Output desc was clipped from length %u to %zu",
@@ -189,7 +189,7 @@ static ssize_t write_output_desc(struct bt_conn *conn,
 				    strlen(inst->output_desc));
 
 		if (inst->cb && inst->cb->description) {
-			inst->cb->description(NULL, inst->index, 0,
+			inst->cb->description(NULL, (struct bt_vocs *)inst, 0,
 					      inst->output_desc);
 		}
 	}
@@ -203,7 +203,7 @@ static ssize_t read_output_desc(struct bt_conn *conn,
 				const struct bt_gatt_attr *attr,
 				void *buf, uint16_t len, uint16_t offset)
 {
-	struct bt_vocs *inst = attr->user_data;
+	struct vocs_server *inst = attr->user_data;
 
 	BT_DBG("%s", log_strdup(inst->output_desc));
 	return bt_gatt_attr_read(conn, attr, buf, len, offset,
@@ -237,7 +237,7 @@ static ssize_t read_output_desc(struct bt_conn *conn,
 		    BT_GATT_PERM_READ | BT_GATT_PERM_WRITE_ENCRYPT) \
 	}
 
-static struct bt_vocs vocs_insts[CONFIG_BT_VOCS_MAX_INSTANCE_COUNT];
+static struct vocs_server vocs_insts[CONFIG_BT_VOCS_MAX_INSTANCE_COUNT];
 static uint32_t instance_cnt;
 BT_GATT_SERVICE_INSTANCE_DEFINE(vocs_service_list, vocs_insts,
 				CONFIG_BT_VOCS_MAX_INSTANCE_COUNT,
@@ -246,7 +246,6 @@ BT_GATT_SERVICE_INSTANCE_DEFINE(vocs_service_list, vocs_insts,
 static int vocs_init(const struct device *unused)
 {
 	for (int i = 0; i < ARRAY_SIZE(vocs_insts); i++) {
-		vocs_insts[i].index = i;
 		vocs_insts[i].service_p = &vocs_service_list[i];
 	}
 	return 0;
@@ -257,7 +256,7 @@ DEVICE_DEFINE(bt_vocs, "bt_vocs", &vocs_init, NULL, NULL, NULL,
 
 void *bt_vocs_svc_decl_get(struct bt_vocs *vocs)
 {
-	return vocs->service_p->attrs;
+	return vocs->srv.service_p->attrs;
 }
 
 int bt_vocs_init(struct bt_vocs *vocs, struct bt_vocs_init *init)
@@ -268,7 +267,7 @@ int bt_vocs_init(struct bt_vocs *vocs, struct bt_vocs_init *init)
 
 	__ASSERT(init, "VOCS init struct cannot be null");
 
-	if (vocs->initialized) {
+	if (vocs->srv.initialized) {
 		return -EALREADY;
 	}
 
@@ -277,19 +276,19 @@ int bt_vocs_init(struct bt_vocs *vocs, struct bt_vocs_init *init)
 		return -EINVAL;
 	}
 
-	vocs->location = init->location;
-	vocs->state.offset = init->offset;
+	vocs->srv.location = init->location;
+	vocs->srv.state.offset = init->offset;
 
 
 	if (init->output_desc) {
-		strncpy(vocs->output_desc, init->output_desc,
-			sizeof(vocs->output_desc) - 1);
+		strncpy(vocs->srv.output_desc, init->output_desc,
+			sizeof(vocs->srv.output_desc) - 1);
 		/* strncpy may not always null-terminate */
-		vocs->output_desc[sizeof(vocs->output_desc) - 1] = '\0';
+		vocs->srv.output_desc[sizeof(vocs->srv.output_desc) - 1] = '\0';
 		if (IS_ENABLED(CONFIG_BT_DEBUG_VOCS) &&
-		    strcmp(vocs->output_desc, init->output_desc)) {
+		    strcmp(vocs->srv.output_desc, init->output_desc)) {
 			BT_DBG("Output desc clipped to %s",
-			       log_strdup(vocs->output_desc));
+			       log_strdup(vocs->srv.output_desc));
 		}
 	}
 
@@ -300,33 +299,33 @@ int bt_vocs_init(struct bt_vocs *vocs, struct bt_vocs_init *init)
 	 * the characteristic declaration (always found at [i - 1]) with the
 	 * BT_GATT_CHRC_WRITE_WITHOUT_RESP property.
 	 */
-	for (int i = 1; i < vocs->service_p->attr_count; i++) {
-		attr = &vocs->service_p->attrs[i];
+	for (int i = 1; i < vocs->srv.service_p->attr_count; i++) {
+		attr = &vocs->srv.service_p->attrs[i];
 
 		if (init->location_writable &&
 		    !bt_uuid_cmp(attr->uuid, BT_UUID_VOCS_LOCATION)) {
 			/* Update attr and chrc to be writable */
-			chrc = vocs->service_p->attrs[i - 1].user_data;
+			chrc = vocs->srv.service_p->attrs[i - 1].user_data;
 			attr->write = write_location;
 			attr->perm |= BT_GATT_PERM_WRITE_ENCRYPT;
 			chrc->properties |= BT_GATT_CHRC_WRITE_WITHOUT_RESP;
 		} else if (init->desc_writable &&
 			   !bt_uuid_cmp(attr->uuid, BT_UUID_VOCS_DESCRIPTION)) {
 			/* Update attr and chrc to be writable */
-			chrc = vocs->service_p->attrs[i - 1].user_data;
+			chrc = vocs->srv.service_p->attrs[i - 1].user_data;
 			attr->write = write_output_desc;
 			attr->perm |= BT_GATT_PERM_WRITE_ENCRYPT;
 			chrc->properties |= BT_GATT_CHRC_WRITE_WITHOUT_RESP;
 		}
 	}
 
-	err = bt_gatt_service_register(vocs->service_p);
+	err = bt_gatt_service_register(vocs->srv.service_p);
 	if (err) {
 		BT_DBG("Could not register VOCS service");
 		return err;
 	}
 
-	vocs->initialized = true;
+	vocs->srv.initialized = true;
 	return 0;
 }
 
@@ -336,114 +335,117 @@ struct bt_vocs *bt_vocs_free_instance_get(void)
 		return NULL;
 	}
 
-	return &vocs_insts[instance_cnt++];
+	return (struct bt_vocs *)&vocs_insts[instance_cnt++];
 }
 
-int bt_vocs_offset_state_get(uint8_t index)
+int bt_vocs_state_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
-	if (index >= ARRAY_SIZE(vocs_insts)) {
-		return -ERANGE;
+	/* TODO: Add client handling */
+	if (conn || !inst) {
+		return -EINVAL;
 	}
 
-	if (vocs_insts[index].cb && vocs_insts[index].cb->state) {
-		vocs_insts[index].cb->state(
-			NULL, vocs_insts[index].index, 0,
-			vocs_insts[index].state.offset);
+	if (inst->srv.cb && inst->srv.cb->state) {
+		inst->srv.cb->state(NULL, inst, 0, inst->srv.state.offset);
 	}
 
 	return 0;
 }
 
-int bt_vocs_location_get(uint8_t index)
+int bt_vocs_location_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
-	if (index >= ARRAY_SIZE(vocs_insts)) {
-		return -ERANGE;
+	/* TODO: Add client handling */
+	if (conn || !inst) {
+		return -EINVAL;
 	}
 
-	if (vocs_insts[index].cb && vocs_insts[index].cb->location) {
-		vocs_insts[index].cb->location(
-			NULL, vocs_insts[index].index, 0,
-			vocs_insts[index].location);
+	if (inst->srv.cb && inst->srv.cb->location) {
+		inst->srv.cb->location(NULL, inst, 0, inst->srv.location);
 	}
 
 	return 0;
 }
 
-int bt_vocs_location_set(uint8_t index, uint8_t location)
+int bt_vocs_location_set(struct bt_conn *conn, struct bt_vocs *inst,
+			 uint8_t location)
 {
 	struct bt_gatt_attr attr;
 	int err;
 
-	if (index >= ARRAY_SIZE(vocs_insts)) {
-		return -ERANGE;
+	/* TODO: Add client handling */
+	if (conn || !inst) {
+		return -EINVAL;
 	}
 
-	attr.user_data = &vocs_insts[index];
+	attr.user_data = inst;
 
 	err = write_location(NULL, &attr, &location, sizeof(location), 0, 0);
 
 	return err > 0 ? 0 : err;
 }
 
-int bt_vocs_state_set(uint8_t index, int16_t offset)
+int bt_vocs_state_set(struct bt_conn *conn, struct bt_vocs *inst,
+		      int16_t offset)
 {
 	struct bt_gatt_attr attr;
 	struct vocs_control_t cp;
 	int err;
 
-	if (index >= ARRAY_SIZE(vocs_insts)) {
-		return -ERANGE;
+	/* TODO: Add client handling */
+	if (conn || !inst) {
+		return -EINVAL;
 	}
 
 	cp.opcode = VOCS_OPCODE_SET_OFFSET;
-	cp.counter = vocs_insts[index].state.change_counter;
+	cp.counter = inst->srv.state.change_counter;
 	cp.offset = sys_cpu_to_le16(offset);
 
-	attr.user_data = &vocs_insts[index];
+	attr.user_data = inst;
 
 	err = write_vocs_control(NULL, &attr, &cp, sizeof(cp), 0, 0);
 
 	return err > 0 ? 0 : err;
 }
 
-int bt_vocs_output_description_get(uint8_t index)
+int bt_vocs_description_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
-	if (index >= ARRAY_SIZE(vocs_insts)) {
-		return -ERANGE;
+	/* TODO: Add client handling */
+	if (conn || !inst) {
+		return -EINVAL;
 	}
 
-	if (vocs_insts[index].cb && vocs_insts[index].cb->description) {
-		vocs_insts[index].cb->description(
-			NULL, vocs_insts[index].index, 0,
-			vocs_insts[index].output_desc);
+	if (inst->srv.cb && inst->srv.cb->description) {
+		inst->srv.cb->description(NULL, inst, 0, inst->srv.output_desc);
 	}
 
 	return 0;
 }
 
-int bt_vocs_output_description_set(uint8_t index, const char *description)
+int bt_vocs_description_set(struct bt_conn *conn, struct bt_vocs *inst,
+			    const char *description)
 {
 	struct bt_gatt_attr attr;
 	int err;
 
-	if (index >= ARRAY_SIZE(vocs_insts)) {
-		return -ERANGE;
+	/* TODO: Add client handling */
+	if (conn || !inst) {
+		return -EINVAL;
 	}
 
-	attr.user_data = &vocs_insts[index];
+	attr.user_data = inst;
 
 	err = write_output_desc(NULL, &attr, description, strlen(description),
 				0, 0);
 	return err > 0 ? 0 : err;
 }
 
-int bt_vocs_cb_register(uint8_t index, struct bt_vocs_cb *cb)
+int bt_vocs_cb_register(struct bt_vocs *inst, struct bt_vocs_cb *cb)
 {
-	if (index < ARRAY_SIZE(vocs_insts)) {
-		vocs_insts[index].cb = cb;
-	} else {
-		return -ERANGE;
+	if (!inst) {
+		return -EINVAL;
 	}
+
+	inst->srv.cb = cb;
 
 	return 0;
 }
