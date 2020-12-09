@@ -196,6 +196,10 @@ static inline int cmd_mics_client_discover(
 {
 	int result;
 
+	if (!ctx_shell) {
+		ctx_shell = shell;
+	}
+
 	bt_mics_client_cb_register(&mics_cbs);
 
 	if (!default_conn) {
