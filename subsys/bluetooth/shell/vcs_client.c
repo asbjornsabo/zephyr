@@ -312,6 +312,10 @@ static int cmd_vcs_client_discover(
 {
 	int result;
 
+	if (!ctx_shell) {
+		ctx_shell = shell;
+	}
+
 	bt_vcs_client_cb_register(&vcs_cbs);
 
 	if (!default_conn) {
