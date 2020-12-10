@@ -73,7 +73,7 @@ int bt_vcs_aics_deactivate(uint8_t aics_index);
  *
  *  Audio Input Control Services are activated by default, but this will allow
  *  the server reactivate a Audio Input Control Service instance after it has
- *  been deactived with @ref bt_vcs_aics_deactivate.
+ *  been deactivated with @ref bt_vcs_aics_deactivate.
  *
  *  @param aics_index    The index of the Audio Input Control Service instance.
  *
