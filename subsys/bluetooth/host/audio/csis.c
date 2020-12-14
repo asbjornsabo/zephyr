@@ -84,6 +84,8 @@ struct csis_instance_t {
 	bt_addr_le_t lock_client_addr;
 	const struct bt_gatt_service_static *service_p;
 	struct csis_pending_notifications_t pend_notify[CONFIG_BT_MAX_PAIRED];
+	/* Array of connections that initiated pairing */
+	struct bt_conn *init_pairing_conns[CONFIG_BT_MAX_CONN];
 #if IS_ENABLED(CONFIG_BT_KEYS_OVERWRITE_OLDEST)
 	uint32_t age_counter;
 #endif /* CONFIG_BT_KEYS_OVERWRITE_OLDEST */
@@ -257,6 +259,16 @@ static int generate_prand(uint32_t *dest)
 	return 0;
 }
 
+static bool conn_initiated_pairing(struct bt_conn *conn)
+{
+	for (int i = 0; i < ARRAY_SIZE(csis_inst.init_pairing_conns); i++) {
+		if (csis_inst.init_pairing_conns[i] == conn) {
+			return true;
+		}
+	}
+	return false;
+}
+
 static ssize_t read_set_sirk(struct bt_conn *conn,
 			     const struct bt_gatt_attr *attr,
 			     void *buf, uint16_t len, uint16_t offset)
@@ -275,6 +287,15 @@ static ssize_t read_set_sirk(struct bt_conn *conn,
 		} else if (IS_ENABLED(CONFIG_BT_CSIS_ENC_SIRK_SUPPORT) &&
 			   cb_rsp == BT_CSIS_READ_SIRK_REQ_RSP_ACCEPT_ENC) {
 			int err;
+
+			/* Reject if the connection did not initiate pairing as
+			 * per the specification */
+			if (!conn_initiated_pairing(conn)) {
+				BT_DBG("Reject as conn did not initiate "
+				       "pairing");
+				return BT_GATT_ERR(
+					BT_CSIP_ERROR_SIRK_ACCESS_REJECTED);
+			}
 
 			err = sirk_encrypt(conn,
 						&csis_inst.set_sirk,
@@ -462,6 +483,12 @@ static void csis_disconnected(struct bt_conn *conn, uint8_t reason)
 	BT_DBG("Disconnected: %s (reason %u)",
 	       bt_addr_le_str(bt_conn_get_dst(conn)), reason);
 
+	for (int i = 0; i < ARRAY_SIZE(csis_inst.init_pairing_conns); i++) {
+		if (conn == csis_inst.init_pairing_conns[i]) {
+			csis_inst.init_pairing_conns[i] = NULL;
+		}
+	}
+
 	/*
 	 * If lock was taken by non-bonded device, set lock to released value,
 	 * and notify other connections.
@@ -501,14 +528,33 @@ static void auth_pairing_complete(struct bt_conn *conn, bool bonded)
 {
 	/**
 	 * If a pairing is complete for a bonded device, then we
-	 * 1) Check if the device is already in the `pend_notify`, and if it is
+	 * 1) Store the connection pointer to later validate SIRK encryption
+	 * 2) Check if the device is already in the `pend_notify`, and if it is
 	 * not, then we
-	 * 2) Check if there's room for another device in the `pend_notify`
+	 * 3) Check if there's room for another device in the `pend_notify`
 	 *    array. If there are no more room for a new device, then
-	 * 3) Either we ignore this new device (bad luck), or we overwrite
+	 * 4) Either we ignore this new device (bad luck), or we overwrite
 	 *    the oldest entry, following the behavior of the key storage.
 	 */
 	bt_addr_le_t *addr;
+	struct bt_conn **free = NULL;
+
+	BT_DBG("%s paired (%sbonded)",
+	       bt_addr_le_str(bt_conn_get_dst(conn)), bonded ? "" : "not ");
+
+	/* Store the connection pointer for later use */
+	for (int i = 0; i < ARRAY_SIZE(csis_inst.init_pairing_conns); i++) {
+		if (!free && csis_inst.init_pairing_conns[i] == NULL) {
+			free = &csis_inst.init_pairing_conns[i];
+		}
+
+		if (csis_inst.init_pairing_conns[i] == conn) {
+			free = &csis_inst.init_pairing_conns[i];
+			break;
+		}
+	}
+	__ASSERT(free, "Could not store conn in init_pairing_conns");
+	*free = conn;
 
 	if (!bonded) {
 		return;
