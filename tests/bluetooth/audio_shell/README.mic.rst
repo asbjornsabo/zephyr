@@ -19,22 +19,12 @@ Using the Microphone Controller
 ===============================
 
 When the Bluetooth stack has been initialized (:code:`bt init`),
-and a device has been connected, the client can be initialized by
+and a device has been connected, the client can initiate discovery by
 calling :code:`mics_client discover`, which will start a discovery for the MICS
-UUIDs and store the handles, and optionally subscribe to all notifications
-(default is to subscribe to all).
+UUIDs, store the handles and subscribe to all notifications.
 
 Since a server may have multiple AICS instances, the commands starting with
 :code:`aics_` of the commands will take an index (starting from 0) as input.
-The number of AICS instances on the server will be visible if
-:code:`BT_DEBUG_MICS_CLIENT` is enabled.
-
-The AICS control point requires a change counter value for each write.
-This is handled automatically by the client implementation if it has subscribed
-to the AICS state characteristic. If the change counter value is invalid on a
-write (:code:`Write failed (0x80)`), it may be necessary to call
-:code:`aics_read_input_state`, to update the value in the client.
-
 
 Example usage
 =============
@@ -55,12 +45,9 @@ Muting MICS:
 .. code-block:: console
 
    uart:~$ mics_client discover
-   <dbg> bt_mics_client.mics_discover_func: Setup complete for MICS
-   <dbg> bt_mics_client.mics_discover_include_func: Discover include complete for MICS: 2 AICS
-   <dbg> bt_mics_client.aics_discover_func: Setup complete for AICS 2 / 2
+   MICS discover done with 1 AICS
    uart:~$ mics_client mute
-   <dbg> bt_mics_client.mute_notify_handler: Mute 1
-   <dbg> bt_mics_client.mics_client_write_mics_mute_cb: Write successful (0x00)
+   Mute value 1
 
 
 Muting AICS:
@@ -68,23 +55,18 @@ Muting AICS:
 .. code-block:: console
 
    uart:~$ mics_client aics_input_mute 0
-   <dbg> bt_mics_client.aics_notify_handler: Gain 0, mute 1, mode 2, counter 21
-   <dbg> bt_mics_client.mics_client_write_aics_cp_cb: Write successful (0x00)
+   AICS index 0 state gain 0, mute 1, mode 2
+   Muted index 0
+
 
 Setting gain can only be done if the mode is manual (2) (or manual only (0)).
 If the mode is automatic (3) or automatic only (1), then the server should not
 update the gain value.
 
 .. code-block:: console
-
-   uart:~$ mics_client aics_set_gain 1 10
-   <dbg> bt_mics_client.aics_notify_handler: Gain 10, mute 0, mode 2, counter 21
-   <dbg> bt_mics_client.mics_client_write_aics_cp_cb: Write successful (0x00)
-   uart:~$ mics_client aics_set_automatic_input_gain 1
-   <dbg> bt_mics_client.aics_notify_handler: Gain 10, mute 0, mode 3, counter 22
-   <dbg> bt_mics_client.mics_client_write_aics_cp_cb: Write successful (0x00)
-   uart:~$ mics_client aics_set_gain 1 5
-   <dbg> bt_mics_client.mics_client_write_aics_cp_cb: Write successful (0x00)
+   uart:~$ mics_client aics_gain_set 0 10
+   AICS index 0 state gain 10, mute 1, mode 2
+   Gain set for index 0
 
 
 Microphone Device (Server)
@@ -94,13 +76,11 @@ The server holds a muted state for the microphone(s) on the device.
 If individual microphone control is needed by a remote client,
 it is necessary for the MICS server to include one or more AICS instances.
 
-Currently MICS and VCS share the same AICS instances.
-
 Using the Microphone Device
 ===========================
-The server itself does not expose any APIs to change the values currently.
-If the MICS server includes any AICS instances, these will be controllable via
-the :code:`aics` subcommands.
+The MICS server shall be initialized with :code:`mics init` before use, as it
+dynamically added to the server. The VCS API allows changing or reading all the
+same values as the client, and can be used without a connection.
 
 Example Usage
 =============
@@ -111,5 +91,18 @@ Setup
 .. code-block:: console
 
    uart:~$ bt init
-   uart:~$ bt advertise on
-   Advertising started
+   uart:~$ mics init
+
+Modifying and reading values
+----------------------------
+
+.. code-block:: console
+
+   uart:~$ mics mute_get
+   Mute value 1
+   uart:~$ mics unmute
+   Mute value 0
+   uart:~$ mics aics_gain_setting_get 0
+   AICS index 0 gain settings units 1, min -100, max 100
+   uart:~$ mics aics_gain_set 0 50
+   AICS index 0 state gain 50, mute 1, mode 2
