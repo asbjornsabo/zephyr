@@ -18,9 +18,9 @@ on the server (microphone) device.
 Using the Microphone Controller
 ===============================
 
-When the btaudio stack has been initialized (:code:`btaudio init`),
+When the Bluetooth stack has been initialized (:code:`bt init`),
 and a device has been connected, the client can be initialized by
-calling :code:`btaudio mics_client discover`, which will start a discovery for the MICS
+calling :code:`mics_client discover`, which will start a discovery for the MICS
 UUIDs and store the handles, and optionally subscribe to all notifications
 (default is to subscribe to all).
 
@@ -44,7 +44,7 @@ Setup
 
 .. code-block:: console
 
-   uart:~$ btaudio init
+   uart:~$ bt init
    uart:~$ bt connect xx:xx:xx:xx:xx:xx public
 
 When connected
@@ -54,11 +54,11 @@ Muting MICS:
 
 .. code-block:: console
 
-   uart:~$ btaudio mics_client discover
+   uart:~$ mics_client discover
    <dbg> bt_mics_client.mics_discover_func: Setup complete for MICS
    <dbg> bt_mics_client.mics_discover_include_func: Discover include complete for MICS: 2 AICS
    <dbg> bt_mics_client.aics_discover_func: Setup complete for AICS 2 / 2
-   uart:~$ btaudio mics_client mute
+   uart:~$ mics_client mute
    <dbg> bt_mics_client.mute_notify_handler: Mute 1
    <dbg> bt_mics_client.mics_client_write_mics_mute_cb: Write successful (0x00)
 
@@ -67,7 +67,7 @@ Muting AICS:
 
 .. code-block:: console
 
-   uart:~$ btaudio mics_client aics_input_mute 0
+   uart:~$ mics_client aics_input_mute 0
    <dbg> bt_mics_client.aics_notify_handler: Gain 0, mute 1, mode 2, counter 21
    <dbg> bt_mics_client.mics_client_write_aics_cp_cb: Write successful (0x00)
 
@@ -77,13 +77,13 @@ update the gain value.
 
 .. code-block:: console
 
-   uart:~$ btaudio mics_client aics_set_gain 1 10
+   uart:~$ mics_client aics_set_gain 1 10
    <dbg> bt_mics_client.aics_notify_handler: Gain 10, mute 0, mode 2, counter 21
    <dbg> bt_mics_client.mics_client_write_aics_cp_cb: Write successful (0x00)
-   uart:~$ btaudio mics_client aics_set_automatic_input_gain 1
+   uart:~$ mics_client aics_set_automatic_input_gain 1
    <dbg> bt_mics_client.aics_notify_handler: Gain 10, mute 0, mode 3, counter 22
    <dbg> bt_mics_client.mics_client_write_aics_cp_cb: Write successful (0x00)
-   uart:~$ btaudio mics_client aics_set_gain 1 5
+   uart:~$ mics_client aics_set_gain 1 5
    <dbg> bt_mics_client.mics_client_write_aics_cp_cb: Write successful (0x00)
 
 
@@ -110,6 +110,6 @@ Setup
 
 .. code-block:: console
 
-   uart:~$ btaudio init
+   uart:~$ bt init
    uart:~$ bt advertise on
    Advertising started
