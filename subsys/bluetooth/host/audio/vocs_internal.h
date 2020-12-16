@@ -10,7 +10,12 @@
 #define ZEPHYR_INCLUDE_BLUETOOTH_AUDIO_VOCS_INTERNAL_
 #include <zephyr/types.h>
 
-#define VOCS_MAX_DESC_SIZE                      32
+
+#if defined(CONFIG_BT_VOCS)
+#define VOCS_MAX_DESC_SIZE CONFIG_BT_VOCS_MAX_OUTPUT_DESCRIPTION_SIZE
+#else
+#define VOCS_MAX_DESC_SIZE 0
+#endif /* CONFIG_BT_VOCS */
 
 /* VOCS opcodes */
 #define VOCS_OPCODE_SET_OFFSET                  0x01
@@ -55,7 +60,7 @@ struct bt_vocs {
 	uint8_t location;
 	uint8_t index;
 	bool initialized;
-	char output_desc[CONFIG_BT_VOCS_MAX_OUTPUT_DESCRIPTION_SIZE];
+	char output_desc[VOCS_MAX_DESC_SIZE];
 	struct bt_vocs_cb *cb;
 
 	struct bt_gatt_service *service_p;

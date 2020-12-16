@@ -13,6 +13,12 @@
 #include <zephyr/types.h>
 #include <bluetooth/gatt.h>
 
+#if defined(CONFIG_BT_AICS)
+#define AICS_MAX_DESC_SIZE CONFIG_BT_AICS_MAX_INPUT_DESCRIPTION_SIZE
+#else
+#define AICS_MAX_DESC_SIZE 0
+#endif /* CONFIG_BT_AICS */
+
 /* AICS opcodes */
 #define AICS_OPCODE_SET_GAIN                    0x01
 #define AICS_OPCODE_UNMUTE                      0x02
@@ -124,7 +130,7 @@ struct bt_aics {
 	uint8_t type;
 	uint8_t status;
 	uint8_t index;
-	char input_desc[CONFIG_BT_AICS_MAX_INPUT_DESCRIPTION_SIZE];
+	char input_desc[AICS_MAX_DESC_SIZE];
 	struct bt_aics_cb *cb;
 
 	struct bt_gatt_service *service_p;
