@@ -15,6 +15,8 @@
 
 #include "bt.h"
 
+static struct bt_vcs vcs;
+
 static void bt_vcs_state_cb(struct bt_conn *conn, int err, uint8_t volume,
 			    uint8_t mute)
 {
@@ -200,6 +202,8 @@ static int cmd_vcs_init(
 	}
 
 	bt_vcs_server_cb_register(&vcs_cbs);
+
+	bt_vcs_get(NULL, &vcs);
 	return result;
 }
 

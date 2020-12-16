@@ -426,7 +426,32 @@ void bt_vcs_server_cb_register(struct bt_vcs_cb_t *cb)
 
 #endif /* CONFIG_BT_VCS */
 
-#if defined(CONFIG_BT_VCS_CLIENT) || defined(CONFIG_BT_VCS)
+int bt_vcs_get(struct bt_conn *conn, struct bt_vcs *service)
+{
+
+#if defined(CONFIG_BT_VCS_CLIENT)
+	if (conn) {
+		return bt_vcs_client_service_get(conn, service);
+	}
+#endif /* CONFIG_BT_VCS_CLIENT */
+
+#if defined(CONFIG_BT_VCS)
+	if (!conn) {
+		if (!service) {
+			return -EINVAL;
+		}
+
+		service->vocs_cnt = ARRAY_SIZE(vcs_inst.vocs_insts);
+		service->vocs = vcs_inst.vocs_insts;
+
+		service->aics_cnt = ARRAY_SIZE(vcs_inst.aics_insts);
+		service->aics = vcs_inst.aics_insts;
+
+		return 0;
+	}
+#endif /* CONFIG_BT_VCS */
+	return -EOPNOTSUPP;
+}
 
 int bt_vcs_volume_step_set(uint8_t volume_step)
 {
@@ -924,4 +949,3 @@ int bt_vcs_aics_description_set(struct bt_conn *conn, uint8_t aics_index,
 #endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
-#endif /* CONFIG_BT_VCS_CLIENT || CONFIG_BT_VCS */

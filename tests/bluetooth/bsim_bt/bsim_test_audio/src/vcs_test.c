@@ -24,6 +24,8 @@ static uint8_t passes;
 #define AICS_DESC_SIZE 0
 #endif /* CONFIG_BT_AICS */
 
+static struct bt_vcs vcs;
+
 static volatile uint8_t g_volume;
 static volatile uint8_t g_mute;
 static volatile uint8_t g_flags;
@@ -484,6 +486,12 @@ static void test_standalone(void)
 	}
 
 	bt_vcs_server_cb_register(&vcs_cb);
+
+	err = bt_vcs_get(NULL, &vcs);
+	if (err) {
+		FAIL("VCS get failed (err %d)\n", err);
+		return;
+	}
 
 	printk("VCS initialized\n");
 

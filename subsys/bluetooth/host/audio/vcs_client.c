@@ -1107,6 +1107,31 @@ void bt_vcs_client_cb_register(struct bt_vcs_cb_t *cb)
 	vcs_client_cb = cb;
 }
 
+int bt_vcs_client_service_get(struct bt_conn *conn, struct bt_vcs *service)
+{
+	static struct bt_vocs *vocs[CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST];
+	static struct bt_aics *aics[CONFIG_BT_VCS_CLIENT_MAX_AICS_INST];
+
+	if (!service) {
+		return -EINVAL;
+	}
+
+	service->vocs_cnt = vcs_inst.vocs_inst_cnt;
+	for (int i = 0; i < vcs_inst.vocs_inst_cnt; i++) {
+		vocs[i] = (struct bt_vocs *)&vcs_inst.vocs[i];
+	}
+
+	service->aics_cnt = vcs_inst.aics_inst_cnt;
+	for (int i = 0; i < vcs_inst.aics_inst_cnt; i++) {
+		aics[i] = (struct bt_aics *)&vcs_inst.aics[i];
+	}
+
+	service->vocs = vocs;
+	service->aics = aics;
+
+	return 0;
+}
+
 int bt_vcs_client_read_volume_state(struct bt_conn *conn)
 {
 	int err;

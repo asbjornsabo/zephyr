@@ -14,6 +14,8 @@
 
 #include "bt.h"
 
+static struct bt_vcs vcs;
+
 static void bt_vcs_discover_cb(struct bt_conn *conn, int err,
 			       uint8_t vocs_count, uint8_t aics_count)
 {
@@ -22,6 +24,10 @@ static void bt_vcs_discover_cb(struct bt_conn *conn, int err,
 	} else {
 		shell_print(ctx_shell, "VCS discover done with %u AICS",
 			    aics_count);
+
+		if (bt_vcs_get(conn, &vcs)) {
+			shell_error(ctx_shell, "Could not get VCS context");
+		}
 	}
 }
 

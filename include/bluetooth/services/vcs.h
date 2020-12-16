@@ -47,6 +47,24 @@ struct bt_vcs_init {
 	struct bt_aics_init aics_init[VCS_AICS_CNT];
 };
 
+/** @brief VCS service instance
+ *
+ * Used for to represent a VCS service, either for a client
+ * or a server instance. The instance pointers either represent local
+ * server instances, or remote service instances.
+ */
+struct bt_vcs {
+	/** Number of Volume Offset Control Service instances */
+	uint8_t vocs_cnt;
+	/** Array of pointers to Volume Offset Control Service instances */
+	struct bt_vocs **vocs;
+
+	/** Number of Audio Input Control Service instances */
+	uint8_t aics_cnt;
+	/** Array of pointers to Audio Input Control Service instances */
+	struct bt_aics **aics;
+};
+
 /** @brief Initialize the Volume Control Service
  *
  *  This will enable the service and make it discoverable by clients.
@@ -57,6 +75,18 @@ struct bt_vcs_init {
  *  @return 0 if success, ERRNO on failure.
  */
 int bt_vcs_init(struct bt_vcs_init *init);
+
+/** @brief Get VCS service pointer
+ *
+ *  Returns a pointer to a struct that contains information about the VCS
+ *  instance, such as pointers to the VOCS or AICS instances.
+ *
+ *  @param conn          Connection to peer device, or NULL to get server value.
+ *  @param[out] service  Pointer to store the result in.
+ *
+ *  @return 0 if success, ERRNO on failure.
+ */
+int bt_vcs_get(struct bt_conn *conn, struct bt_vcs *service);
 
 /** @brief Deactivates a Audio Input Control Service instance.
  *
