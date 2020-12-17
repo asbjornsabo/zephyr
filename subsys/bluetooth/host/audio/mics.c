@@ -114,11 +114,11 @@ static ssize_t write_mute(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 static struct bt_gatt_attr mics_attrs[] = { BT_MICS_SERVICE_DEFINITION };
 static struct bt_gatt_service mics_svc;
 
-int bt_mics_init(struct bt_mics_init *init)
+static int prepare_aics_inst(struct bt_mics_init *init)
 {
-	int err;
 	int i;
 	int j;
+	int err;
 
 	for (j = 0, i = 0; i < ARRAY_SIZE(mics_attrs); i++) {
 		if (!bt_uuid_cmp(mics_attrs[i].uuid, BT_UUID_GATT_INCLUDE)) {
@@ -131,7 +131,7 @@ int bt_mics_init(struct bt_mics_init *init)
 			}
 
 			err = bt_aics_init(mics_inst.aics_insts[j],
-					   init ? &init->aics_init[j] : NULL);
+					   &init->aics_init[j]);
 			if (err) {
 				BT_DBG("Could not init AICS instance[%u]: %d",
 				       j, err);
@@ -146,6 +146,22 @@ int bt_mics_init(struct bt_mics_init *init)
 				break;
 			}
 		}
+	}
+
+	__ASSERT(j == CONFIG_BT_MICS_AICS_INSTANCE_COUNT,
+		 "Invalid AICS instance count");
+
+	return 0;
+}
+
+int bt_mics_init(struct bt_mics_init *init)
+{
+	int err;
+
+	__ASSERT(init, "MICS init cannot be NULL");
+
+	if (CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0) {
+		prepare_aics_inst(init);
 	}
 
 	mics_svc = (struct bt_gatt_service)BT_GATT_SERVICE(mics_attrs);
@@ -193,17 +209,19 @@ void bt_mics_server_cb_register(struct bt_mics_cb_t *cb)
 	int err;
 
 	mics_inst.cb = cb;
+	if (CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0) {
+		for (int i = 0; i < CONFIG_BT_MICS_AICS_INSTANCE_COUNT; i++) {
+			if (cb) {
+				err = bt_aics_cb_register(AICS_MICS_INDEX(i),
+							&mics_inst.cb->aics_cb);
+			} else {
+				err = bt_aics_cb_register(i, NULL);
+			}
 
-	for (int i = 0; i < CONFIG_BT_MICS_AICS_INSTANCE_COUNT; i++) {
-		if (cb) {
-			err = bt_aics_cb_register(AICS_MICS_INDEX(i),
-						  &mics_inst.cb->aics_cb);
-		} else {
-			err = bt_aics_cb_register(i, NULL);
-		}
-
-		if (err) {
-			BT_WARN("[%d] Could not register AICS callbacks", i);
+			if (err) {
+				BT_WARN("[%d] Could not register AICS "
+					"callbacks", i);
+			}
 		}
 	}
 }
