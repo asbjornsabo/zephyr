@@ -15,6 +15,8 @@
 
 #include "bt.h"
 
+static struct bt_mics mics;
+
 static void bt_mics_discover_cb(struct bt_conn *conn, int err,
 				uint8_t aics_count)
 {
@@ -23,6 +25,10 @@ static void bt_mics_discover_cb(struct bt_conn *conn, int err,
 	} else {
 		shell_print(ctx_shell, "MICS discover done with %u AICS",
 			    aics_count);
+
+		if (bt_mics_get(conn, &mics)) {
+			shell_error(ctx_shell, "Could not get MICS context");
+		}
 	}
 }
 

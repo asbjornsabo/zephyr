@@ -15,6 +15,8 @@
 
 #include "bt.h"
 
+static struct bt_mics mics;
+
 static void bt_mics_mute_cb(struct bt_conn *conn, int err, uint8_t mute)
 {
 	if (err) {
@@ -138,6 +140,8 @@ static int cmd_mics_init(
 	shell_print(shell, "MICS initialized", result);
 
 	bt_mics_server_cb_register(&mics_cbs);
+
+	bt_mics_get(NULL, &mics);
 	return result;
 }
 

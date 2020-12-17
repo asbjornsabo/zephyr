@@ -42,6 +42,19 @@ struct bt_mics_init {
 	struct bt_aics_init aics_init[MICS_AICS_CNT];
 };
 
+/** @brief MICS service instance
+ *
+ * Used for to represent a MICS service, either for a client
+ * or a server instance. The instance pointers either represent local
+ * server instances, or remote service instances.
+ */
+struct bt_mics {
+	/** Number of Audio Input Control Service instances */
+	uint8_t aics_cnt;
+	/** Array of pointers to Audio Input Control Service instances */
+	struct bt_aics **aics;
+};
+
 /** @brief Initialize the Microphone Input Control Service
  *
  *  This will enable the service and make it discoverable by clients.
@@ -52,6 +65,18 @@ struct bt_mics_init {
  *  @return 0 if success, ERRNO on failure.
  */
 int bt_mics_init(struct bt_mics_init *init);
+
+/** @brief Get MICS service pointer
+ *
+ *  Returns a pointer to a struct that contains information about the MICS
+ *  instance, such as pointers to the AICS instances.
+ *
+ *  @param conn          Connection to peer device, or NULL to get server value.
+ *  @param[out] service  Pointer to store the result in.
+ *
+ *  @return 0 if success, ERRNO on failure.
+ */
+int bt_mics_get(struct bt_conn *conn, struct bt_mics *service);
 
 /** @brief Callback function for @ref bt_mics_discover.
  *

@@ -154,6 +154,7 @@ static int prepare_aics_inst(struct bt_mics_init *init)
 	return 0;
 }
 
+/****************************** PUBLIC API ******************************/
 int bt_mics_init(struct bt_mics_init *init)
 {
 	int err;
@@ -175,8 +176,6 @@ int bt_mics_init(struct bt_mics_init *init)
 	return err;
 }
 
-
-/****************************** PUBLIC API ******************************/
 int bt_mics_aics_deactivate(uint8_t aics_index)
 {
 	if (aics_index >= CONFIG_BT_MICS_AICS_INSTANCE_COUNT) {
@@ -226,6 +225,29 @@ void bt_mics_server_cb_register(struct bt_mics_cb_t *cb)
 	}
 }
 #endif /* CONFIG_BT_MICS */
+
+int bt_mics_get(struct bt_conn *conn, struct bt_mics *service)
+{
+#if defined(CONFIG_BT_MICS_CLIENT)
+	if (conn) {
+		return bt_mics_client_service_get(conn, service);
+	}
+#endif /* CONFIG_BT_MICS_CLIENT */
+
+#if defined(CONFIG_BT_MICS)
+	if (!conn) {
+		if (!service) {
+			return -EINVAL;
+		}
+
+		service->aics_cnt = ARRAY_SIZE(mics_inst.aics_insts);
+		service->aics = mics_inst.aics_insts;
+
+		return 0;
+	}
+#endif /* CONFIG_BT_MICS */
+	return -EOPNOTSUPP;
+}
 
 int bt_mics_unmute(struct bt_conn *conn)
 {

@@ -481,6 +481,24 @@ void bt_mics_client_cb_register(struct bt_mics_cb_t *cb)
 	}
 }
 
+int bt_mics_client_service_get(struct bt_conn *conn, struct bt_mics *service)
+{
+	static struct bt_aics *aics[CONFIG_BT_MICS_CLIENT_MAX_AICS_INST];
+
+	if (!service) {
+		return -EINVAL;
+	}
+
+	service->aics_cnt = mics_inst.aics_inst_cnt;
+	for (int i = 0; i < mics_inst.aics_inst_cnt; i++) {
+		aics[i] = (struct bt_aics *)&mics_inst.aics[i];
+	}
+
+	service->aics = aics;
+
+	return 0;
+}
+
 int bt_mics_client_mute_get(struct bt_conn *conn)
 {
 	int err;
