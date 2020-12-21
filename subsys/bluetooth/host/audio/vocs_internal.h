@@ -36,6 +36,7 @@ struct vocs_client {
 	bool location_writable;
 	uint8_t location;
 	bool desc_writable;
+	bool active;
 
 	uint16_t start_handle;
 	uint16_t end_handle;
@@ -52,6 +53,7 @@ struct vocs_client {
 	uint8_t write_buf[sizeof(struct vocs_control_t)];
 	struct bt_gatt_write_params write_params;
 	struct bt_gatt_read_params read_params;
+	struct bt_vocs_cb *cb;
 };
 
 struct vocs_server {
@@ -70,5 +72,16 @@ struct bt_vocs {
 		struct vocs_client cli;
 	};
 };
+
+int bt_vocs_client_state_get(struct bt_conn *conn, struct bt_vocs *inst);
+int bt_vocs_client_state_set(struct bt_conn *conn, struct bt_vocs *inst,
+			     int16_t offset);
+int bt_vocs_client_location_get(struct bt_conn *conn, struct bt_vocs *inst);
+
+int bt_vocs_client_location_set(struct bt_conn *conn, struct bt_vocs *inst,
+				uint8_t location);
+int bt_vocs_client_description_get(struct bt_conn *conn, struct bt_vocs *inst);
+int bt_vocs_client_description_set(struct bt_conn *conn, struct bt_vocs *inst,
+				   const char *description);
 
 #endif /* ZEPHYR_INCLUDE_BLUETOOTH_AUDIO_VOCS_INTERNAL_ */

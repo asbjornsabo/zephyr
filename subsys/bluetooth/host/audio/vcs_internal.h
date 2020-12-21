@@ -41,8 +41,6 @@ int bt_vcs_client_unmute_volume_up(struct bt_conn *conn);
 int bt_vcs_client_set_volume(struct bt_conn *conn, uint8_t volume);
 int bt_vcs_client_unmute(struct bt_conn *conn);
 int bt_vcs_client_mute(struct bt_conn *conn);
-int bt_vcs_client_vocs_read_offset_state(struct bt_conn *conn,
-					 struct bt_vocs *inst);
 int bt_vcs_client_vocs_read_location(struct bt_conn *conn,
 				     struct bt_vocs *inst);
 int bt_vcs_client_vocs_set_location(struct bt_conn *conn, struct bt_vocs *inst,
@@ -77,4 +75,5 @@ int bt_vcs_client_aics_set_input_description(struct bt_conn *conn,
 					     uint8_t aics_index,
 					     const char *description);
 
+bool bt_vcs_client_valid_inst(struct bt_vocs *vocs);
 #endif /* ZEPHYR_INCLUDE_BLUETOOTH_AUDIO_VCS_INTERNAL_*/

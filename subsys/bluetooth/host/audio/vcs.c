@@ -19,16 +19,15 @@
 
 #include "vcs_internal.h"
 #include "aics_internal.h"
-#include "vocs_internal.h"
 
 #define BT_DBG_ENABLED IS_ENABLED(CONFIG_BT_DEBUG_VCS)
 #define LOG_MODULE_NAME bt_vcs
 #include "common/log.h"
 
+#if defined(CONFIG_BT_VCS)
+
 #define VCS_CP_LEN                      0x02
 #define VCS_CP_ABS_VOL_LEN              0x03
-
-#if defined(CONFIG_BT_VCS)
 
 #define VOLUME_DOWN(current_vol) \
 	((uint8_t)MAX(0, (int)current_vol - vcs_inst.volume_step))
@@ -334,6 +333,7 @@ static int prepare_aics_inst(struct bt_vcs_init *init)
 	return 0;
 }
 
+/****************************** PUBLIC API ******************************/
 int bt_vcs_init(struct bt_vcs_init *init)
 {
 	int err;
@@ -366,8 +366,6 @@ int bt_vcs_init(struct bt_vcs_init *init)
 	return err;
 }
 
-
-/****************************** PUBLIC API ******************************/
 int bt_vcs_aics_deactivate(uint8_t aics_index)
 {
 	if (aics_index >= CONFIG_BT_VCS_AICS_INSTANCE_COUNT) {
@@ -425,6 +423,23 @@ void bt_vcs_server_cb_register(struct bt_vcs_cb_t *cb)
 }
 
 #endif /* CONFIG_BT_VCS */
+
+#if defined(CONFIG_BT_VCS) || defined(CONFIG_BT_VCS_CLIENT)
+static bool valid_vocs_inst(struct bt_vocs *vocs)
+{
+	if (!vocs) {
+		return false;
+	}
+
+#if defined(CONFIG_BT_VCS)
+	for (int i = 0; i < ARRAY_SIZE(vcs_inst.vocs_insts); i++) {
+		if (vcs_inst.vocs_insts[i] == vocs) {
+			return true;
+		}
+	}
+#endif /* CONFIG_BT_VCS */
+	return false;
+}
 
 int bt_vcs_get(struct bt_conn *conn, struct bt_vcs *service)
 {
@@ -666,104 +681,88 @@ int bt_vcs_mute(struct bt_conn *conn)
 
 int bt_vcs_vocs_state_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-	if (conn) {
-		return bt_vcs_client_vocs_read_offset_state(conn, inst);
-	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
-
-#if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
-	if (!conn) {
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
+	    conn && bt_vcs_client_valid_inst(inst)) {
 		return bt_vocs_state_get(conn, inst);
 	}
-#endif /* CONFIG_BT_VCS_VOCS_INSTANCE_COUNT */
+
+	if (IS_ENABLED(CONFIG_BT_VCS_VOCS) && !conn && valid_vocs_inst(inst)) {
+		return bt_vocs_state_get(NULL, inst);
+	}
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_vocs_location_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-	if (conn) {
-		return bt_vcs_client_vocs_read_location(conn, inst);
-	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
-
-#if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
-	if (!conn) {
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
+	    conn && bt_vcs_client_valid_inst(inst)) {
 		return bt_vocs_location_get(conn, inst);
 	}
-#endif /* CONFIG_BT_VCS_VOCS_INSTANCE_COUNT */
+
+	if (IS_ENABLED(CONFIG_BT_VCS_VOCS) && !conn && valid_vocs_inst(inst)) {
+		return bt_vocs_location_get(NULL, inst);
+	}
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_vocs_location_set(struct bt_conn *conn, struct bt_vocs *inst,
 			     uint8_t location)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-	if (conn) {
-		return bt_vcs_client_vocs_set_location(conn, inst,
-						       location);
-	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
-
-#if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
-	if (!conn) {
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
+	    conn && bt_vcs_client_valid_inst(inst)) {
 		return bt_vocs_location_set(conn, inst, location);
 	}
-#endif /* CONFIG_BT_VCS_VOCS_INSTANCE_COUNT */
+
+	if (IS_ENABLED(CONFIG_BT_VCS_VOCS) && !conn && valid_vocs_inst(inst)) {
+		return bt_vocs_location_set(NULL, inst, location);
+	}
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_vocs_state_set(struct bt_conn *conn, struct bt_vocs *inst,
 			  int16_t offset)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-	if (conn) {
-		return bt_vcs_client_vocs_set_offset(
-			conn, inst, offset);
-	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
-
-#if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
-	if (!conn) {
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
+	    conn && bt_vcs_client_valid_inst(inst)) {
 		return bt_vocs_state_set(conn, inst, offset);
 	}
-#endif /* CONFIG_BT_VCS_VOCS_INSTANCE_COUNT */
+
+	if (IS_ENABLED(CONFIG_BT_VCS_VOCS) && !conn && valid_vocs_inst(inst)) {
+		return bt_vocs_state_set(NULL, inst, offset);
+	}
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_vocs_description_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-	if (conn) {
-		return bt_vcs_client_vocs_read_output_description(conn,
-								  inst);
-	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
-
-#if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
-	if (!conn) {
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
+	    conn && bt_vcs_client_valid_inst(inst)) {
 		return bt_vocs_description_get(conn, inst);
 	}
-#endif /* CONFIG_BT_VCS_VOCS_INSTANCE_COUNT */
+
+	if (IS_ENABLED(CONFIG_BT_VCS_VOCS) && !conn && valid_vocs_inst(inst)) {
+		return bt_vocs_description_get(NULL, inst);
+	}
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_vocs_description_set(struct bt_conn *conn, struct bt_vocs *inst,
 				const char *description)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-	if (conn) {
-		return bt_vcs_client_vocs_set_output_description(
-			conn, inst, description);
-	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
-
-#if CONFIG_BT_VCS_VOCS_INSTANCE_COUNT > 0
-	if (!conn) {
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
+	    conn && bt_vcs_client_valid_inst(inst)) {
 		return bt_vocs_description_set(conn, inst, description);
 	}
-#endif /* CONFIG_BT_VCS_VOCS_INSTANCE_COUNT */
+
+	if (IS_ENABLED(CONFIG_BT_VCS_VOCS) && !conn && valid_vocs_inst(inst)) {
+		return bt_vocs_description_set(NULL, inst, description);
+	}
+
 	return -EOPNOTSUPP;
 }
 
@@ -950,3 +949,4 @@ int bt_vcs_aics_description_set(struct bt_conn *conn, uint8_t aics_index,
 #endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
 	return -EOPNOTSUPP;
 }
+#endif /* CONFIG_BT_VCS || CONFIG_BT_VCS_CLIENT */

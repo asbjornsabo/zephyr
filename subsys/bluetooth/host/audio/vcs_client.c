@@ -16,10 +16,10 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/services/vcs.h>
+#include <bluetooth/services/vocs.h>
 
 #include "vcs_internal.h"
 #include "aics_internal.h"
-#include "vocs_internal.h"
 
 #define BT_DBG_ENABLED IS_ENABLED(CONFIG_BT_DEBUG_VCS_CLIENT)
 #define LOG_MODULE_NAME bt_vcs_client
@@ -46,8 +46,7 @@ struct vcs_instance_t {
 	struct bt_gatt_read_params read_params;
 
 	uint8_t vocs_inst_cnt;
-	/* TODO Split VOCS client from VCS */
-	struct bt_vocs vocs[CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST];
+	struct bt_vocs *vocs[CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST];
 	uint8_t aics_inst_cnt;
 	struct aics_instance_t aics[CONFIG_BT_VCS_CLIENT_MAX_AICS_INST];
 };
@@ -63,6 +62,21 @@ static struct aics_instance_t *cur_aics_inst;
 static struct vcs_instance_t vcs_inst;
 static struct bt_uuid_16 uuid = BT_UUID_INIT_16(0);
 static int vcs_client_common_vcs_cp(struct bt_conn *conn, uint8_t opcode);
+
+bool bt_vcs_client_valid_inst(struct bt_vocs *vocs)
+{
+	if (!vocs) {
+		return false;
+	}
+
+	for (int i = 0; i < ARRAY_SIZE(vcs_inst.vocs); i++) {
+		if (vcs_inst.vocs[i] == vocs) {
+			return true;
+		}
+	}
+
+	return false;
+}
 
 static uint8_t vcs_notify_handler(struct bt_conn *conn,
 				  struct bt_gatt_subscribe_params *params,
@@ -284,396 +298,6 @@ static void vcs_client_write_vcs_cp_cb(struct bt_conn *conn, uint8_t err,
 	vcs_cp_notify_app(conn, opcode, err);
 }
 
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-static struct bt_vocs *lookup_vocs_by_handle(uint16_t handle)
-{
-	for (int i = 0; i < vcs_inst.vocs_inst_cnt; i++) {
-		if (vcs_inst.vocs[i].cli.start_handle <= handle &&
-		    vcs_inst.vocs[i].cli.end_handle >= handle) {
-			return &vcs_inst.vocs[i];
-		}
-	}
-	BT_DBG("Could not find VOCS instance with handle 0x%04x", handle);
-	return NULL;
-}
-
-static uint8_t vocs_notify_handler(struct bt_conn *conn,
-				   struct bt_gatt_subscribe_params *params,
-				   const void *data, uint16_t length)
-{
-	uint16_t handle = params->value_handle;
-	struct bt_vocs *inst = lookup_vocs_by_handle(handle);
-	char desc[MIN(CONFIG_BT_L2CAP_RX_MTU, BT_ATT_MAX_ATTRIBUTE_LEN) + 1];
-
-	if (!inst) {
-		BT_DBG("Instance not found");
-		return BT_GATT_ITER_STOP;
-	}
-
-	if (data) {
-		if (handle == inst->cli.state_handle) {
-			if (length == sizeof(vcs_inst.state)) {
-				memcpy(&inst->cli.state, data, length);
-				BT_DBG("Inst %p: Offset %d, counter %u",
-				       inst,
-				       inst->cli.state.offset,
-				       inst->cli.state.change_counter);
-				if (vcs_client_cb &&
-				    vcs_client_cb->vocs_cb.state) {
-					vcs_client_cb->vocs_cb.state(
-						conn,
-						(struct bt_vocs *)inst, 0,
-						inst->cli.state.offset);
-				}
-			}
-		} else if (handle == inst->cli.desc_handle) {
-			if (length > BT_ATT_MAX_ATTRIBUTE_LEN) {
-				BT_DBG("Length (%u) too large", length);
-				return BT_GATT_ITER_CONTINUE;
-			}
-
-			memcpy(desc, data, length);
-			desc[length] = '\0';
-			BT_DBG("Inst %p: Output description: %s",
-			       inst, log_strdup(desc));
-			if (vcs_client_cb &&
-			    vcs_client_cb->vocs_cb.description) {
-				vcs_client_cb->vocs_cb.description(
-					conn, (struct bt_vocs *)inst,
-					0, desc);
-			}
-		} else if (handle == inst->cli.location_handle) {
-			if (length == sizeof(inst->cli.location)) {
-				memcpy(&inst->cli.location, data, length);
-				BT_DBG("Inst %p: Location %u",
-				       inst, inst->cli.location);
-				if (vcs_client_cb &&
-				    vcs_client_cb->vocs_cb.location) {
-					vcs_client_cb->vocs_cb.location(
-						conn,
-						(struct bt_vocs *)inst, 0,
-						inst->cli.location);
-				}
-			}
-		}
-	}
-	return BT_GATT_ITER_CONTINUE;
-}
-
-static uint8_t vcs_client_vocs_read_offset_state_cb(
-	struct bt_conn *conn, uint8_t err, struct bt_gatt_read_params *params,
-	const void *data, uint16_t length)
-{
-	uint8_t cb_err = err;
-	struct bt_vocs *inst =
-		lookup_vocs_by_handle(params->single.handle);
-
-	if (!inst) {
-		BT_DBG("Instance not found");
-		return BT_GATT_ITER_STOP;
-	}
-
-	BT_DBG("Inst %p: err: 0x%02X", inst, err);
-	inst->cli.busy = false;
-
-	if (data) {
-		if (length == sizeof(inst->cli.state)) {
-			memcpy(&inst->cli.state, data, length);
-			BT_DBG("Offset %d, counter %u",
-			       inst->cli.state.offset,
-			       inst->cli.state.change_counter);
-		} else {
-			BT_DBG("Invalid length %u (expected %zu)",
-			       length, sizeof(inst->cli.state));
-			cb_err = BT_ATT_ERR_INVALID_ATTRIBUTE_LEN;
-		}
-	}
-
-	if (vcs_client_cb && vcs_client_cb->vocs_cb.state) {
-		vcs_client_cb->vocs_cb.state(conn, (struct bt_vocs *)inst,
-					     cb_err, inst->cli.state.offset);
-	}
-
-	return BT_GATT_ITER_STOP;
-}
-
-static uint8_t vcs_client_vocs_read_location_cb(
-	struct bt_conn *conn, uint8_t err, struct bt_gatt_read_params *params,
-	const void *data, uint16_t length)
-{
-	uint8_t cb_err = err;
-	struct bt_vocs *inst =
-		lookup_vocs_by_handle(params->single.handle);
-
-	if (!inst) {
-		BT_DBG("Instance not found");
-		return BT_GATT_ITER_STOP;
-	}
-
-	BT_DBG("Inst %p: err: 0x%02X", inst, err);
-	inst->cli.busy = false;
-
-	if (data) {
-		if (length == sizeof(inst->cli.location)) {
-			memcpy(&inst->cli.location, data, length);
-			BT_DBG("Location %u", inst->cli.location);
-		} else {
-			BT_DBG("Invalid length %u (expected %zu)",
-			       length, sizeof(inst->cli.location));
-			cb_err = BT_ATT_ERR_INVALID_ATTRIBUTE_LEN;
-		}
-	}
-
-	if (vcs_client_cb && vcs_client_cb->vocs_cb.location) {
-		vcs_client_cb->vocs_cb.location(conn,
-						(struct bt_vocs *)inst,
-						cb_err, inst->cli.location);
-	}
-
-	return BT_GATT_ITER_STOP;
-}
-
-static void vocs_cp_notify_app(struct bt_conn *conn, struct bt_vocs *inst,
-			       uint8_t err)
-{
-	if (vcs_client_cb && vcs_client_cb->vocs_cb.set_offset) {
-		vcs_client_cb->vocs_cb.set_offset(conn, (struct bt_vocs *)inst,
-						  err);
-	}
-}
-
-static uint8_t internal_read_volume_offset_state_cb(
-	struct bt_conn *conn, uint8_t err, struct bt_gatt_read_params *params,
-	const void *data, uint16_t length)
-{
-	uint8_t cb_err = 0;
-	struct vocs_control_t *cp = (struct vocs_control_t *)vcs_inst.write_buf;
-	struct bt_vocs *inst =
-		lookup_vocs_by_handle(params->single.handle);
-
-	if (!inst) {
-		BT_ERR("Instance not found");
-		return BT_GATT_ITER_STOP;
-	}
-
-	if (err) {
-		BT_WARN("Volume state read failed: %d", err);
-		cb_err = BT_ATT_ERR_UNLIKELY;
-	} else if (data) {
-		if (length == sizeof(inst->cli.state)) {
-			int write_err;
-
-			memcpy(&inst->cli.state, data, length);
-			BT_DBG("Offset %d, counter %u",
-			       inst->cli.state.offset,
-			       inst->cli.state.change_counter);
-
-			/* clear busy flag to reuse function */
-			inst->cli.busy = false;
-			write_err = bt_vcs_client_vocs_set_offset(
-					conn, (struct bt_vocs *)inst,
-					cp->offset);
-			if (write_err) {
-				cb_err = BT_ATT_ERR_UNLIKELY;
-			}
-		} else {
-			BT_DBG("Invalid length %u (expected %zu)",
-			       length, sizeof(inst->cli.state));
-			cb_err = BT_ATT_ERR_UNLIKELY;
-		}
-	}
-
-	if (cb_err) {
-		inst->cli.busy = false;
-		vocs_cp_notify_app(conn, inst, BT_ATT_ERR_UNLIKELY);
-	}
-
-	return BT_GATT_ITER_STOP;
-}
-
-static void vcs_client_write_vocs_cp_cb(struct bt_conn *conn, uint8_t err,
-					struct bt_gatt_write_params *params)
-{
-	struct bt_vocs *inst =
-		lookup_vocs_by_handle(params->handle);
-
-	if (!inst) {
-		BT_DBG("Instance not found");
-		return;
-	}
-
-	BT_DBG("Inst %p: err: 0x%02X", inst, err);
-
-	if (err == VOCS_ERR_INVALID_COUNTER && inst->cli.state_handle) {
-		int read_err;
-
-		inst->cli.read_params.func =
-			internal_read_volume_offset_state_cb;
-		inst->cli.read_params.handle_count = 1;
-		inst->cli.read_params.single.handle = inst->cli.state_handle;
-		inst->cli.read_params.single.offset = 0U;
-
-		read_err = bt_gatt_read(conn, &inst->cli.read_params);
-
-		if (read_err) {
-			BT_WARN("Could not read Volume state: %d", read_err);
-		} else {
-			return;
-		}
-	}
-
-	inst->cli.busy = false;
-
-	if (vcs_client_cb && vcs_client_cb->vocs_cb.set_offset) {
-		vcs_client_cb->vocs_cb.set_offset(conn,
-						  (struct bt_vocs *)inst,
-						  err);
-	}
-}
-
-static uint8_t vcs_client_read_output_desc_cb(
-	struct bt_conn *conn, uint8_t err, struct bt_gatt_read_params *params,
-	const void *data, uint16_t length)
-{
-	uint8_t cb_err = err;
-	struct bt_vocs *inst =
-		lookup_vocs_by_handle(params->single.handle);
-	char desc[MIN(CONFIG_BT_L2CAP_RX_MTU, BT_ATT_MAX_ATTRIBUTE_LEN) + 1];
-
-	if (!inst) {
-		BT_DBG("Instance not found");
-		return BT_GATT_ITER_STOP;
-	}
-
-	BT_DBG("Inst %p: err: 0x%02X", inst, err);
-	inst->cli.busy = false;
-
-	if (data) {
-		BT_HEXDUMP_DBG(data, length, "Output description read");
-
-		if (length > BT_ATT_MAX_ATTRIBUTE_LEN) {
-			BT_DBG("Length (%u) too large", length);
-			return BT_GATT_ITER_CONTINUE;
-		}
-
-		/* TODO: Handle long reads */
-		memcpy(desc, data, length);
-		desc[length] = '\0';
-		BT_DBG("Output description: %s", log_strdup(desc));
-	}
-
-	if (vcs_client_cb && vcs_client_cb->vocs_cb.description) {
-		vcs_client_cb->vocs_cb.description(conn,
-						   (struct bt_vocs *)inst,
-						   cb_err, desc);
-	}
-
-	return BT_GATT_ITER_STOP;
-}
-
-static uint8_t vocs_discover_func(struct bt_conn *conn,
-			       const struct bt_gatt_attr *attr,
-			       struct bt_gatt_discover_params *params)
-{
-	int err;
-	struct bt_gatt_chrc *chrc;
-	static uint8_t next_idx;
-	uint8_t aics_cnt;
-	uint8_t vocs_cnt;
-	struct bt_gatt_subscribe_params *sub_params = NULL;
-
-	if (!attr) {
-		aics_cnt = vcs_inst.aics_inst_cnt;
-		vocs_cnt = vcs_inst.vocs_inst_cnt;
-		next_idx++;
-		BT_DBG("Setup complete for VOCS %u / %u",
-		       next_idx, vcs_inst.vocs_inst_cnt);
-		(void)memset(params, 0, sizeof(*params));
-
-		if (next_idx < vcs_inst.vocs_inst_cnt) {
-			/* Discover characteristics */
-			cur_inst = &vcs_inst.vocs[next_idx];
-			discover_params.start_handle =
-				cur_inst->cli.start_handle;
-			discover_params.end_handle = cur_inst->cli.end_handle;
-			discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
-			discover_params.func = vocs_discover_func;
-
-			err = bt_gatt_discover(conn, &discover_params);
-			if (err) {
-				BT_DBG("Discover failed (err %d)", err);
-				cur_vcs_inst = NULL;
-				cur_aics_inst = NULL;
-				cur_inst = NULL;
-				if (vcs_client_cb && vcs_client_cb->discover) {
-					vcs_client_cb->discover(conn, err,
-								aics_cnt,
-								vocs_cnt);
-				}
-			}
-		} else {
-			cur_vcs_inst = NULL;
-			cur_aics_inst = NULL;
-			cur_inst = NULL;
-			if (vcs_client_cb && vcs_client_cb->discover) {
-				vcs_client_cb->discover(conn, 0, aics_cnt,
-							vocs_cnt);
-			}
-		}
-		return BT_GATT_ITER_STOP;
-	}
-
-	BT_DBG("[ATTRIBUTE] handle 0x%04X", attr->handle);
-
-	if (params->type == BT_GATT_DISCOVER_CHARACTERISTIC) {
-		chrc = (struct bt_gatt_chrc *)attr->user_data;
-		if (!bt_uuid_cmp(chrc->uuid, BT_UUID_VOCS_STATE)) {
-			BT_DBG("Volume offset state");
-			cur_inst->cli.state_handle = chrc->value_handle;
-			sub_params = &cur_inst->cli.state_sub_params;
-		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_VOCS_LOCATION)) {
-			BT_DBG("Location");
-			cur_inst->cli.location_handle = chrc->value_handle;
-			if (chrc->properties & BT_GATT_CHRC_NOTIFY) {
-				sub_params =
-					&cur_inst->cli.location_sub_params;
-			}
-			if (chrc->properties &
-				BT_GATT_CHRC_WRITE_WITHOUT_RESP) {
-				cur_inst->cli.location_writable = true;
-			}
-		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_VOCS_CONTROL)) {
-			BT_DBG("Control point");
-			cur_inst->cli.control_handle = chrc->value_handle;
-		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_VOCS_DESCRIPTION)) {
-			BT_DBG("Description");
-			cur_inst->cli.desc_handle = chrc->value_handle;
-			if (chrc->properties & BT_GATT_CHRC_NOTIFY) {
-				sub_params = &cur_inst->cli.desc_sub_params;
-			}
-			if (chrc->properties &
-				BT_GATT_CHRC_WRITE_WITHOUT_RESP) {
-				cur_inst->cli.desc_writable = true;
-			}
-		}
-
-		if (sub_params) {
-			sub_params->value = BT_GATT_CCC_NOTIFY;
-			sub_params->value_handle = chrc->value_handle;
-			/*
-			 * TODO: Don't assume that CCC is at handle + 2;
-			 * do proper discovery;
-			 */
-			sub_params->ccc_handle = attr->handle + 2;
-			sub_params->notify = vocs_notify_handler;
-			bt_gatt_subscribe(conn, sub_params);
-		}
-	}
-
-	return BT_GATT_ITER_CONTINUE;
-}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
-
 #if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 
 static uint8_t aics_discover_func(struct bt_conn *conn,
@@ -718,31 +342,7 @@ static uint8_t aics_discover_func(struct bt_conn *conn,
 								vocs_cnt);
 				}
 			}
-		}
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-		else if (vcs_inst.vocs_inst_cnt) {
-			/* Discover characteristics */
-			cur_inst = &vcs_inst.vocs[0];
-			discover_params.start_handle =
-				cur_inst->cli.start_handle;
-			discover_params.end_handle = cur_inst->cli.end_handle;
-			discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
-			discover_params.func = vocs_discover_func;
-
-			err = bt_gatt_discover(conn, &discover_params);
-			if (err) {
-				BT_DBG("Discover failed (err %d)", err);
-				cur_vcs_inst = NULL;
-				if (vcs_client_cb && vcs_client_cb->discover) {
-					vcs_client_cb->discover(conn, err,
-								aics_cnt,
-								vocs_cnt);
-				}
-			}
-
-		}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
-		else {
+		} else {
 			cur_vcs_inst = NULL;
 			if (vcs_client_cb && vcs_client_cb->discover) {
 				vcs_client_cb->discover(conn, 0, aics_cnt,
@@ -842,29 +442,6 @@ static uint8_t vcs_discover_include_func(struct bt_conn *conn,
 			}
 		} else
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-		if (vcs_inst.vocs_inst_cnt) {
-			/* Discover characteristics */
-			cur_inst = &vcs_inst.vocs[0];
-			discover_params.start_handle =
-				cur_inst->cli.start_handle;
-			discover_params.end_handle = cur_inst->cli.end_handle;
-			discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
-			discover_params.func = vocs_discover_func;
-
-			err = bt_gatt_discover(conn, &discover_params);
-			if (err) {
-				BT_DBG("Discover failed (err %d)", err);
-				cur_vcs_inst = NULL;
-				cur_aics_inst = NULL;
-				cur_inst = NULL;
-				if (vcs_client_cb && vcs_client_cb->discover) {
-					vcs_client_cb->discover(conn, err, 0,
-								0);
-				}
-			}
-		} else
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
 		{
 			cur_vcs_inst = NULL;
 			if (vcs_client_cb && vcs_client_cb->discover) {
@@ -896,12 +473,30 @@ static uint8_t vcs_discover_include_func(struct bt_conn *conn,
 		if (!bt_uuid_cmp(include->uuid, BT_UUID_VOCS) &&
 		    vcs_inst.vocs_inst_cnt <
 			CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST) {
-			inst_idx = vcs_inst.vocs_inst_cnt;
-			vcs_inst.vocs[inst_idx].cli.start_handle =
-				include->start_handle;
-			vcs_inst.vocs[inst_idx].cli.end_handle =
-				include->end_handle;
-			vcs_inst.vocs_inst_cnt++;
+
+			struct bt_vocs_discover_param param = {
+				.start_handle = include->start_handle,
+				.end_handle = include->end_handle,
+			};
+
+			/* Update discover params so we can continue where we
+			 * left off after bt_vocs_discover
+			 */
+			discover_params.start_handle = attr->handle + 1;
+
+			inst_idx = vcs_inst.vocs_inst_cnt++;
+			err = bt_vocs_discover(conn, vcs_inst.vocs[inst_idx],
+					       &param);
+			if (err) {
+				BT_DBG("VOCS Discover failed (err %d)", err);
+				cur_vcs_inst = NULL;
+				cur_aics_inst = NULL;
+				if (vcs_client_cb && vcs_client_cb->discover) {
+					vcs_client_cb->discover(conn, err, 0,
+								0);
+				}
+			}
+			return BT_GATT_ITER_STOP;
 		}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST */
 	}
@@ -1074,10 +669,45 @@ static int vcs_client_common_vcs_cp(struct bt_conn *conn, uint8_t opcode)
 	return err;
 }
 
+#if defined(CONFIG_BT_VOCS_CLIENT)
+static void vocs_discover_cb(struct bt_conn *conn, struct bt_vocs *inst,
+			     int err)
+{
+	if (!err) {
+		/* Continue discovery of included services */
+		err = bt_gatt_discover(conn, &discover_params);
+	}
+
+	if (err) {
+		BT_DBG("Discover failed (err %d)", err);
+		cur_vcs_inst = NULL;
+		if (vcs_client_cb && vcs_client_cb->discover) {
+			vcs_client_cb->discover(conn, err, 0, 0);
+		}
+	}
+}
+#endif /* CONFIG_BT_VOCS_CLIENT */
+
+static void vcs_client_reset(struct bt_conn *conn)
+{
+	memset(&vcs_inst.state, 0, sizeof(vcs_inst.state));
+	vcs_inst.flags = 0;
+	vcs_inst.start_handle = 0;
+	vcs_inst.end_handle = 0;
+	vcs_inst.state_handle = 0;
+	vcs_inst.control_handle = 0;
+	vcs_inst.flag_handle = 0;
+	vcs_inst.vocs_inst_cnt = 0;
+	vcs_inst.aics_inst_cnt = 0;
+
+	/* It's okay if these fail */
+	(void)bt_gatt_unsubscribe(conn, &vcs_inst.state_sub_params);
+	(void)bt_gatt_unsubscribe(conn, &vcs_inst.flag_sub_params);
+}
+
 int bt_vcs_discover(struct bt_conn *conn)
 {
-	/* TODO: Read states in init */
-
+	static bool initialized;
 	/*
 	 * This will initiate a discover procedure. The procedure will do the
 	 * following sequence:
@@ -1090,29 +720,67 @@ int bt_vcs_discover(struct bt_conn *conn)
 
 	if (!conn) {
 		return -ENOTCONN;
-	} else if (cur_vcs_inst) {
+	} else if (cur_vcs_inst || vcs_inst.busy) {
 		return -EBUSY;
 	}
 
 	cur_aics_inst = NULL;
 	cur_inst = NULL;
 	memset(&discover_params, 0, sizeof(discover_params));
-	memset(&vcs_inst, 0, sizeof(vcs_inst));
+	vcs_client_reset(conn);
 	memcpy(&uuid, BT_UUID_VCS, sizeof(uuid));
 	for (int i = 0; i < ARRAY_SIZE(vcs_inst.aics); i++) {
 		bt_aics_client_unregister(AICS_CLI_VCS_CLIENT_INDEX(i));
 	}
+
+	if (IS_ENABLED(CONFIG_BT_VOCS_CLIENT) &&
+	    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0) {
+		for (int i = 0; i < ARRAY_SIZE(vcs_inst.vocs); i++) {
+			if (!initialized) {
+				vcs_inst.vocs[i] =
+					bt_vocs_client_free_instance_get();
+
+				if (!vcs_inst.vocs[i]) {
+					return -ENOMEM;
+				}
+
+				bt_vocs_client_cb_register(
+					vcs_inst.vocs[i],
+					&vcs_client_cb->vocs_cb);
+			}
+		}
+	}
+
 	discover_params.func = primary_discover_func;
 	discover_params.uuid = &uuid.uuid;
 	discover_params.type = BT_GATT_DISCOVER_PRIMARY;
 	discover_params.start_handle = FIRST_HANDLE;
 	discover_params.end_handle = LAST_HANDLE;
+
+	initialized = true;
 	return bt_gatt_discover(conn, &discover_params);
 }
 
 void bt_vcs_client_cb_register(struct bt_vcs_cb_t *cb)
 {
 	vcs_client_cb = cb;
+
+#if defined(CONFIG_BT_VOCS_CLIENT)
+	if (cb) {
+		if (cb->vocs_cb.discover) {
+			BT_WARN("VCS overwrote discover callback of VOCS");
+		}
+		cb->vocs_cb.discover = vocs_discover_cb;
+
+		for (int i = 0; i < ARRAY_SIZE(vcs_inst.vocs); i++) {
+			if (vcs_inst.vocs[i]) {
+				bt_vocs_client_cb_register(vcs_inst.vocs[i],
+							   &cb->vocs_cb);
+			}
+		}
+
+	}
+#endif /* CONFIG_BT_VOCS_CLIENT */
 }
 
 int bt_vcs_client_service_get(struct bt_conn *conn, struct bt_vcs *service)
@@ -1126,7 +794,7 @@ int bt_vcs_client_service_get(struct bt_conn *conn, struct bt_vcs *service)
 
 	service->vocs_cnt = vcs_inst.vocs_inst_cnt;
 	for (int i = 0; i < vcs_inst.vocs_inst_cnt; i++) {
-		vocs[i] = (struct bt_vocs *)&vcs_inst.vocs[i];
+		vocs[i] = vcs_inst.vocs[i];
 	}
 
 	service->aics_cnt = vcs_inst.aics_inst_cnt;
@@ -1257,217 +925,6 @@ int bt_vcs_client_unmute(struct bt_conn *conn)
 int bt_vcs_client_mute(struct bt_conn *conn)
 {
 	return vcs_client_common_vcs_cp(conn, VCS_OPCODE_MUTE);
-}
-
-int bt_vcs_client_vocs_read_offset_state(struct bt_conn *conn,
-					 struct bt_vocs *inst)
-{
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-	int err;
-
-	if (!conn) {
-		return -ENOTCONN;
-	} else if (!inst) {
-		return -EINVAL;
-	}
-
-	if (!inst->cli.state_handle) {
-		BT_DBG("Handle not set");
-		return -EINVAL;
-	} else if (inst->cli.busy) {
-		return -EBUSY;
-	}
-
-	inst->cli.read_params.func = vcs_client_vocs_read_offset_state_cb;
-	inst->cli.read_params.handle_count = 1;
-	inst->cli.read_params.single.handle = inst->cli.state_handle;
-	inst->cli.read_params.single.offset = 0U;
-
-	err = bt_gatt_read(conn, &inst->cli.read_params);
-	if (!err) {
-		inst->cli.busy = true;
-	}
-	return err;
-#else
-	BT_DBG("Not supported");
-	return -EOPNOTSUPP;
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0 */
-}
-
-int bt_vcs_client_vocs_set_location(struct bt_conn *conn, struct bt_vocs *inst,
-				    uint8_t location)
-{
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-	int err;
-
-	if (!conn) {
-		return -ENOTCONN;
-	} else if (!inst) {
-		return -EINVAL;
-	}
-
-	if (!inst->cli.location_handle) {
-		BT_DBG("Handle not set");
-		return -EINVAL;
-	} else if (inst->cli.busy) {
-		return -EBUSY;
-	} else if (!inst->cli.location_writable) {
-		BT_DBG("Location is not writable on peer service instance");
-		return -EPERM;
-	}
-
-	memcpy(inst->cli.write_buf, &location, sizeof(location));
-
-	err = bt_gatt_write_without_response(conn, inst->cli.location_handle,
-					     inst->cli.write_buf,
-					     sizeof(location), false);
-
-	return err;
-#else
-	BT_DBG("Not supported");
-	return -EOPNOTSUPP;
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0 */
-}
-
-int bt_vcs_client_vocs_read_location(struct bt_conn *conn, struct bt_vocs *inst)
-{
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-	int err;
-
-	if (!conn) {
-		return -ENOTCONN;
-	} else if (!inst) {
-		return -EINVAL;
-	}
-
-	if (!inst->cli.location_handle) {
-		BT_DBG("Handle not set");
-		return -EINVAL;
-	} else if (inst->cli.busy) {
-		return -EBUSY;
-	}
-
-	inst->cli.read_params.func = vcs_client_vocs_read_location_cb;
-	inst->cli.read_params.handle_count = 1;
-	inst->cli.read_params.single.handle = inst->cli.location_handle;
-	inst->cli.read_params.single.offset = 0U;
-
-	err = bt_gatt_read(conn, &inst->cli.read_params);
-	if (!err) {
-		inst->cli.busy = true;
-	}
-	return err;
-#else
-	BT_DBG("Not supported");
-	return -EOPNOTSUPP;
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0 */
-}
-
-int bt_vcs_client_vocs_set_offset(struct bt_conn *conn,
-				  struct bt_vocs *inst,
-				  int16_t offset)
-{
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-	int err;
-	struct vocs_control_t cp = {
-		.opcode = VOCS_OPCODE_SET_OFFSET,
-		.offset = offset
-	};
-
-	if (!conn) {
-		return -ENOTCONN;
-	} else if (!inst) {
-		return -EINVAL;
-	} else if (!inst->cli.control_handle) {
-		BT_DBG("Handle not set");
-		return -EINVAL;
-	} else if (inst->cli.busy) {
-		return -EBUSY;
-	}
-
-	cp.counter = inst->cli.state.change_counter;
-
-	memcpy(inst->cli.write_buf, &cp, sizeof(cp));
-	inst->cli.write_params.offset = 0;
-	inst->cli.write_params.data = inst->cli.write_buf;
-	inst->cli.write_params.length = sizeof(cp);
-	inst->cli.write_params.handle = inst->cli.control_handle;
-	inst->cli.write_params.func = vcs_client_write_vocs_cp_cb;
-
-	err = bt_gatt_write(conn, &inst->cli.write_params);
-	if (!err) {
-		inst->cli.busy = true;
-	}
-	return err;
-#else
-	BT_DBG("Not supported");
-	return -EOPNOTSUPP;
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0 */
-}
-
-int bt_vcs_client_vocs_read_output_description(struct bt_conn *conn,
-					       struct bt_vocs *inst)
-{
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-	int err;
-
-	if (!conn) {
-		return -ENOTCONN;
-	} else if (!inst) {
-		return -EINVAL;
-	} else if (!inst->cli.desc_handle) {
-		BT_DBG("Handle not set");
-		return -EINVAL;
-	} else if (inst->cli.busy) {
-		return -EBUSY;
-	}
-
-	inst->cli.read_params.func = vcs_client_read_output_desc_cb;
-	inst->cli.read_params.handle_count = 1;
-	inst->cli.read_params.single.handle = inst->cli.desc_handle;
-	inst->cli.read_params.single.offset = 0U;
-
-	err = bt_gatt_read(conn, &inst->cli.read_params);
-	if (!err) {
-		inst->cli.busy = true;
-	}
-	return err;
-#else
-	BT_DBG("Not supported");
-	return -EOPNOTSUPP;
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0 */
-}
-
-int bt_vcs_client_vocs_set_output_description(struct bt_conn *conn,
-					      struct bt_vocs *inst,
-					      const char *description)
-{
-#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
-	int err;
-
-	if (!conn) {
-		return -ENOTCONN;
-	} else if (!inst) {
-		return -EINVAL;
-	} else if (!inst->cli.desc_handle) {
-		BT_DBG("Handle not set");
-		return -EINVAL;
-	} else if (inst->cli.busy) {
-		return -EBUSY;
-	} else if (!inst->cli.desc_writable) {
-		BT_DBG("Description is not writable on peer service instance");
-		return -EPERM;
-	}
-
-	err = bt_gatt_write_without_response(conn, inst->cli.desc_handle,
-					     description, strlen(description),
-					     false);
-
-	return err;
-#else
-	BT_DBG("Not supported");
-	return -EOPNOTSUPP;
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0 */
 }
 
 int bt_vcs_client_aics_read_input_state(struct bt_conn *conn,

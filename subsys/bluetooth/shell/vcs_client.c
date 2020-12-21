@@ -145,17 +145,6 @@ static void bt_vcs_aics_automatic_mode_cb(struct bt_conn *conn, uint8_t index,
 	}
 }
 
-static void bt_vocs_set_offset_cb(struct bt_conn *conn, struct bt_vocs *inst,
-				  int err)
-{
-	if (err) {
-		shell_error(ctx_shell, "Set offset failed (%d) for inst %p",
-			    err, inst);
-	} else {
-		shell_print(ctx_shell, "Offset set for inst %p", inst);
-	}
-}
-
 static void bt_vcs_state_cb(struct bt_conn *conn, int err, uint8_t volume,
 			    uint8_t mute)
 {
@@ -174,6 +163,7 @@ static void bt_vcs_flags_cb(struct bt_conn *conn, int err, uint8_t flags)
 	}
 }
 
+#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 static void bt_vcs_aics_state_cb(struct bt_conn *conn, uint8_t aics_index,
 				 int err, int8_t gain, uint8_t mute,
 				 uint8_t mode)
@@ -240,6 +230,20 @@ static void bt_vcs_aics_description_cb(struct bt_conn *conn, uint8_t aics_index,
 			    aics_index, description);
 	}
 }
+#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0 */
+
+#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
+static void bt_vocs_set_offset_cb(struct bt_conn *conn, struct bt_vocs *inst,
+				  int err)
+{
+	if (err) {
+		shell_error(ctx_shell, "Set offset failed (%d) for inst %p",
+			    err, inst);
+	} else {
+		shell_print(ctx_shell, "Offset set for inst %p", inst);
+	}
+}
+
 static void bt_vocs_state_cb(struct bt_conn *conn, struct bt_vocs *inst,
 			     int err, int16_t offset)
 {
@@ -275,7 +279,7 @@ static void bt_vocs_description_cb(struct bt_conn *conn, struct bt_vocs *inst,
 			    inst, description);
 	}
 }
-
+#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0 */
 
 static struct bt_vcs_cb_t vcs_cbs = {
 	.discover = bt_vcs_discover_cb,
@@ -291,7 +295,7 @@ static struct bt_vcs_cb_t vcs_cbs = {
 	.flags = bt_vcs_flags_cb,
 
 	/* Audio Input Control Service */
-
+#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
 	.aics_cb = {
 		.state = bt_vcs_aics_state_cb,
 		.gain_setting = bt_vcs_aics_gain_setting_cb,
@@ -304,13 +308,15 @@ static struct bt_vcs_cb_t vcs_cbs = {
 		.set_manual_mode = bt_vcs_aics_set_manual_mode_cb,
 		.set_auto_mode = bt_vcs_aics_automatic_mode_cb,
 	},
-
+#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0 */
+#if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
 	.vocs_cb = {
 		.state = bt_vocs_state_cb,
 		.location = bt_vocs_location_cb,
 		.description = bt_vocs_description_cb,
 		.set_offset = bt_vocs_set_offset_cb,
 	}
+#endif /* CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0 */
 };
 
 static int cmd_vcs_client_discover(

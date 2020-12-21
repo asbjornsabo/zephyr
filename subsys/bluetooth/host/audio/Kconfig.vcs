@@ -24,6 +24,13 @@ config BT_VCS_VOCS_INSTANCE_COUNT
 	  This option sets the number of instances of Volume Offset Control
 	  Services.
 
+config BT_VCS_VOCS
+	bool # Hidden
+	default y if BT_VCS_VOCS_INSTANCE_COUNT > 0
+	help
+	  This hidden option makes it possible to easily check if VOCS is
+	  enabled for VCS.
+
 config BT_VCS_AICS_INSTANCE_COUNT
 	int "Audio Input Control Service instance count for VCS"
 	default 0
@@ -64,10 +71,17 @@ if BT_VCS_CLIENT
 config BT_VCS_CLIENT_MAX_VOCS_INST
 	int "Maximum number of VOCS instances to setup"
 	default 0
-	range 0 3
+	range 0 BT_VOCS_CLIENT_MAX_INSTANCE_COUNT
 	help
 	  Sets the maximum number of Volume Offset Control Service (VOCS)
 	  instances to setup and use.
+
+config BT_VCS_CLIENT_VOCS
+	bool # Hidden
+	default y if BT_VCS_CLIENT_MAX_VOCS_INST > 0
+	help
+	  This hidden option makes it possible to easily check if VOCS is
+	  enabled for VCS client.
 
 config BT_VCS_CLIENT_MAX_AICS_INST
 	int "Maximum number of AICS instances to setup"
