@@ -392,7 +392,7 @@ void bt_vcs_server_cb_register(struct bt_vcs_cb_t *cb)
 
 	vcs_inst.cb = cb;
 
-	if (IS_ENABLED(CONFIG_BT_VCS_AICS_INSTANCE_COUNT)) {
+	if (IS_ENABLED(CONFIG_BT_VCS_AICS)) {
 		for (int i = 0; i < CONFIG_BT_VCS_AICS_INSTANCE_COUNT; i++) {
 			if (cb) {
 				err = bt_aics_cb_register(AICS_VCS_INDEX(i),

@@ -32,6 +32,13 @@ config BT_VCS_AICS_INSTANCE_COUNT
 	  This option sets the number of instances of Audio Input Control
 	  Services for VCS.
 
+config BT_VCS_AICS
+	bool # Hidden
+	default y if BT_VCS_AICS_INSTANCE_COUNT > 0
+	help
+	  This hidden option makes it possible to easily check if AICS is
+	  enabled for VCS.
+
 ############# DEBUG #############
 
 config BT_DEBUG_VCS
