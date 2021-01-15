@@ -42,6 +42,8 @@ static volatile uint8_t g_aics_gain_min;
 static volatile bool g_aics_active = 1;
 static char g_aics_desc[AICS_DESC_SIZE];
 static volatile bool g_cb;
+static struct bt_conn *g_conn;
+static bool g_is_connected;
 
 static void vcs_state_cb(
 	struct bt_conn *conn, int err, uint8_t volume, uint8_t mute)
@@ -363,6 +365,27 @@ static int test_aics_standalone(void)
 	return 0;
 }
 
+
+static void connected(struct bt_conn *conn, uint8_t err)
+{
+	char addr[BT_ADDR_LE_STR_LEN];
+
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+	if (err) {
+		FAIL("Failed to connect to %s (%u)\n", addr, err);
+		return;
+	}
+	printk("Connected to %s\n", addr);
+	g_conn = conn;
+	g_is_connected = true;
+}
+
+static struct bt_conn_cb conn_callbacks = {
+	.connected = connected,
+	.disconnected = disconnected,
+};
+
 static int test_vocs_standalone(void)
 {
 	int err;
@@ -629,12 +652,86 @@ static void test_standalone(void)
 	PASS("VCS passed\n");
 }
 
+static void test_main(void)
+{
+	int err;
+	struct bt_vcs_init vcs_init;
+	char input_desc[CONFIG_BT_VCS_AICS_INSTANCE_COUNT][16];
+	char output_desc[CONFIG_BT_VCS_VOCS_INSTANCE_COUNT][16];
+
+	err = bt_enable(NULL);
+	if (err) {
+		FAIL("Bluetooth init failed (err %d)\n", err);
+		return;
+	}
+
+	printk("Bluetooth initialized\n");
+
+	memset(&vcs_init, 0, sizeof(vcs_init));
+
+	for (int i = 0; i < ARRAY_SIZE(vcs_init.vocs_init); i++) {
+		vcs_init.vocs_init[i].location_writable = true;
+		vcs_init.vocs_init[i].desc_writable = true;
+		snprintf(output_desc[i], sizeof(output_desc[i]),
+			 "Output %d", i + 1);
+		vcs_init.vocs_init[i].output_desc = output_desc[i];
+	}
+
+	for (int i = 0; i < ARRAY_SIZE(vcs_init.aics_init); i++) {
+		vcs_init.aics_init[i].desc_writable = true;
+		snprintf(input_desc[i], sizeof(input_desc[i]),
+			 "Input %d", i + 1);
+		vcs_init.aics_init[i].input_desc = input_desc[i];
+		vcs_init.aics_init[i].input_type = AICS_INPUT_TYPE_DIGITAL;
+		vcs_init.aics_init[i].input_state = g_aics_active;
+		vcs_init.aics_init[i].mode = AICS_MODE_MANUAL;
+		vcs_init.aics_init[i].units = 1;
+		vcs_init.aics_init[i].min_gain = 0;
+		vcs_init.aics_init[i].max_gain = 100;
+	}
+
+	err = bt_vcs_init(&vcs_init);
+	if (err) {
+		FAIL("VCS init failed (err %d)\n", err);
+		return;
+	}
+
+	bt_vcs_server_cb_register(&vcs_cb);
+	bt_conn_cb_register(&conn_callbacks);
+
+	err = bt_vcs_get(NULL, &vcs);
+	if (err) {
+		FAIL("VCS get failed (err %d)\n", err);
+		return;
+	}
+
+	printk("VCS initialized\n");
+
+	err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, 1, NULL, 0);
+	if (err) {
+		FAIL("Advertising failed to start (err %d)\n", err);
+		return;
+	}
+
+	printk("Advertising successfully started\n");
+
+	WAIT_FOR(g_is_connected);
+
+	PASS("VCS passed\n");
+}
+
 static const struct bst_test_instance test_vcs[] = {
 	{
 		.test_id = "vcs_standalone",
 		.test_post_init_f = test_init,
 		.test_tick_f = test_tick,
 		.test_main_f = test_standalone
+	},
+	{
+		.test_id = "vcs",
+		.test_post_init_f = test_init,
+		.test_tick_f = test_tick,
+		.test_main_f = test_main
 	},
 	BSTEST_END_MARKER
 };
