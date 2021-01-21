@@ -431,7 +431,7 @@ static ssize_t write_control_point(struct bt_conn *conn,
 	} else if (!len) {
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
 	} else if (!BASS_VALID_OPCODE(cp->opcode)) {
-		return BT_GATT_ERR(BT_ATT_ERR_VALUE_NOT_ALLOWED);
+		return BT_GATT_ERR(BASS_ERR_OPCODE_NOT_SUPPORTED);
 	}
 
 	bass_client = get_bass_client(conn);
