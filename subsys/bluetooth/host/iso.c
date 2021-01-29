@@ -273,6 +273,9 @@ void bt_iso_cleanup(struct bt_conn *conn)
 	if (!iso->acl) {
 		goto done;
 	}
+	__ASSERT_NO_MSG(conn->type == BT_CONN_TYPE_ISO);
+
+	BT_DBG("%p", conn);
 
 	/* If ACL is still connected there are channels to serve that means the
 	 * connection is still in use.
