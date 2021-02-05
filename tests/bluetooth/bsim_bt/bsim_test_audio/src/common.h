@@ -57,7 +57,8 @@
 		}							\
 	} while (0)
 
-extern const struct bt_data ad[];
+#define AD_SIZE 1
+extern const struct bt_data ad[AD_SIZE];
 
 void device_found(const bt_addr_le_t *addr, int8_t rssi, uint8_t type,
 		  struct net_buf_simple *ad);

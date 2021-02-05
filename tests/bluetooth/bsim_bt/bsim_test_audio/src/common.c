@@ -12,7 +12,7 @@
 extern enum bst_result_t bst_result;
 struct bt_conn *default_conn;
 
-const struct bt_data ad[] = {
+const struct bt_data ad[AD_SIZE] = {
 	BT_DATA_BYTES(BT_DATA_FLAGS, (BT_LE_AD_GENERAL | BT_LE_AD_NO_BREDR))
 };
 
