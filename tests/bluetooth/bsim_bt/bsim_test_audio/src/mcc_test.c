@@ -21,6 +21,7 @@
 #include <bluetooth/mcc.h>
 
 #include "../../../../subsys/bluetooth/host/audio/mpl.h"
+#include "../../../../subsys/bluetooth/host/audio/otc.h"
 
 #include "common.h"
 
@@ -31,10 +32,15 @@ static uint8_t passes;
 static struct bt_conn *default_conn;
 static struct bt_mcc_cb_t mcc_cb;
 
+uint64_t g_current_track_object_id;
+
 CREATE_FLAG(ble_is_initialized);
 CREATE_FLAG(ble_link_is_ready);
 CREATE_FLAG(mcc_is_initialized);
 CREATE_FLAG(discovery_done);
+CREATE_FLAG(current_track_object_id_read);
+CREATE_FLAG(object_selected);
+CREATE_FLAG(metadata_read);
 
 
 static void mcc_init_cb(struct bt_conn *conn, int err)
@@ -59,11 +65,50 @@ static void mcc_discover_mcs_cb(struct bt_conn *conn, int err)
 	SET_FLAG(discovery_done);
 }
 
+static void mcc_current_track_obj_id_read_cb(struct bt_conn *conn, int err,
+					     uint64_t id)
+{
+	if (err) {
+		FAIL("Current Track Object ID read failed (%d)\n", err);
+		return;
+	}
+
+	printk("Current Track Object ID read succeeded\n");
+	g_current_track_object_id = id;
+	SET_FLAG(current_track_object_id_read);
+}
+
+static void mcc_otc_obj_selected_cb(struct bt_conn *conn, int err)
+{
+	if (err) {
+		FAIL("Selecting object failed (%d)\n", err);
+		return;
+	}
+
+	printk("Selecting object succeeded\n");
+	SET_FLAG(object_selected);
+}
+
+static void mcc_otc_obj_metadata_cb(struct bt_conn *conn, int err)
+{
+	if (err) {
+		FAIL("Reading object metadata failed (%d)\n", err);
+		return;
+	}
+
+	printk("Reading object metadata succeeded\n");
+	SET_FLAG(metadata_read);
+}
+
+
 int do_mcc_init(void)
 {
 	/* Set up the callbacks */
 	mcc_cb.init             = &mcc_init_cb;
 	mcc_cb.discover_mcs     = &mcc_discover_mcs_cb;
+	mcc_cb.current_track_obj_id_read = &mcc_current_track_obj_id_read_cb;
+	mcc_cb.otc_obj_selected = &mcc_otc_obj_selected_cb;
+	mcc_cb.otc_obj_metadata = &mcc_otc_obj_metadata_cb;
 
 	/* Initialize the module */
 	return bt_mcc_init(default_conn, &mcc_cb);
@@ -137,6 +182,54 @@ void test_main(void)
 	}
 
 	WAIT_FOR_FLAG(discovery_done);
+
+	/* Read current track object ID */
+	err = bt_mcc_read_current_track_obj_id(default_conn);
+	if (err) {
+		FAIL("Failed to read current track object ID: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(current_track_object_id_read);
+
+	/* Select the object */
+	/* TODO: Fix the instance pointer - it is neither valid nor used */
+	err = bt_otc_select_id(default_conn, bt_mcc_otc_inst(0),
+			       g_current_track_object_id);
+	if (err) {
+		FAIL("Failed to select object\n");
+		return;
+	}
+
+	WAIT_FOR_FLAG(object_selected);
+
+	/* Read the object metadata */
+	/* TODO: Fix the instance pointer - it is neither valid nor used */
+	err = bt_otc_obj_metadata_read(default_conn, bt_mcc_otc_inst(0),
+				       BT_OTC_METADATA_REQ_ALL);
+	if (err) {
+		FAIL("Failed to read object metadata\n");
+		return;
+	}
+
+	WAIT_FOR_FLAG(metadata_read);
+
+
+	err = bt_mcc_otc_read_current_track_object(default_conn);
+
+	if (err) {
+		FAIL("Failed to current track object\n");
+		return;
+	}
+
+	/* TODO */
+	/* In principle, this should also result in a callback. */
+	/* But there is no application level callback for reading the current */
+	/* track yet. */
+	/* Therefore, the test ends here for now, without verifying that the */
+	/* object was actually returned to us. */
+
+	printk("Succeeded to read current track object\n");
 
 	PASS("MCC passed\n");
 }
