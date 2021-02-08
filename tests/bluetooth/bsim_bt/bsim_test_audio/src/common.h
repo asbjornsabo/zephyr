@@ -31,6 +31,13 @@
 
 #define WAIT_FOR(cond) while (!(cond)) { k_sleep(K_MSEC(1)); }
 
+#define CREATE_FLAG(flag) static atomic_t flag = (atomic_t)false
+#define SET_FLAG(flag) (void)atomic_set(&flag, (atomic_t)true)
+#define UNSET_FLAG(flag) (void)atomic_set(&flag, (atomic_t)false)
+#define WAIT_FOR_FLAG(flag)	while (!(bool)atomic_get(&flag)) {   \
+					(void)k_sleep(K_MSEC(1)); \
+				}
+
 #define FAIL(...)							\
 	do {								\
 		bst_result = Failed;					\
