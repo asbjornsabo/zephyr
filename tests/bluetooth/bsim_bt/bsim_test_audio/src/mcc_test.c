@@ -33,6 +33,41 @@ static struct bt_mcc_cb_t mcc_cb;
 
 CREATE_FLAG(ble_is_initialized);
 CREATE_FLAG(ble_link_is_ready);
+CREATE_FLAG(mcc_is_initialized);
+CREATE_FLAG(discovery_done);
+
+
+static void mcc_init_cb(struct bt_conn *conn, int err)
+{
+	if (err) {
+		FAIL("MCC init failed (%d)\n", err);
+		return;
+	}
+
+	printk("MCC init succeeded\n");
+	SET_FLAG(mcc_is_initialized);
+}
+
+static void mcc_discover_mcs_cb(struct bt_conn *conn, int err)
+{
+	if (err) {
+		FAIL("Discovery of MCS failed (%d)\n", err);
+		return;
+	}
+
+	printk("Discovery of MCS succeeded\n");
+	SET_FLAG(discovery_done);
+}
+
+int do_mcc_init(void)
+{
+	/* Set up the callbacks */
+	mcc_cb.init             = &mcc_init_cb;
+	mcc_cb.discover_mcs     = &mcc_discover_mcs_cb;
+
+	/* Initialize the module */
+	return bt_mcc_init(default_conn, &mcc_cb);
+}
 
 /* Callback after Bluetoot initialization attempt */
 static void bt_ready(int err)
@@ -91,6 +126,17 @@ void test_main(void)
 	}
 
 	WAIT_FOR_FLAG(ble_link_is_ready);
+
+	do_mcc_init();
+	WAIT_FOR_FLAG(mcc_is_initialized);
+
+	/* Discover MCS, subscribe to notifications */
+	err = bt_mcc_discover_mcs(default_conn, true);
+	if (err) {
+		FAIL("Failed to start discovery of MCS: %d\n", err);
+	}
+
+	WAIT_FOR_FLAG(discovery_done);
 
 	PASS("MCC passed\n");
 }

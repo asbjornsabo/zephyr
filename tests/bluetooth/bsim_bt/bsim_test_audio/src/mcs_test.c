@@ -76,6 +76,14 @@ static void test_main(void)
 
 	bt_conn_cb_register(&conn_callbacks);
 
+	/* Initialize media player */
+	err = mpl_init();
+	if (err) {
+		FAIL("Initializing MPL failed (err %d)", err);
+		return;
+	}
+
+	/* Initialize Bluetooth, get connected */
 	err = bt_enable(bt_ready);
 	if (err) {
 		FAIL("Bluetooth init failed (err %d)\n", err);
