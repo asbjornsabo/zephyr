@@ -36,6 +36,11 @@ extern "C" {
 #define BT_MICS_ERR_MUTE_DISABLED               0x80
 #define BT_MICS_ERR_VAL_OUT_OF_RANGE            0x81
 
+/** Microphone Input Control Service mute states */
+#define BT_MICS_MUTE_UNMUTED                       0x00
+#define BT_MICS_MUTE_MUTED                         0x01
+#define BT_MICS_MUTE_DISABLED                      0x02
+
 /** @brief Initializing structure for Microphone Input Control Service */
 struct bt_mics_init {
 	/** Initializing structure for Audio Input Control Services */

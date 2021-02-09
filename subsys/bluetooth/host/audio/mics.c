@@ -23,10 +23,6 @@
 #define LOG_MODULE_NAME bt_mics
 #include "common/log.h"
 
-#define MICS_MUTE_UNMUTED		0x00
-#define MICS_MUTE_MUTED			0x01
-#define MICS_MUTE_DISABLED		0x02
-
 #if defined(CONFIG_BT_MICS)
 struct mics_inst_t {
 	uint8_t mute;
@@ -67,11 +63,12 @@ static ssize_t write_mute(struct bt_conn *conn, const struct bt_gatt_attr *attr,
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
 	}
 
-	if ((conn && *val == MICS_MUTE_DISABLED) || *val > MICS_MUTE_DISABLED) {
+	if ((conn && *val == BT_MICS_MUTE_DISABLED) ||
+	    *val > BT_MICS_MUTE_DISABLED) {
 		return BT_GATT_ERR(BT_MICS_ERR_VAL_OUT_OF_RANGE);
 	}
 
-	if (conn && mics_inst.mute == MICS_MUTE_DISABLED) {
+	if (conn && mics_inst.mute == BT_MICS_MUTE_DISABLED) {
 		return BT_GATT_ERR(BT_MICS_ERR_MUTE_DISABLED);
 	}
 
@@ -205,7 +202,7 @@ int bt_mics_aics_activate(struct bt_aics *inst)
 
 int bt_mics_mute_disable(void)
 {
-	uint8_t val = MICS_MUTE_DISABLED;
+	uint8_t val = BT_MICS_MUTE_DISABLED;
 	int err = write_mute(NULL, NULL, &val, sizeof(val), 0, 0);
 
 	return err > 0 ? 0 : err;
@@ -269,7 +266,7 @@ int bt_mics_unmute(struct bt_conn *conn)
 
 #if defined(CONFIG_BT_MICS)
 	if (!conn) {
-		uint8_t val = MICS_MUTE_UNMUTED;
+		uint8_t val = BT_MICS_MUTE_UNMUTED;
 		int err = write_mute(NULL, NULL, &val, sizeof(val), 0, 0);
 
 		return err > 0 ? 0 : err;
@@ -288,7 +285,7 @@ int bt_mics_mute(struct bt_conn *conn)
 
 #if defined(CONFIG_BT_MICS)
 	if (!conn) {
-		uint8_t val = MICS_MUTE_MUTED;
+		uint8_t val = BT_MICS_MUTE_MUTED;
 		int err = write_mute(NULL, NULL, &val, sizeof(val), 0, 0);
 
 		return err > 0 ? 0 : err;
