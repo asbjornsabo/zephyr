@@ -81,6 +81,7 @@ struct aics_client {
 	uint8_t change_counter;
 	uint8_t mode;
 	bool desc_writable;
+	bool active;
 
 	uint16_t start_handle;
 	uint16_t end_handle;
@@ -143,38 +144,22 @@ uint8_t aics_client_notify_handler(struct bt_conn *conn,
 
 int bt_aics_client_register(struct bt_aics *inst);
 int bt_aics_client_unregister(struct bt_aics *inst);
-int bt_aics_client_input_state_get(struct bt_conn *conn, struct bt_aics *inst);
+int bt_aics_client_state_get(struct bt_conn *conn, struct bt_aics *inst);
 int bt_aics_client_gain_setting_get(struct bt_conn *conn, struct bt_aics *inst);
-int bt_aics_client_input_type_get(struct bt_conn *conn, struct bt_aics *inst);
-int bt_aics_client_input_status_get(struct bt_conn *conn, struct bt_aics *inst);
-int bt_aics_client_input_unmute(struct bt_conn *conn, struct bt_aics *inst);
-int bt_aics_client_input_mute(struct bt_conn *conn, struct bt_aics *inst);
-int bt_aics_client_manual_input_gain_set(struct bt_conn *conn,
+int bt_aics_client_type_get(struct bt_conn *conn, struct bt_aics *inst);
+int bt_aics_client_status_get(struct bt_conn *conn, struct bt_aics *inst);
+int bt_aics_client_unmute(struct bt_conn *conn, struct bt_aics *inst);
+int bt_aics_client_mute(struct bt_conn *conn, struct bt_aics *inst);
+int bt_aics_client_manual_gain_set(struct bt_conn *conn,
 					 struct bt_aics *inst);
-int bt_aics_client_automatic_input_gain_set(struct bt_conn *conn,
+int bt_aics_client_automatic_gain_set(struct bt_conn *conn,
 					    struct bt_aics *inst);
 int bt_aics_client_gain_set(struct bt_conn *conn, struct bt_aics *inst,
 			    int8_t gain);
-int bt_aics_client_input_description_get(struct bt_conn *conn,
+int bt_aics_client_description_get(struct bt_conn *conn,
 					 struct bt_aics *inst);
-int bt_aics_client_input_description_set(struct bt_conn *conn,
+int bt_aics_client_description_set(struct bt_conn *conn,
 					 struct bt_aics *inst,
 					 const char *description);
-
-int bt_aics_deactivate(struct bt_aics *inst);
-int bt_aics_activate(struct bt_aics *inst);
-int bt_aics_cb_register(struct bt_aics *inst, struct bt_aics_cb *cb);
-int bt_aics_input_state_get(struct bt_aics *inst);
-int bt_aics_gain_setting_get(struct bt_aics *inst);
-int bt_aics_input_type_get(struct bt_aics *inst);
-int bt_aics_input_status_get(struct bt_aics *inst);
-int bt_aics_input_unmute(struct bt_aics *inst);
-int bt_aics_input_mute(struct bt_aics *inst);
-int bt_aics_manual_input_gain_set(struct bt_aics *inst);
-int bt_aics_automatic_input_gain_set(struct bt_aics *inst);
-int bt_aics_gain_set(struct bt_aics *inst, int8_t gain);
-int bt_aics_input_description_get(struct bt_aics *inst);
-int bt_aics_input_description_set(struct bt_aics *inst,
-				  const char *description);
 
 #endif /* ZEPHYR_INCLUDE_BLUETOOTH_AUDIO_AICS_INTERNAL_ */

@@ -88,29 +88,6 @@ int bt_vcs_init(struct bt_vcs_init *init);
  */
 int bt_vcs_get(struct bt_conn *conn, struct bt_vcs *service);
 
-/** @brief Deactivates a Audio Input Control Service instance.
- *
- *  Audio Input Control Services are activated by default, but this will allow
- *  the server deactivate a Audio Input Control Service.
- *
- *  @param inst          Pointer to the Audio Input Control Service instance.
- *
- *  @return 0 if success, ERRNO on failure.
- */
-int bt_vcs_aics_deactivate(struct bt_aics *inst);
-
-/** @brief Activates a Audio Input Control Service instance.
- *
- *  Audio Input Control Services are activated by default, but this will allow
- *  the server reactivate a Audio Input Control Service instance after it has
- *  been deactivated with @ref bt_vcs_aics_deactivate.
- *
- *  @param inst          Pointer to the Audio Input Control Service instance.
- *
- *  @return 0 if success, ERRNO on failure.
- */
-int bt_vcs_aics_activate(struct bt_aics *inst);
-
 /** @brief Callback function for bt_vcs_discover
  *
  *  @param conn          The connection that was used to discover VCS.
@@ -342,6 +319,29 @@ int bt_vcs_vocs_description_get(struct bt_conn *conn, struct bt_vocs *inst);
  */
 int bt_vcs_vocs_description_set(struct bt_conn *conn, struct bt_vocs *inst,
 				const char *description);
+
+/** @brief Deactivates a Audio Input Control Service instance.
+ *
+ *  Audio Input Control Services are activated by default, but this will allow
+ *  the server deactivate a Audio Input Control Service.
+ *
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 if success, ERRNO on failure.
+ */
+int bt_vcs_aics_deactivate(struct bt_aics *inst);
+
+/** @brief Activates a Audio Input Control Service instance.
+ *
+ *  Audio Input Control Services are activated by default, but this will allow
+ *  the server reactivate a Audio Input Control Service instance after it has
+ *  been deactivated with @ref bt_vcs_aics_deactivate.
+ *
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 if success, ERRNO on failure.
+ */
+int bt_vcs_aics_activate(struct bt_aics *inst);
 
 /** @brief Read the Audio Input Control Service input state.
  *

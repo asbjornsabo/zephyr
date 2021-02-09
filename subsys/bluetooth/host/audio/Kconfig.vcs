@@ -91,6 +91,13 @@ config BT_VCS_CLIENT_MAX_AICS_INST
 	  Sets the maximum number of Audio Input Control Service (AICS)
 	  instances to setup and use.
 
+config BT_VCS_CLIENT_AICS
+	bool # Hidden
+	default y if BT_VCS_CLIENT_MAX_AICS_INST > 0
+	help
+	  This hidden option makes it possible to easily check if AICS is
+	  enabled for VCS client.
+
 ############# DEBUG #############
 
 config BT_DEBUG_VCS_CLIENT

@@ -182,7 +182,7 @@ static void bt_mics_aics_description_cb(struct bt_conn *conn,
 }
 
 static struct bt_mics_cb_t mics_cbs = {
-	.init = bt_mics_discover_cb,
+	.discover = bt_mics_discover_cb,
 	.mute_write = bt_mics_mute_write_cb,
 
 	.mute = bt_mics_mute_cb,

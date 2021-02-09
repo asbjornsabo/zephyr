@@ -13,27 +13,6 @@ int bt_mics_client_service_get(struct bt_conn *conn, struct bt_mics *service);
 int bt_mics_client_mute_get(struct bt_conn *conn);
 int bt_mics_client_mute(struct bt_conn *conn);
 int bt_mics_client_unmute(struct bt_conn *conn);
-
-int bt_mics_client_aics_input_state_get(struct bt_conn *conn,
-					struct bt_aics *inst);
-int bt_mics_client_aics_gain_setting_get(struct bt_conn *conn,
-					 struct bt_aics *inst);
-int bt_mics_client_aics_input_type_get(struct bt_conn *conn,
-				       struct bt_aics *inst);
-int bt_mics_client_aics_input_status_get(struct bt_conn *conn,
-					 struct bt_aics *inst);
-int bt_mics_client_aics_input_unmute(struct bt_conn *conn, struct bt_aics *inst);
-int bt_mics_client_aics_input_mute(struct bt_conn *conn, struct bt_aics *inst);
-int bt_mics_client_aics_manual_input_gain_set(struct bt_conn *conn,
-					      struct bt_aics *inst);
-int bt_mics_client_aics_automatic_input_gain_set(struct bt_conn *conn,
-						 struct bt_aics *inst);
-int bt_mics_client_aics_gain_set(struct bt_conn *conn, struct bt_aics *inst,
-				 int8_t gain);
-int bt_mics_client_aics_input_description_get(struct bt_conn *conn,
-					      struct bt_aics *inst);
-int bt_mics_client_aics_input_description_set(struct bt_conn *conn,
-					      struct bt_aics *inst,
-					      const char *description);
+bool bt_mics_client_valid_aics_inst(struct bt_aics *aics);
 
 #endif /* ZEPHYR_INCLUDE_BLUETOOTH_AUDIO_MICS_INTERNAL_ */

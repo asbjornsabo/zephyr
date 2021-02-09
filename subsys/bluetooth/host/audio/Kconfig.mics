@@ -25,6 +25,13 @@ config BT_MICS_AICS_INSTANCE_COUNT
 	  This option sets the number of instances of Audio Input Control
 	  Services for MICS.
 
+config BT_MICS_AICS
+	bool # Hidden
+	default y if BT_MICS_AICS_INSTANCE_COUNT > 0
+	help
+	  This hidden option makes it possible to easily check if AICS is
+	  enabled for MICS.
+
 ############# DEBUG #############
 
 config BT_DEBUG_MICS
@@ -53,6 +60,13 @@ config BT_MICS_CLIENT_MAX_AICS_INST
 	help
 	  Sets the maximum number of Audio Input Control Service (AICS)
 	  instances to setup and use.
+
+config BT_MICS_CLIENT_AICS
+	bool # Hidden
+	default y if BT_MICS_CLIENT_MAX_AICS_INST > 0
+	help
+	  This hidden option makes it possible to easily check if AICS is
+	  enabled for MICS client.
 
 ############# DEBUG #############
 

@@ -315,8 +315,6 @@ static uint8_t vocs_discover_func(struct bt_conn *conn,
 		BT_DBG("Discovery complete for VOCS %p", inst);
 		(void)memset(params, 0, sizeof(*params));
 
-		BT_DBG("%p %p", inst->cli.cb, inst->cli.cb->discover);
-
 		if (inst->cli.cb && inst->cli.cb->discover) {
 			int err = valid_inst_discovered(inst) ? 0 : -ENOENT;
 

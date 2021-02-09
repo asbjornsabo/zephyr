@@ -20,7 +20,6 @@
 
 #include <zephyr/types.h>
 #include <bluetooth/services/aics.h>
-#include <bluetooth/services/vocs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -119,7 +118,7 @@ typedef void (*bt_mics_mute_write_cb_t)(
 
 struct bt_mics_cb_t {
 #if defined(CONFIG_BT_MICS_CLIENT)
-	bt_mics_discover_cb_t           init;
+	bt_mics_discover_cb_t           discover;
 	bt_mics_mute_write_cb_t         mute_write;
 #endif /* CONFIG_BT_MICS_CLIENT */
 

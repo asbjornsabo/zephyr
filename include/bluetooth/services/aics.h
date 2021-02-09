@@ -94,6 +94,21 @@ struct bt_aics_init {
 	char *input_desc;
 };
 
+/** @brief Structure for discovering a Audio Input Control Service instance.
+ */
+struct bt_aics_discover_param {
+	/** @brief The start handle of the discovering.
+	 *
+	 * Typically the @p start_handle of a @ref bt_gatt_include.
+	 */
+	uint16_t start_handle;
+	/** @brief The end handle of the discovering.
+	 *
+	 * Typically the @p end_handle of a @ref bt_gatt_include.
+	 */
+	uint16_t end_handle;
+};
+
 /** @brief Get the service declaration attribute.
  *
  *  The first service attribute returned can be included in any other
@@ -211,6 +226,19 @@ typedef void (*bt_aics_status_cb_t)(
 typedef void (*bt_aics_description_cb_t)(
 	struct bt_conn *conn, struct bt_aics *inst, int err, char *description);
 
+/** @brief Callback function for bt_aics_discover.
+ *
+ *  This callback will usually be overwritten by the primary service that
+ *  includes the Audio Input Control Service client.
+ *
+ *  @param conn         Connection to peer device, or NULL if local server read.
+ *  @param inst         The instance pointer.
+ *  @param err          Error value. 0 on success, GATT error or ERRNO on fail.
+ *                      For notifications, this will always be 0.
+ */
+typedef void (*bt_aics_discover_cb_t)(
+	struct bt_conn *conn, struct bt_aics *inst, int err);
+
 struct bt_aics_cb {
 	bt_aics_state_cb_t                 state;
 	bt_aics_gain_setting_cb_t          gain_setting;
@@ -219,6 +247,7 @@ struct bt_aics_cb {
 	bt_aics_description_cb_t           description;
 
 #if defined(CONFIG_BT_AICS_CLIENT)
+	bt_aics_discover_cb_t              discover;
 	bt_aics_write_cb_t                 set_gain;
 	bt_aics_write_cb_t                 unmute;
 	bt_aics_write_cb_t                 mute;
@@ -226,6 +255,179 @@ struct bt_aics_cb {
 	bt_aics_write_cb_t                 set_auto_mode;
 #endif /* CONFIG_BT_AICS_CLIENT */
 };
+
+
+/** @brief Discover a Audio Input Control Service.
+ *
+ * Attempts to discover a Audio Input Control Service on a server given the
+ * @p param.
+ *
+ * @param conn  Connection to the peer with the Audio Input Control Service.
+ * @param inst  Pointer to the Audio Input Control Service client instance.
+ * @param param Pointer to the parameters.
+ *
+ * @return 0 on success, ERRNO on fail.
+ */
+int bt_aics_discover(struct bt_conn *conn, struct bt_aics *inst,
+		     const struct bt_aics_discover_param *param);
+
+/** @brief Deactivates a Audio Input Control Service instance.
+ *
+ *  Audio Input Control Services are activated by default, but this will allow
+ *  the server deactivate a Audio Input Control Service.
+ *
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 if success, ERRNO on failure.
+ */
+int bt_aics_deactivate(struct bt_aics *inst);
+
+/** @brief Activates a Audio Input Control Service instance.
+ *
+ *  Audio Input Control Services are activated by default, but this will allow
+ *  the server reactivate a Audio Input Control Service instance after it has
+ *  been deactivated with @ref bt_aics_deactivate.
+ *
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 if success, ERRNO on failure.
+ */
+int bt_aics_activate(struct bt_aics *inst);
+
+/** @brief Read the Audio Input Control Service input state.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to read local server value.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_aics_state_get(struct bt_conn *conn, struct bt_aics *inst);
+
+/** @brief Read the Audio Input Control Service gain settings.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to read local server value.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_aics_gain_setting_get(struct bt_conn *conn, struct bt_aics *inst);
+
+/** @brief Read the Audio Input Control Service input type.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to read local server value.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_aics_type_get(struct bt_conn *conn, struct bt_aics *inst);
+
+/** @brief Read the Audio Input Control Service input status.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to read local server value.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_aics_status_get(struct bt_conn *conn, struct bt_aics *inst);
+
+/** @brief Unmute the Audio Input Control Service input.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to read local server value.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_aics_unmute(struct bt_conn *conn, struct bt_aics *inst);
+
+/** @brief Mute the Audio Input Control Service input.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to read local server value.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_aics_mute(struct bt_conn *conn, struct bt_aics *inst);
+
+/** @brief Set input gain to manual.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to set local server value.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_aics_manual_gain_set(struct bt_conn *conn, struct bt_aics *inst);
+
+/** @brief Set the input gain to automatic.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to set local server value.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_aics_automatic_gain_set(struct bt_conn *conn, struct bt_aics *inst);
+
+/** @brief Set the input gain.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to set local server value.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *  @param gain          The gain in dB to set (-128 to 127).
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_aics_gain_set(struct bt_conn *conn, struct bt_aics *inst, int8_t gain);
+
+/** @brief Read the Audio Input Control Service description.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to read local server value.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_aics_description_get(struct bt_conn *conn, struct bt_aics *inst);
+
+/** @brief Set the Audio Input Control Service description.
+ *
+ *  @param conn          Connection to peer device,
+ *                       or NULL to set local server value.
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *  @param description   The description to set.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_aics_description_set(struct bt_conn *conn, struct bt_aics *inst,
+			    const char *description);
+
+/** @brief Register callbacks for the Audio Input Control Service.
+ *
+ *  @param inst          Pointer to the Audio Input Control Service instance.
+ *  @param cb            Pointer to the callback structure.
+ *
+ *  @return 0 on success, GATT error value on fail.
+ */
+int bt_aics_cb_register(struct bt_aics *inst, struct bt_aics_cb *cb);
+
+/** @brief Get a new Audio Input Control Service client instance.
+ *
+ * @return Pointer to the instance, or NULL if no free instances are left.
+ */
+struct bt_aics *bt_aics_client_free_instance_get(void);
+
+/** @brief Registers the callbacks for the Audio Input Control Service client.
+ *
+ *  @param inst  Pointer to the Audio Input Control Service client instance.
+ *  @param cb    Pointer to the callback structure.
+ */
+void bt_aics_client_cb_register(struct bt_aics *inst, struct bt_aics_cb *cb);
 
 #ifdef __cplusplus
 }

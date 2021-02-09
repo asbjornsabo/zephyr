@@ -16,9 +16,10 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/services/vcs.h>
+#include <bluetooth/services/vocs.h>
+#include <bluetooth/services/aics.h>
 
 #include "vcs_internal.h"
-#include "aics_internal.h"
 
 #define BT_DBG_ENABLED IS_ENABLED(CONFIG_BT_DEBUG_VCS)
 #define LOG_MODULE_NAME bt_vcs
@@ -443,6 +444,22 @@ static bool valid_vocs_inst(struct bt_vocs *vocs)
 	return false;
 }
 
+static bool valid_aics_inst(struct bt_aics *aics)
+{
+	if (!aics) {
+		return false;
+	}
+
+#if defined(CONFIG_BT_VCS)
+	for (int i = 0; i < ARRAY_SIZE(vcs_inst.aics_insts); i++) {
+		if (vcs_inst.aics_insts[i] == aics) {
+			return true;
+		}
+	}
+#endif /* CONFIG_BT_VCS */
+	return false;
+}
+
 int bt_vcs_get(struct bt_conn *conn, struct bt_vcs *service)
 {
 
@@ -684,7 +701,7 @@ int bt_vcs_mute(struct bt_conn *conn)
 int bt_vcs_vocs_state_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
-	    conn && bt_vcs_client_valid_inst(inst)) {
+	    conn && bt_vcs_client_valid_vocs_inst(inst)) {
 		return bt_vocs_state_get(conn, inst);
 	}
 
@@ -698,7 +715,7 @@ int bt_vcs_vocs_state_get(struct bt_conn *conn, struct bt_vocs *inst)
 int bt_vcs_vocs_location_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
-	    conn && bt_vcs_client_valid_inst(inst)) {
+	    conn && bt_vcs_client_valid_vocs_inst(inst)) {
 		return bt_vocs_location_get(conn, inst);
 	}
 
@@ -713,7 +730,7 @@ int bt_vcs_vocs_location_set(struct bt_conn *conn, struct bt_vocs *inst,
 			     uint8_t location)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
-	    conn && bt_vcs_client_valid_inst(inst)) {
+	    conn && bt_vcs_client_valid_vocs_inst(inst)) {
 		return bt_vocs_location_set(conn, inst, location);
 	}
 
@@ -728,7 +745,7 @@ int bt_vcs_vocs_state_set(struct bt_conn *conn, struct bt_vocs *inst,
 			  int16_t offset)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
-	    conn && bt_vcs_client_valid_inst(inst)) {
+	    conn && bt_vcs_client_valid_vocs_inst(inst)) {
 		return bt_vocs_state_set(conn, inst, offset);
 	}
 
@@ -742,7 +759,7 @@ int bt_vcs_vocs_state_set(struct bt_conn *conn, struct bt_vocs *inst,
 int bt_vcs_vocs_description_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
-	    conn && bt_vcs_client_valid_inst(inst)) {
+	    conn && bt_vcs_client_valid_vocs_inst(inst)) {
 		return bt_vocs_description_get(conn, inst);
 	}
 
@@ -757,7 +774,7 @@ int bt_vcs_vocs_description_set(struct bt_conn *conn, struct bt_vocs *inst,
 				const char *description)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
-	    conn && bt_vcs_client_valid_inst(inst)) {
+	    conn && bt_vcs_client_valid_vocs_inst(inst)) {
 		return bt_vocs_description_set(conn, inst, description);
 	}
 
@@ -770,187 +787,157 @@ int bt_vcs_vocs_description_set(struct bt_conn *conn, struct bt_vocs *inst,
 
 int bt_vcs_aics_state_get(struct bt_conn *conn, struct bt_aics *inst)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-	if (conn) {
-		return bt_vcs_client_aics_read_input_state(conn, inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
+	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+		return bt_aics_state_get(conn, inst);
 	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
-#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	if (!conn) {
-		return bt_aics_input_state_get(inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_AICS) && !conn && valid_aics_inst(inst)) {
+		return bt_aics_state_get(NULL, inst);
 	}
-#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_aics_gain_setting_get(struct bt_conn *conn, struct bt_aics *inst)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-	if (conn) {
-		return bt_vcs_client_aics_read_gain_setting(conn, inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
+	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+		return bt_aics_gain_setting_get(conn, inst);
 	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
-#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	if (!conn) {
-		return bt_aics_gain_setting_get(
-			inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_AICS) && !conn && valid_aics_inst(inst)) {
+		return bt_aics_gain_setting_get(NULL, inst);
 	}
-#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_aics_type_get(struct bt_conn *conn, struct bt_aics *inst)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-	if (conn) {
-		return bt_vcs_client_aics_read_input_type(conn, inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
+	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+		return bt_aics_type_get(conn, inst);
 	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
-#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	return bt_aics_input_type_get(inst);
-#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
+	if (IS_ENABLED(CONFIG_BT_VCS_AICS) && !conn && valid_aics_inst(inst)) {
+		return bt_aics_type_get(NULL, inst);
+	}
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_aics_status_get(struct bt_conn *conn, struct bt_aics *inst)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-	if (conn) {
-		return bt_vcs_client_aics_read_input_status(conn, inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
+	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+		return bt_aics_status_get(conn, inst);
 	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
-#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	if (!conn) {
-		return bt_aics_input_status_get(
-			inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_AICS) && !conn && valid_aics_inst(inst)) {
+		return bt_aics_status_get(NULL, inst);
 	}
-#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_aics_unmute(struct bt_conn *conn, struct bt_aics *inst)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-	if (conn) {
-		return bt_vcs_client_aics_input_unmute(conn, inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
+	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+		return bt_aics_unmute(conn, inst);
 	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
-#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	if (!conn) {
-		return bt_aics_input_unmute(inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_AICS) && !conn && valid_aics_inst(inst)) {
+		return bt_aics_unmute(NULL, inst);
 	}
-#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_aics_mute(struct bt_conn *conn, struct bt_aics *inst)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-	if (conn) {
-		return bt_vcs_client_aics_input_mute(conn, inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
+	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+		return bt_aics_mute(conn, inst);
 	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
-#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	if (!conn) {
-		return bt_aics_input_mute(inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_AICS) && !conn && valid_aics_inst(inst)) {
+		return bt_aics_mute(NULL, inst);
 	}
-#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_aics_manual_gain_set(struct bt_conn *conn, struct bt_aics *inst)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-	if (conn) {
-		return bt_vcs_client_aics_set_manual_input_gain(conn,
-								inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
+	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+		return bt_aics_manual_gain_set(conn, inst);
 	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
-#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	if (!conn) {
-		return bt_aics_manual_input_gain_set(
-			inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_AICS) && !conn && valid_aics_inst(inst)) {
+		return bt_aics_manual_gain_set(NULL, inst);
 	}
-#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_aics_automatic_gain_set(struct bt_conn *conn, struct bt_aics *inst)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-	if (conn) {
-		return bt_vcs_client_aics_set_automatic_input_gain(conn,
-								   inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
+	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+		return bt_aics_automatic_gain_set(conn, inst);
 	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
-#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	if (!conn) {
-		return bt_aics_automatic_input_gain_set(
-			inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_AICS) && !conn && valid_aics_inst(inst)) {
+		return bt_aics_automatic_gain_set(NULL, inst);
 	}
-#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
+
 	return -EOPNOTSUPP;
 }
 
-int bt_vcs_aics_gain_set(struct bt_conn *conn, struct bt_aics *inst, int8_t gain)
+int bt_vcs_aics_gain_set(struct bt_conn *conn, struct bt_aics *inst,
+			 int8_t gain)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-	if (conn) {
-		return bt_vcs_client_aics_set_gain(conn, inst, gain);
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
+	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+		return bt_aics_gain_set(conn, inst, gain);
 	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
-#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	if (!conn) {
-		return bt_aics_gain_set(inst, gain);
+	if (IS_ENABLED(CONFIG_BT_VCS_AICS) && !conn && valid_aics_inst(inst)) {
+		return bt_aics_gain_set(NULL, inst, gain);
 	}
-#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_aics_description_get(struct bt_conn *conn, struct bt_aics *inst)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-	if (conn) {
-		return bt_vcs_client_aics_read_input_description(conn,
-								 inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
+	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+		return bt_aics_description_get(conn, inst);
 	}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 
-#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	if (!conn) {
-		return bt_aics_input_description_get(
-			inst);
+	if (IS_ENABLED(CONFIG_BT_VCS_AICS) && !conn && valid_aics_inst(inst)) {
+		return bt_aics_description_get(NULL, inst);
 	}
-#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
+
 	return -EOPNOTSUPP;
 }
 
 int bt_vcs_aics_description_set(struct bt_conn *conn, struct bt_aics *inst,
 				const char *description)
 {
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-	if (conn) {
-		return bt_vcs_client_aics_set_input_description(conn,
-								inst,
-								description);
+	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
+	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+		return bt_aics_description_set(conn, inst, description);
 	}
-#endif /* CONFIG_BT_VCS_CLIENT */
 
-#if CONFIG_BT_VCS_AICS_INSTANCE_COUNT > 0
-	if (!conn) {
-		return bt_aics_input_description_set(
-			inst, description);
+	if (IS_ENABLED(CONFIG_BT_VCS_AICS) && !conn && valid_aics_inst(inst)) {
+		return bt_aics_description_set(NULL, inst, description);
 	}
-#endif /* CONFIG_BT_VCS_AICS_INSTANCE_COUNT */
+
 	return -EOPNOTSUPP;
 }
 #endif /* CONFIG_BT_VCS || CONFIG_BT_VCS_CLIENT */

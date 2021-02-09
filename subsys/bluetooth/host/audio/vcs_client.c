@@ -48,7 +48,7 @@ struct vcs_instance_t {
 	uint8_t vocs_inst_cnt;
 	struct bt_vocs *vocs[CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST];
 	uint8_t aics_inst_cnt;
-	struct bt_aics aics[CONFIG_BT_VCS_CLIENT_MAX_AICS_INST];
+	struct bt_aics *aics[CONFIG_BT_VCS_CLIENT_MAX_AICS_INST];
 };
 
 /* Callback functions */
@@ -56,14 +56,12 @@ static struct bt_vcs_cb_t *vcs_client_cb;
 
 static struct bt_gatt_discover_params discover_params;
 static struct vcs_instance_t *cur_vcs_inst;
-static struct bt_vocs *cur_inst;
-static struct bt_aics *cur_aics_inst;
 
 static struct vcs_instance_t vcs_inst;
 static struct bt_uuid_16 uuid = BT_UUID_INIT_16(0);
 static int vcs_client_common_vcs_cp(struct bt_conn *conn, uint8_t opcode);
 
-bool bt_vcs_client_valid_inst(struct bt_vocs *vocs)
+bool bt_vcs_client_valid_vocs_inst(struct bt_vocs *vocs)
 {
 	if (!vocs) {
 		return false;
@@ -71,6 +69,21 @@ bool bt_vcs_client_valid_inst(struct bt_vocs *vocs)
 
 	for (int i = 0; i < ARRAY_SIZE(vcs_inst.vocs); i++) {
 		if (vcs_inst.vocs[i] == vocs) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
+bool bt_vcs_client_valid_aics_inst(struct bt_aics *aics)
+{
+	if (!aics) {
+		return false;
+	}
+
+	for (int i = 0; i < ARRAY_SIZE(vcs_inst.aics); i++) {
+		if (vcs_inst.aics[i] == aics) {
 			return true;
 		}
 	}
@@ -298,113 +311,6 @@ static void vcs_client_write_vcs_cp_cb(struct bt_conn *conn, uint8_t err,
 	vcs_cp_notify_app(conn, opcode, err);
 }
 
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-
-static uint8_t aics_discover_func(struct bt_conn *conn,
-			       const struct bt_gatt_attr *attr,
-			       struct bt_gatt_discover_params *params)
-{
-	int err;
-	struct bt_gatt_chrc *chrc;
-	static uint8_t next_aics_idx;
-	uint8_t aics_cnt;
-	uint8_t vocs_cnt;
-	struct bt_gatt_subscribe_params *sub_params = NULL;
-
-	if (!attr) {
-		cur_aics_inst->cli.cb = &vcs_client_cb->aics_cb;
-		bt_aics_client_register(cur_aics_inst);
-		aics_cnt = vcs_inst.aics_inst_cnt;
-		vocs_cnt = vcs_inst.vocs_inst_cnt;
-		next_aics_idx++;
-		BT_DBG("Setup complete for AICS %u / %u",
-		       next_aics_idx, vcs_inst.aics_inst_cnt);
-		(void)memset(params, 0, sizeof(*params));
-
-		if (next_aics_idx < vcs_inst.aics_inst_cnt) {
-			/* Discover characteristics */
-			cur_aics_inst = &vcs_inst.aics[next_aics_idx];
-			discover_params.start_handle =
-				cur_aics_inst->cli.start_handle;
-			discover_params.end_handle =
-				cur_aics_inst->cli.end_handle;
-			discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
-			discover_params.func = aics_discover_func;
-
-			err = bt_gatt_discover(conn, &discover_params);
-			if (err) {
-				BT_DBG("Discover failed (err %d)", err);
-				cur_vcs_inst = NULL;
-				if (vcs_client_cb && vcs_client_cb->discover) {
-					vcs_client_cb->discover(conn, err,
-								aics_cnt,
-								vocs_cnt);
-				}
-			}
-		} else {
-			cur_vcs_inst = NULL;
-			if (vcs_client_cb && vcs_client_cb->discover) {
-				vcs_client_cb->discover(conn, 0, aics_cnt,
-							vocs_cnt);
-			}
-		}
-		return BT_GATT_ITER_STOP;
-	}
-
-	BT_DBG("[ATTRIBUTE] handle 0x%04X", attr->handle);
-
-	if (params->type == BT_GATT_DISCOVER_CHARACTERISTIC) {
-		chrc = (struct bt_gatt_chrc *)attr->user_data;
-		if (!bt_uuid_cmp(chrc->uuid, BT_UUID_AICS_STATE)) {
-			BT_DBG("Audio Input state");
-			cur_aics_inst->cli.state_handle = chrc->value_handle;
-			sub_params = &cur_aics_inst->cli.state_sub_params;
-		} else if (!bt_uuid_cmp(chrc->uuid,
-					BT_UUID_AICS_GAIN_SETTINGS)) {
-			BT_DBG("Gain settings");
-			cur_aics_inst->cli.gain_handle = chrc->value_handle;
-		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_AICS_INPUT_TYPE)) {
-			BT_DBG("Input type");
-			cur_aics_inst->cli.type_handle = chrc->value_handle;
-		} else if (!bt_uuid_cmp(chrc->uuid,
-					BT_UUID_AICS_INPUT_STATUS)) {
-			BT_DBG("Input status");
-			cur_aics_inst->cli.status_handle = chrc->value_handle;
-			sub_params = &cur_aics_inst->cli.status_sub_params;
-		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_AICS_CONTROL)) {
-			BT_DBG("Control point");
-			cur_aics_inst->cli.control_handle = chrc->value_handle;
-		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_AICS_DESCRIPTION)) {
-			BT_DBG("Description");
-			cur_aics_inst->cli.desc_handle = chrc->value_handle;
-			if (chrc->properties & BT_GATT_CHRC_NOTIFY) {
-				sub_params =
-					&cur_aics_inst->cli.desc_sub_params;
-			}
-
-			if (chrc->properties &
-				BT_GATT_CHRC_WRITE_WITHOUT_RESP) {
-				cur_aics_inst->cli.desc_writable = true;
-			}
-		}
-
-		if (sub_params) {
-			sub_params->value = BT_GATT_CCC_NOTIFY;
-			sub_params->value_handle = chrc->value_handle;
-			/*
-			 * TODO: Don't assume that CCC is at handle + 2;
-			 * do proper discovery;
-			 */
-			sub_params->ccc_handle = attr->handle + 2;
-			sub_params->notify = aics_client_notify_handler;
-			bt_gatt_subscribe(conn, sub_params);
-		}
-	}
-
-	return BT_GATT_ITER_CONTINUE;
-}
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0 */
-
 #if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0 || \
 	CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0)
 static uint8_t vcs_discover_include_func(struct bt_conn *conn,
@@ -420,34 +326,11 @@ static uint8_t vcs_discover_include_func(struct bt_conn *conn,
 		       vcs_inst.aics_inst_cnt,
 		       vcs_inst.vocs_inst_cnt);
 		(void)memset(params, 0, sizeof(*params));
-#if CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0
-		if (vcs_inst.aics_inst_cnt) {
-			/* Discover characteristics */
-			cur_aics_inst = &vcs_inst.aics[0];
-			discover_params.start_handle =
-				cur_aics_inst->cli.start_handle;
-			discover_params.end_handle =
-				cur_aics_inst->cli.end_handle;
-			discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
-			discover_params.func = aics_discover_func;
 
-			err = bt_gatt_discover(conn, &discover_params);
-			if (err) {
-				BT_DBG("Discover failed (err %d)", err);
-				cur_vcs_inst = NULL;
-				cur_aics_inst = NULL;
-				if (vcs_client_cb && vcs_client_cb->discover) {
-					vcs_client_cb->discover(conn, err, 0,
-								0);
-				}
-			}
-		} else
-#endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
-		{
-			cur_vcs_inst = NULL;
-			if (vcs_client_cb && vcs_client_cb->discover) {
-				vcs_client_cb->discover(conn, 0, 0, 0);
-			}
+		cur_vcs_inst = NULL;
+		if (vcs_client_cb && vcs_client_cb->discover) {
+			vcs_client_cb->discover(conn, 0, vcs_inst.vocs_inst_cnt,
+						vcs_inst.aics_inst_cnt);
 		}
 		return BT_GATT_ITER_STOP;
 	}
@@ -461,12 +344,29 @@ static uint8_t vcs_discover_include_func(struct bt_conn *conn,
 		if (!bt_uuid_cmp(include->uuid, BT_UUID_AICS) &&
 		    vcs_inst.aics_inst_cnt <
 			CONFIG_BT_VCS_CLIENT_MAX_AICS_INST) {
-			inst_idx = vcs_inst.aics_inst_cnt;
-			vcs_inst.aics[inst_idx].cli.start_handle =
-				include->start_handle;
-			vcs_inst.aics[inst_idx].cli.end_handle =
-				include->end_handle;
-			vcs_inst.aics_inst_cnt++;
+
+			struct bt_aics_discover_param param = {
+				.start_handle = include->start_handle,
+				.end_handle = include->end_handle,
+			};
+
+			/* Update discover params so we can continue where we
+			 * left off after bt_vocs_discover
+			 */
+			discover_params.start_handle = attr->handle + 1;
+
+			inst_idx = vcs_inst.aics_inst_cnt++;
+			err = bt_aics_discover(conn, vcs_inst.aics[inst_idx],
+					       &param);
+			if (err) {
+				BT_DBG("AICS Discover failed (err %d)", err);
+				cur_vcs_inst = NULL;
+				if (vcs_client_cb && vcs_client_cb->discover) {
+					vcs_client_cb->discover(conn, err, 0,
+								0);
+				}
+			}
+			return BT_GATT_ITER_STOP;
 		}
 #endif /* CONFIG_BT_VCS_CLIENT_MAX_AICS_INST */
 #if CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0
@@ -490,7 +390,6 @@ static uint8_t vcs_discover_include_func(struct bt_conn *conn,
 			if (err) {
 				BT_DBG("VOCS Discover failed (err %d)", err);
 				cur_vcs_inst = NULL;
-				cur_aics_inst = NULL;
 				if (vcs_client_cb && vcs_client_cb->discover) {
 					vcs_client_cb->discover(conn, err, 0,
 								0);
@@ -669,7 +568,23 @@ static int vcs_client_common_vcs_cp(struct bt_conn *conn, uint8_t opcode)
 	return err;
 }
 
-#if defined(CONFIG_BT_VOCS_CLIENT)
+static void aics_discover_cb(struct bt_conn *conn, struct bt_aics *inst,
+			     int err)
+{
+	if (!err) {
+		/* Continue discovery of included services */
+		err = bt_gatt_discover(conn, &discover_params);
+	}
+
+	if (err) {
+		BT_DBG("Discover failed (err %d)", err);
+		cur_vcs_inst = NULL;
+		if (vcs_client_cb && vcs_client_cb->discover) {
+			vcs_client_cb->discover(conn, err, 0, 0);
+		}
+	}
+}
+
 static void vocs_discover_cb(struct bt_conn *conn, struct bt_vocs *inst,
 			     int err)
 {
@@ -686,7 +601,6 @@ static void vocs_discover_cb(struct bt_conn *conn, struct bt_vocs *inst,
 		}
 	}
 }
-#endif /* CONFIG_BT_VOCS_CLIENT */
 
 static void vcs_client_reset(struct bt_conn *conn)
 {
@@ -724,14 +638,9 @@ int bt_vcs_discover(struct bt_conn *conn)
 		return -EBUSY;
 	}
 
-	cur_aics_inst = NULL;
-	cur_inst = NULL;
 	memset(&discover_params, 0, sizeof(discover_params));
 	vcs_client_reset(conn);
 	memcpy(&uuid, BT_UUID_VCS, sizeof(uuid));
-	for (int i = 0; i < ARRAY_SIZE(vcs_inst.aics); i++) {
-		bt_aics_client_unregister((struct bt_aics *)&vcs_inst.aics[i]);
-	}
 
 	if (IS_ENABLED(CONFIG_BT_VOCS_CLIENT) &&
 	    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0) {
@@ -751,6 +660,24 @@ int bt_vcs_discover(struct bt_conn *conn)
 		}
 	}
 
+	if (IS_ENABLED(CONFIG_BT_AICS_CLIENT) &&
+	    CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0) {
+		for (int i = 0; i < ARRAY_SIZE(vcs_inst.aics); i++) {
+			if (!initialized) {
+				vcs_inst.aics[i] =
+					bt_aics_client_free_instance_get();
+
+				if (!vcs_inst.aics[i]) {
+					return -ENOMEM;
+				}
+
+				bt_aics_client_cb_register(
+					vcs_inst.aics[i],
+					&vcs_client_cb->aics_cb);
+			}
+		}
+	}
+
 	discover_params.func = primary_discover_func;
 	discover_params.uuid = &uuid.uuid;
 	discover_params.type = BT_GATT_DISCOVER_PRIMARY;
@@ -764,23 +691,38 @@ int bt_vcs_discover(struct bt_conn *conn)
 void bt_vcs_client_cb_register(struct bt_vcs_cb_t *cb)
 {
 	vcs_client_cb = cb;
+	if (IS_ENABLED(CONFIG_BT_VOCS_CLIENT)) {
+		if (cb) {
+			if (cb->vocs_cb.discover) {
+				BT_WARN("VCS overwrote discover callback "
+					"of VOCS");
+			}
+			cb->vocs_cb.discover = vocs_discover_cb;
 
-#if defined(CONFIG_BT_VOCS_CLIENT)
-	if (cb) {
-		if (cb->vocs_cb.discover) {
-			BT_WARN("VCS overwrote discover callback of VOCS");
-		}
-		cb->vocs_cb.discover = vocs_discover_cb;
-
-		for (int i = 0; i < ARRAY_SIZE(vcs_inst.vocs); i++) {
-			if (vcs_inst.vocs[i]) {
-				bt_vocs_client_cb_register(vcs_inst.vocs[i],
-							   &cb->vocs_cb);
+			for (int i = 0; i < ARRAY_SIZE(vcs_inst.vocs); i++) {
+				if (vcs_inst.vocs[i]) {
+					bt_vocs_client_cb_register(
+						vcs_inst.vocs[i], &cb->vocs_cb);
+				}
 			}
 		}
-
 	}
-#endif /* CONFIG_BT_VOCS_CLIENT */
+	if (IS_ENABLED(CONFIG_BT_AICS_CLIENT)) {
+		if (cb) {
+			if (cb->aics_cb.discover) {
+				BT_WARN("VCS overwrote discover callback "
+					"of AICS");
+			}
+			cb->aics_cb.discover = aics_discover_cb;
+
+			for (int i = 0; i < ARRAY_SIZE(vcs_inst.aics); i++) {
+				if (vcs_inst.aics[i]) {
+					bt_aics_client_cb_register(
+						vcs_inst.aics[i], &cb->aics_cb);
+				}
+			}
+		}
+	}
 }
 
 int bt_vcs_client_service_get(struct bt_conn *conn, struct bt_vcs *service)
@@ -925,127 +867,4 @@ int bt_vcs_client_unmute(struct bt_conn *conn)
 int bt_vcs_client_mute(struct bt_conn *conn)
 {
 	return vcs_client_common_vcs_cp(conn, VCS_OPCODE_MUTE);
-}
-
-int bt_vcs_client_aics_read_input_state(struct bt_conn *conn,
-					struct bt_aics *inst)
-{
-	if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_state_get(conn, inst);
-	} else {
-		BT_DBG("Not supported");
-		return -EOPNOTSUPP;
-	}
-}
-
-int bt_vcs_client_aics_read_gain_setting(struct bt_conn *conn,
-					 struct bt_aics *inst)
-{
-	if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_gain_setting_get(conn, inst);
-	} else {
-		BT_DBG("Not supported");
-		return -EOPNOTSUPP;
-	}
-}
-
-int bt_vcs_client_aics_read_input_type(struct bt_conn *conn,
-				       struct bt_aics *inst)
-{
-	if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_type_get(conn, inst);
-	} else {
-		BT_DBG("Not supported");
-		return -EOPNOTSUPP;
-	}
-}
-
-int bt_vcs_client_aics_read_input_status(struct bt_conn *conn,
-					 struct bt_aics *inst)
-{
-	if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_status_get(conn, inst);
-	} else {
-		BT_DBG("Not supported");
-		return -EOPNOTSUPP;
-	}
-}
-
-int bt_vcs_client_aics_input_unmute(struct bt_conn *conn, struct bt_aics *inst)
-{
-	if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_unmute(conn, inst);
-	} else {
-		BT_DBG("Not supported");
-		return -EOPNOTSUPP;
-	}
-}
-
-int bt_vcs_client_aics_input_mute(struct bt_conn *conn, struct bt_aics *inst)
-{
-
-	if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_mute(conn, inst);
-	} else {
-		BT_DBG("Not supported");
-		return -EOPNOTSUPP;
-	}
-}
-
-int bt_vcs_client_aics_set_manual_input_gain(struct bt_conn *conn,
-					     struct bt_aics *inst)
-{
-	if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_manual_input_gain_set(conn, inst);
-	} else {
-		BT_DBG("Not supported");
-		return -EOPNOTSUPP;
-	}
-}
-
-int bt_vcs_client_aics_set_automatic_input_gain(struct bt_conn *conn,
-						struct bt_aics *inst)
-{
-	if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_automatic_input_gain_set(conn, inst);
-	} else {
-		BT_DBG("Not supported");
-		return -EOPNOTSUPP;
-	}
-}
-
-int bt_vcs_client_aics_set_gain(struct bt_conn *conn, struct bt_aics *inst,
-				int8_t gain)
-{
-	if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_gain_set(conn, inst,
-			gain);
-	} else {
-		BT_DBG("Not supported");
-		return -EOPNOTSUPP;
-	}
-}
-
-int bt_vcs_client_aics_read_input_description(struct bt_conn *conn,
-					      struct bt_aics *inst)
-{
-	if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_description_get(conn, inst);
-	} else {
-		BT_DBG("Not supported");
-		return -EOPNOTSUPP;
-	}
-}
-
-int bt_vcs_client_aics_set_input_description(struct bt_conn *conn,
-					     struct bt_aics *inst,
-					     const char *description)
-{
-	if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0) {
-		return bt_aics_client_input_description_set(conn, inst,
-							    description);
-	} else {
-		BT_DBG("Not supported");
-		return -EOPNOTSUPP;
-	}
 }
