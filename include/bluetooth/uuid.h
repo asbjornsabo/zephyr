@@ -419,6 +419,15 @@ struct bt_uuid_128 {
  */
 #define BT_UUID_AICS \
 	BT_UUID_DECLARE_16(BT_UUID_AICS_VAL)
+/** @def BT_UUID_VCS_VAL
+ *  @brief Volume Control Service value
+ */
+#define BT_UUID_VCS_VAL 0x1844
+/** @def BT_UUID_VCS
+ *  @brief Volume Control Service
+ */
+#define BT_UUID_VCS \
+	BT_UUID_DECLARE_16(BT_UUID_VCS_VAL)
 /** @def BT_UUID_VOCS_VAL
  *  @brief Volume Offset Control Service value
  */
@@ -1509,7 +1518,7 @@ struct bt_uuid_128 {
 /** @def BT_UUID_VCS_STATE_VAL
  *  @brief Volume Control Setting value
  */
-#define BT_UUID_VCS_STATE_VAL 0x8fb9
+#define BT_UUID_VCS_STATE_VAL 0x2B7D
 /** @def BT_UUID_VCS_STATE
  *  @brief Volume Control Setting
  */
@@ -1518,7 +1527,7 @@ struct bt_uuid_128 {
 /** @def BT_UUID_VCS_CONTROL_VAL
  *  @brief Volume Control Control point value
  */
-#define BT_UUID_VCS_CONTROL_VAL 0x8fba
+#define BT_UUID_VCS_CONTROL_VAL 0x2B7E
 /** @def BT_UUID_VCS_CONTROL
  *  @brief Volume Control Control point
  */
@@ -1527,7 +1536,7 @@ struct bt_uuid_128 {
 /** @def BT_UUID_VCS_FLAGS_VAL
  *  @brief Volume Control Flags value
  */
-#define BT_UUID_VCS_FLAGS_VAL 0x8fbb
+#define BT_UUID_VCS_FLAGS_VAL 0x2B7F
 /** @def BT_UUID_VCS_FLAGS
  *  @brief Volume Control Flags
  */
