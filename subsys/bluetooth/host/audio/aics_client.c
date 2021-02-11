@@ -88,10 +88,9 @@ uint8_t aics_client_notify_handler(struct bt_conn *conn,
 				}
 			}
 		} else if (handle == inst->desc_handle) {
-			if (length > BT_ATT_MAX_ATTRIBUTE_LEN) {
-				BT_DBG("Length (%u) too large", length);
-				return BT_GATT_ITER_CONTINUE;
-			}
+			/* Truncate if too large */
+			length = MIN(sizeof(desc) - 1, length);
+
 			memcpy(desc, data, length);
 			desc[length] = '\0';
 			BT_DBG("Inst %p: Input description: %s",
@@ -447,10 +446,8 @@ static uint8_t aics_client_read_input_desc_cb(struct bt_conn *conn, uint8_t err,
 	} else if (data) {
 		BT_HEXDUMP_DBG(data, length, "Input description read");
 
-		if (length > BT_ATT_MAX_ATTRIBUTE_LEN) {
-			BT_DBG("Length (%u) too large", length);
-			return BT_GATT_ITER_CONTINUE;
-		}
+		/* Truncate if too large */
+		length = MIN(sizeof(desc) - 1, length);
 
 		/* TODO: Handle long reads */
 
