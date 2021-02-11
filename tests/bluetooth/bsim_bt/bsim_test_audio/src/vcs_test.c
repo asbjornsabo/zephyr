@@ -552,7 +552,7 @@ static void test_standalone(void)
 		FAIL("Could not get down VCS volume (err %d)\n", err);
 		return;
 	}
-	WAIT_FOR(expected_volume == g_volume);
+	WAIT_FOR(expected_volume == g_volume || g_volume == 0);
 	printk("VCS volume downed\n");
 
 	printk("Upping VCS volume\n");
@@ -562,7 +562,7 @@ static void test_standalone(void)
 		FAIL("Could not up VCS volume (err %d)\n", err);
 		return;
 	}
-	WAIT_FOR(expected_volume == g_volume);
+	WAIT_FOR(expected_volume == g_volume || g_volume == UINT8_MAX);
 	printk("VCS volume upped\n");
 
 	printk("Muting VCS\n");
@@ -583,7 +583,8 @@ static void test_standalone(void)
 		FAIL("Could not down and unmute VCS (err %d)\n", err);
 		return;
 	}
-	WAIT_FOR(expected_volume == g_volume && expected_mute == g_mute);
+	WAIT_FOR((expected_volume == g_volume || g_volume == 0) &&
+		 expected_mute == g_mute);
 	printk("VCS volume downed and unmuted\n");
 
 	printk("Muting VCS\n");
@@ -604,7 +605,8 @@ static void test_standalone(void)
 		FAIL("Could not up and unmute VCS (err %d)\n", err);
 		return;
 	}
-	WAIT_FOR(expected_volume == g_volume && expected_mute == g_mute);
+	WAIT_FOR((expected_volume == g_volume  || g_volume == UINT8_MAX) &&
+		 expected_mute == g_mute);
 	printk("VCS volume upped and unmuted\n");
 
 	printk("Muting VCS\n");
