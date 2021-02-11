@@ -465,7 +465,7 @@ int bt_vcs_get(struct bt_conn *conn, struct bt_vcs *service)
 
 #if defined(CONFIG_BT_VCS_CLIENT)
 	if (conn) {
-		return bt_vcs_client_service_get(conn, service);
+		return bt_vcs_client_get(conn, service);
 	}
 #endif /* CONFIG_BT_VCS_CLIENT */
 
