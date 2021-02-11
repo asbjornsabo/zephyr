@@ -73,7 +73,7 @@ uint8_t vocs_client_notify_handler(struct bt_conn *conn,
 			}
 		} else if (handle == inst->cli.desc_handle) {
 			/* Truncate if too large */
-			length = MIN(sizeof(desc), length) - 1;
+			length = MIN(sizeof(desc) - 1, length);
 
 			memcpy(desc, data, length);
 			desc[length] = '\0';
@@ -280,7 +280,7 @@ static uint8_t vcs_client_read_output_desc_cb(
 
 	if (data) {
 		BT_HEXDUMP_DBG(data, length, "Output description read");
-		length = MIN(sizeof(desc), length) - 1;
+		length = MIN(sizeof(desc) - 1, length);
 
 		/* TODO: Handle long reads */
 		memcpy(desc, data, length);
