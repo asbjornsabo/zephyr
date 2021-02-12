@@ -44,6 +44,8 @@ struct vcs_instance_t {
 	uint8_t write_buf[sizeof(struct vcs_control_t)];
 	struct bt_gatt_write_params write_params;
 	struct bt_gatt_read_params read_params;
+	struct bt_gatt_discover_params discover_params;
+	struct bt_uuid_16 uuid;
 
 	uint8_t vocs_inst_cnt;
 	struct bt_vocs *vocs[CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST];
@@ -54,11 +56,9 @@ struct vcs_instance_t {
 /* Callback functions */
 static struct bt_vcs_cb_t *vcs_client_cb;
 
-static struct bt_gatt_discover_params discover_params;
 static struct vcs_instance_t *cur_vcs_inst;
 
 static struct vcs_instance_t vcs_inst;
-static struct bt_uuid_16 uuid = BT_UUID_INIT_16(0);
 static int vcs_client_common_vcs_cp(struct bt_conn *conn, uint8_t opcode);
 
 bool bt_vcs_client_valid_vocs_inst(struct bt_vocs *vocs)
@@ -353,7 +353,8 @@ static uint8_t vcs_discover_include_func(struct bt_conn *conn,
 			/* Update discover params so we can continue where we
 			 * left off after bt_vocs_discover
 			 */
-			discover_params.start_handle = attr->handle + 1;
+			vcs_inst.discover_params.start_handle =
+				attr->handle + 1;
 
 			inst_idx = vcs_inst.aics_inst_cnt++;
 			err = bt_aics_discover(conn, vcs_inst.aics[inst_idx],
@@ -382,7 +383,8 @@ static uint8_t vcs_discover_include_func(struct bt_conn *conn,
 			/* Update discover params so we can continue where we
 			 * left off after bt_vocs_discover
 			 */
-			discover_params.start_handle = attr->handle + 1;
+			vcs_inst.discover_params.start_handle =
+				attr->handle + 1;
 
 			inst_idx = vcs_inst.vocs_inst_cnt++;
 			err = bt_vocs_discover(conn, vcs_inst.vocs[inst_idx],
@@ -425,12 +427,12 @@ static uint8_t vcs_discover_func(struct bt_conn *conn,
 #if (CONFIG_BT_VCS_CLIENT_MAX_AICS_INST > 0 || \
 	CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0)
 		/* Discover included services */
-		discover_params.start_handle = vcs_inst.start_handle;
-		discover_params.end_handle = vcs_inst.end_handle;
-		discover_params.type = BT_GATT_DISCOVER_INCLUDE;
-		discover_params.func = vcs_discover_include_func;
+		vcs_inst.discover_params.start_handle = vcs_inst.start_handle;
+		vcs_inst.discover_params.end_handle = vcs_inst.end_handle;
+		vcs_inst.discover_params.type = BT_GATT_DISCOVER_INCLUDE;
+		vcs_inst.discover_params.func = vcs_discover_include_func;
 
-		err = bt_gatt_discover(conn, &discover_params);
+		err = bt_gatt_discover(conn, &vcs_inst.discover_params);
 		if (err) {
 			BT_DBG("Discover failed (err %d)", err);
 			cur_vcs_inst = NULL;
@@ -508,20 +510,20 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 	if (params->type == BT_GATT_DISCOVER_PRIMARY) {
 		BT_DBG("Primary discover complete");
 		prim_service = (struct bt_gatt_service_val *)attr->user_data;
-		discover_params.start_handle = attr->handle + 1;
+		vcs_inst.discover_params.start_handle = attr->handle + 1;
 
 		cur_vcs_inst = &vcs_inst;
 		vcs_inst.start_handle = attr->handle + 1;
 		vcs_inst.end_handle = prim_service->end_handle;
 
 		/* Discover characteristics */
-		discover_params.uuid = NULL;
-		discover_params.start_handle = vcs_inst.start_handle;
-		discover_params.end_handle = vcs_inst.end_handle;
-		discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
-		discover_params.func = vcs_discover_func;
+		vcs_inst.discover_params.uuid = NULL;
+		vcs_inst.discover_params.start_handle = vcs_inst.start_handle;
+		vcs_inst.discover_params.end_handle = vcs_inst.end_handle;
+		vcs_inst.discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
+		vcs_inst.discover_params.func = vcs_discover_func;
 
-		err = bt_gatt_discover(conn, &discover_params);
+		err = bt_gatt_discover(conn, &vcs_inst.discover_params);
 		if (err) {
 			BT_DBG("Discover failed (err %d)", err);
 			cur_vcs_inst = NULL;
@@ -573,7 +575,7 @@ static void aics_discover_cb(struct bt_conn *conn, struct bt_aics *inst,
 {
 	if (!err) {
 		/* Continue discovery of included services */
-		err = bt_gatt_discover(conn, &discover_params);
+		err = bt_gatt_discover(conn, &vcs_inst.discover_params);
 	}
 
 	if (err) {
@@ -590,7 +592,7 @@ static void vocs_discover_cb(struct bt_conn *conn, struct bt_vocs *inst,
 {
 	if (!err) {
 		/* Continue discovery of included services */
-		err = bt_gatt_discover(conn, &discover_params);
+		err = bt_gatt_discover(conn, &vcs_inst.discover_params);
 	}
 
 	if (err) {
@@ -613,6 +615,8 @@ static void vcs_client_reset(struct bt_conn *conn)
 	vcs_inst.flag_handle = 0;
 	vcs_inst.vocs_inst_cnt = 0;
 	vcs_inst.aics_inst_cnt = 0;
+
+	memset(&vcs_inst.discover_params, 0, sizeof(vcs_inst.discover_params));
 
 	/* It's okay if these fail */
 	(void)bt_gatt_unsubscribe(conn, &vcs_inst.state_sub_params);
@@ -638,9 +642,8 @@ int bt_vcs_discover(struct bt_conn *conn)
 		return -EBUSY;
 	}
 
-	memset(&discover_params, 0, sizeof(discover_params));
 	vcs_client_reset(conn);
-	memcpy(&uuid, BT_UUID_VCS, sizeof(uuid));
+	memcpy(&vcs_inst.uuid, BT_UUID_VCS, sizeof(vcs_inst.uuid));
 
 	if (IS_ENABLED(CONFIG_BT_VOCS_CLIENT) &&
 	    CONFIG_BT_VCS_CLIENT_MAX_VOCS_INST > 0) {
@@ -678,14 +681,14 @@ int bt_vcs_discover(struct bt_conn *conn)
 		}
 	}
 
-	discover_params.func = primary_discover_func;
-	discover_params.uuid = &uuid.uuid;
-	discover_params.type = BT_GATT_DISCOVER_PRIMARY;
-	discover_params.start_handle = FIRST_HANDLE;
-	discover_params.end_handle = LAST_HANDLE;
+	vcs_inst.discover_params.func = primary_discover_func;
+	vcs_inst.discover_params.uuid = &vcs_inst.uuid.uuid;
+	vcs_inst.discover_params.type = BT_GATT_DISCOVER_PRIMARY;
+	vcs_inst.discover_params.start_handle = FIRST_HANDLE;
+	vcs_inst.discover_params.end_handle = LAST_HANDLE;
 
 	initialized = true;
-	return bt_gatt_discover(conn, &discover_params);
+	return bt_gatt_discover(conn, &vcs_inst.discover_params);
 }
 
 void bt_vcs_client_cb_register(struct bt_vcs_cb_t *cb)
