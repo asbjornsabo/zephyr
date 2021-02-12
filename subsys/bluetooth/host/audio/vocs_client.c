@@ -26,7 +26,6 @@
 #include "common/log.h"
 
 static struct bt_vocs vocs_insts[CONFIG_BT_VOCS_CLIENT_MAX_INSTANCE_COUNT];
-static struct bt_gatt_discover_params discover_params;
 static struct bt_vocs *discov_inst;
 
 static struct bt_vocs *lookup_vocs_by_handle(uint16_t handle)
@@ -625,12 +624,12 @@ int bt_vocs_discover(struct bt_conn *conn, struct bt_vocs *inst,
 
 	vocs_client_reset(inst, conn);
 
-	discover_params.start_handle = param->start_handle;
-	discover_params.end_handle = param->end_handle;
-	discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
-	discover_params.func = vocs_discover_func;
+	inst->cli.discover_params.start_handle = param->start_handle;
+	inst->cli.discover_params.end_handle = param->end_handle;
+	inst->cli.discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
+	inst->cli.discover_params.func = vocs_discover_func;
 
-	err = bt_gatt_discover(conn, &discover_params);
+	err = bt_gatt_discover(conn, &inst->cli.discover_params);
 	if (err) {
 		BT_DBG("Discover failed (err %d)", err);
 	}

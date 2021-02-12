@@ -54,6 +54,7 @@ struct vocs_client {
 	struct bt_gatt_write_params write_params;
 	struct bt_gatt_read_params read_params;
 	struct bt_vocs_cb *cb;
+	struct bt_gatt_discover_params discover_params;
 };
 
 struct vocs_server {
