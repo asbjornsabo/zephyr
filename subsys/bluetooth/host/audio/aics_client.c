@@ -26,7 +26,6 @@
 #include "common/log.h"
 
 static struct bt_aics aics_insts[CONFIG_BT_AICS_CLIENT_MAX_INSTANCE_COUNT];
-static struct bt_gatt_discover_params discover_params;
 static struct bt_aics *discov_inst;
 
 static int aics_client_common_control(struct bt_conn *conn, uint8_t opcode,
@@ -592,13 +591,14 @@ int bt_aics_discover(struct bt_conn *conn, struct bt_aics *inst,
 
 	aics_client_reset(inst, conn);
 
-	(void)memset(&discover_params, 0, sizeof(discover_params));
-	discover_params.start_handle = param->start_handle;
-	discover_params.end_handle = param->end_handle;
-	discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
-	discover_params.func = aics_discover_func;
+	(void)memset(&inst->cli.discover_params, 0,
+		     sizeof(inst->cli.discover_params));
+	inst->cli.discover_params.start_handle = param->start_handle;
+	inst->cli.discover_params.end_handle = param->end_handle;
+	inst->cli.discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
+	inst->cli.discover_params.func = aics_discover_func;
 
-	err = bt_gatt_discover(conn, &discover_params);
+	err = bt_gatt_discover(conn, &inst->cli.discover_params);
 	if (err) {
 		BT_DBG("Discover failed (err %d)", err);
 	}
