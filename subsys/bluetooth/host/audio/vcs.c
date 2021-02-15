@@ -697,7 +697,7 @@ int bt_vcs_mute(struct bt_conn *conn)
 int bt_vcs_vocs_state_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
-	    conn && bt_vcs_client_valid_vocs_inst(inst)) {
+	    conn && bt_vcs_client_valid_vocs_inst(conn, inst)) {
 		return bt_vocs_state_get(conn, inst);
 	}
 
@@ -711,7 +711,7 @@ int bt_vcs_vocs_state_get(struct bt_conn *conn, struct bt_vocs *inst)
 int bt_vcs_vocs_location_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
-	    conn && bt_vcs_client_valid_vocs_inst(inst)) {
+	    conn && bt_vcs_client_valid_vocs_inst(conn, inst)) {
 		return bt_vocs_location_get(conn, inst);
 	}
 
@@ -726,7 +726,7 @@ int bt_vcs_vocs_location_set(struct bt_conn *conn, struct bt_vocs *inst,
 			     uint8_t location)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
-	    conn && bt_vcs_client_valid_vocs_inst(inst)) {
+	    conn && bt_vcs_client_valid_vocs_inst(conn, inst)) {
 		return bt_vocs_location_set(conn, inst, location);
 	}
 
@@ -741,7 +741,7 @@ int bt_vcs_vocs_state_set(struct bt_conn *conn, struct bt_vocs *inst,
 			  int16_t offset)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
-	    conn && bt_vcs_client_valid_vocs_inst(inst)) {
+	    conn && bt_vcs_client_valid_vocs_inst(conn, inst)) {
 		return bt_vocs_state_set(conn, inst, offset);
 	}
 
@@ -755,7 +755,7 @@ int bt_vcs_vocs_state_set(struct bt_conn *conn, struct bt_vocs *inst,
 int bt_vcs_vocs_description_get(struct bt_conn *conn, struct bt_vocs *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
-	    conn && bt_vcs_client_valid_vocs_inst(inst)) {
+	    conn && bt_vcs_client_valid_vocs_inst(conn, inst)) {
 		return bt_vocs_description_get(conn, inst);
 	}
 
@@ -770,7 +770,7 @@ int bt_vcs_vocs_description_set(struct bt_conn *conn, struct bt_vocs *inst,
 				const char *description)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_VOCS) &&
-	    conn && bt_vcs_client_valid_vocs_inst(inst)) {
+	    conn && bt_vcs_client_valid_vocs_inst(conn, inst)) {
 		return bt_vocs_description_set(conn, inst, description);
 	}
 
@@ -784,7 +784,7 @@ int bt_vcs_vocs_description_set(struct bt_conn *conn, struct bt_vocs *inst,
 int bt_vcs_aics_state_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
-	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+	    conn && bt_vcs_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_state_get(conn, inst);
 	}
 
@@ -798,7 +798,7 @@ int bt_vcs_aics_state_get(struct bt_conn *conn, struct bt_aics *inst)
 int bt_vcs_aics_gain_setting_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
-	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+	    conn && bt_vcs_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_gain_setting_get(conn, inst);
 	}
 
@@ -812,7 +812,7 @@ int bt_vcs_aics_gain_setting_get(struct bt_conn *conn, struct bt_aics *inst)
 int bt_vcs_aics_type_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
-	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+	    conn && bt_vcs_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_type_get(conn, inst);
 	}
 
@@ -826,7 +826,7 @@ int bt_vcs_aics_type_get(struct bt_conn *conn, struct bt_aics *inst)
 int bt_vcs_aics_status_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
-	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+	    conn && bt_vcs_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_status_get(conn, inst);
 	}
 
@@ -840,7 +840,7 @@ int bt_vcs_aics_status_get(struct bt_conn *conn, struct bt_aics *inst)
 int bt_vcs_aics_unmute(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
-	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+	    conn && bt_vcs_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_unmute(conn, inst);
 	}
 
@@ -854,7 +854,7 @@ int bt_vcs_aics_unmute(struct bt_conn *conn, struct bt_aics *inst)
 int bt_vcs_aics_mute(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
-	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+	    conn && bt_vcs_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_mute(conn, inst);
 	}
 
@@ -868,7 +868,7 @@ int bt_vcs_aics_mute(struct bt_conn *conn, struct bt_aics *inst)
 int bt_vcs_aics_manual_gain_set(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
-	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+	    conn && bt_vcs_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_manual_gain_set(conn, inst);
 	}
 
@@ -882,7 +882,7 @@ int bt_vcs_aics_manual_gain_set(struct bt_conn *conn, struct bt_aics *inst)
 int bt_vcs_aics_automatic_gain_set(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
-	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+	    conn && bt_vcs_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_automatic_gain_set(conn, inst);
 	}
 
@@ -897,7 +897,7 @@ int bt_vcs_aics_gain_set(struct bt_conn *conn, struct bt_aics *inst,
 			 int8_t gain)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
-	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+	    conn && bt_vcs_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_gain_set(conn, inst, gain);
 	}
 
@@ -911,7 +911,7 @@ int bt_vcs_aics_gain_set(struct bt_conn *conn, struct bt_aics *inst,
 int bt_vcs_aics_description_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
-	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+	    conn && bt_vcs_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_description_get(conn, inst);
 	}
 
@@ -926,7 +926,7 @@ int bt_vcs_aics_description_set(struct bt_conn *conn, struct bt_aics *inst,
 				const char *description)
 {
 	if (IS_ENABLED(CONFIG_BT_VCS_CLIENT_AICS) &&
-	    conn && bt_vcs_client_valid_aics_inst(inst)) {
+	    conn && bt_vcs_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_description_set(conn, inst, description);
 	}
 

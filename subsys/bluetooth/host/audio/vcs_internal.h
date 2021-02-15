@@ -79,6 +79,6 @@ int bt_vcs_client_aics_set_input_description(struct bt_conn *conn,
 					     struct bt_aics *inst,
 					     const char *description);
 
-bool bt_vcs_client_valid_vocs_inst(struct bt_vocs *vocs);
-bool bt_vcs_client_valid_aics_inst(struct bt_aics *aics);
+bool bt_vcs_client_valid_vocs_inst(struct bt_conn *conn, struct bt_vocs *vocs);
+bool bt_vcs_client_valid_aics_inst(struct bt_conn *conn, struct bt_aics *aics);
 #endif /* ZEPHYR_INCLUDE_BLUETOOTH_AUDIO_VCS_INTERNAL_*/
