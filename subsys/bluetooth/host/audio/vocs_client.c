@@ -25,15 +25,18 @@
 #define LOG_MODULE_NAME bt_vocs_client
 #include "common/log.h"
 
-static struct bt_vocs vocs_insts[CONFIG_BT_VOCS_CLIENT_MAX_INSTANCE_COUNT];
-static struct bt_vocs *discov_inst;
+static struct bt_vocs vocs_insts
+	[CONFIG_BT_MAX_CONN * CONFIG_BT_VOCS_CLIENT_MAX_INSTANCE_COUNT];
 
-static struct bt_vocs *lookup_vocs_by_handle(uint16_t handle)
+static struct bt_vocs *lookup_vocs_by_handle(struct bt_conn *conn,
+					     uint16_t handle)
 {
 	__ASSERT(handle != 0, "Handle cannot be 0");
+	__ASSERT(conn, "Conn cannot be NULL");
 
 	for (int i = 0; i < ARRAY_SIZE(vocs_insts); i++) {
-		if (vocs_insts[i].cli.active &&
+		if (vocs_insts[i].cli.conn == conn &&
+		    vocs_insts[i].cli.active &&
 		    vocs_insts[i].cli.start_handle <= handle &&
 		    vocs_insts[i].cli.end_handle >= handle) {
 			return &vocs_insts[i];
@@ -48,7 +51,7 @@ uint8_t vocs_client_notify_handler(struct bt_conn *conn,
 				   const void *data, uint16_t length)
 {
 	uint16_t handle = params->value_handle;
-	struct bt_vocs *inst = lookup_vocs_by_handle(handle);
+	struct bt_vocs *inst = lookup_vocs_by_handle(conn, handle);
 	char desc[MIN(CONFIG_BT_L2CAP_RX_MTU, BT_ATT_MAX_ATTRIBUTE_LEN) + 1];
 
 	if (!inst) {
@@ -105,7 +108,7 @@ static uint8_t vocs_client_read_offset_state_cb(
 {
 	uint8_t cb_err = err;
 	struct bt_vocs *inst =
-		lookup_vocs_by_handle(params->single.handle);
+		lookup_vocs_by_handle(conn, params->single.handle);
 
 	if (!inst) {
 		BT_DBG("Instance not found");
@@ -141,7 +144,7 @@ static uint8_t vocs_client_read_location_cb(
 {
 	uint8_t cb_err = err;
 	struct bt_vocs *inst =
-		lookup_vocs_by_handle(params->single.handle);
+		lookup_vocs_by_handle(conn, params->single.handle);
 
 	if (!inst) {
 		BT_DBG("Instance not found");
@@ -175,7 +178,7 @@ static uint8_t internal_read_volume_offset_state_cb(
 {
 	uint8_t cb_err = 0;
 	struct bt_vocs *inst =
-		lookup_vocs_by_handle(params->single.handle);
+		lookup_vocs_by_handle(conn, params->single.handle);
 	struct vocs_control_t *cp;
 
 	if (!inst) {
@@ -226,7 +229,7 @@ static void vcs_client_write_vocs_cp_cb(struct bt_conn *conn, uint8_t err,
 					struct bt_gatt_write_params *params)
 {
 	struct bt_vocs *inst =
-		lookup_vocs_by_handle(params->handle);
+		lookup_vocs_by_handle(conn, params->handle);
 
 	if (!inst) {
 		BT_DBG("Instance not found");
@@ -266,7 +269,7 @@ static uint8_t vcs_client_read_output_desc_cb(
 {
 	uint8_t cb_err = err;
 	struct bt_vocs *inst =
-		lookup_vocs_by_handle(params->single.handle);
+		lookup_vocs_by_handle(conn, params->single.handle);
 	char desc[MIN(CONFIG_BT_L2CAP_RX_MTU, BT_ATT_MAX_ATTRIBUTE_LEN) + 1];
 
 	if (!inst) {
@@ -306,12 +309,12 @@ static uint8_t vocs_discover_func(struct bt_conn *conn,
 				  const struct bt_gatt_attr *attr,
 				  struct bt_gatt_discover_params *params)
 {
+	struct bt_vocs *inst = (struct bt_vocs *)CONTAINER_OF(
+				params, struct vocs_client, discover_params);
+
 	if (!attr) {
-		struct bt_vocs *inst = discov_inst;
-
-		discov_inst = NULL;
-
 		BT_DBG("Discovery complete for VOCS %p", inst);
+		inst->cli.busy = false;
 		(void)memset(params, 0, sizeof(*params));
 
 		if (inst->cli.cb && inst->cli.cb->discover) {
@@ -330,38 +333,38 @@ static uint8_t vocs_discover_func(struct bt_conn *conn,
 		struct bt_gatt_chrc *chrc;
 
 		chrc = (struct bt_gatt_chrc *)attr->user_data;
-		if (discov_inst->cli.start_handle == 0) {
-			discov_inst->cli.start_handle = chrc->value_handle;
+		if (inst->cli.start_handle == 0) {
+			inst->cli.start_handle = chrc->value_handle;
 		}
-		discov_inst->cli.end_handle = chrc->value_handle;
+		inst->cli.end_handle = chrc->value_handle;
 
 		if (!bt_uuid_cmp(chrc->uuid, BT_UUID_VOCS_STATE)) {
 			BT_DBG("Volume offset state");
-			discov_inst->cli.state_handle = chrc->value_handle;
-			sub_params = &discov_inst->cli.state_sub_params;
+			inst->cli.state_handle = chrc->value_handle;
+			sub_params = &inst->cli.state_sub_params;
 		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_VOCS_LOCATION)) {
 			BT_DBG("Location");
-			discov_inst->cli.location_handle = chrc->value_handle;
+			inst->cli.location_handle = chrc->value_handle;
 			if (chrc->properties & BT_GATT_CHRC_NOTIFY) {
 				sub_params =
-					&discov_inst->cli.location_sub_params;
+					&inst->cli.location_sub_params;
 			}
 			if (chrc->properties &
 				BT_GATT_CHRC_WRITE_WITHOUT_RESP) {
-				discov_inst->cli.location_writable = true;
+				inst->cli.location_writable = true;
 			}
 		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_VOCS_CONTROL)) {
 			BT_DBG("Control point");
-			discov_inst->cli.control_handle = chrc->value_handle;
+			inst->cli.control_handle = chrc->value_handle;
 		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_VOCS_DESCRIPTION)) {
 			BT_DBG("Description");
-			discov_inst->cli.desc_handle = chrc->value_handle;
+			inst->cli.desc_handle = chrc->value_handle;
 			if (chrc->properties & BT_GATT_CHRC_NOTIFY) {
-				sub_params = &discov_inst->cli.desc_sub_params;
+				sub_params = &inst->cli.desc_sub_params;
 			}
 			if (chrc->properties &
 				BT_GATT_CHRC_WRITE_WITHOUT_RESP) {
-				discov_inst->cli.desc_writable = true;
+				inst->cli.desc_writable = true;
 			}
 		}
 
@@ -617,13 +620,14 @@ int bt_vocs_discover(struct bt_conn *conn, struct bt_vocs *inst,
 		return -EINVAL;
 	}
 
-	CHECKIF(discov_inst) {
-		BT_DBG("Discovery already in progress");
+	CHECKIF(inst->cli.busy) {
+		BT_DBG("Instance is busy");
 		return -EBUSY;
 	}
 
 	vocs_client_reset(inst, conn);
 
+	inst->cli.conn = conn;
 	inst->cli.discover_params.start_handle = param->start_handle;
 	inst->cli.discover_params.end_handle = param->end_handle;
 	inst->cli.discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
@@ -632,9 +636,9 @@ int bt_vocs_discover(struct bt_conn *conn, struct bt_vocs *inst,
 	err = bt_gatt_discover(conn, &inst->cli.discover_params);
 	if (err) {
 		BT_DBG("Discover failed (err %d)", err);
+	} else {
+		inst->cli.busy = true;
 	}
-
-	discov_inst = inst;
 
 	return err;
 }
