@@ -25,16 +25,18 @@
 #define LOG_MODULE_NAME bt_aics_client
 #include "common/log.h"
 
-static struct bt_aics aics_insts[CONFIG_BT_AICS_CLIENT_MAX_INSTANCE_COUNT];
-static struct bt_aics *discov_inst;
+static struct bt_aics aics_insts
+	[CONFIG_BT_MAX_CONN * CONFIG_BT_AICS_CLIENT_MAX_INSTANCE_COUNT];
 
 static int aics_client_common_control(struct bt_conn *conn, uint8_t opcode,
 				      struct bt_aics *inst);
 
-static struct bt_aics *lookup_aics_by_handle(uint16_t handle)
+static struct bt_aics *lookup_aics_by_handle(struct bt_conn *conn,
+					     uint16_t handle)
 {
 	for (int i = 0; i < ARRAY_SIZE(aics_insts); i++) {
-		if (aics_insts[i].cli.active &&
+		if (aics_insts[i].cli.conn == conn &&
+		    aics_insts[i].cli.active &&
 		    aics_insts[i].cli.start_handle <= handle &&
 		    aics_insts[i].cli.end_handle >= handle) {
 			return &aics_insts[i];
@@ -49,7 +51,7 @@ uint8_t aics_client_notify_handler(struct bt_conn *conn,
 				const void *data, uint16_t length)
 {
 	uint16_t handle = params->value_handle;
-	struct bt_aics *inst = lookup_aics_by_handle(handle);
+	struct bt_aics *inst = lookup_aics_by_handle(conn, handle);
 	struct aics_state_t *state;
 	uint8_t *status;
 	char desc[MIN(CONFIG_BT_L2CAP_RX_MTU, BT_ATT_MAX_ATTRIBUTE_LEN) + 1];
@@ -107,7 +109,8 @@ static uint8_t aics_client_read_state_cb(struct bt_conn *conn, uint8_t err,
 					 const void *data, uint16_t length)
 {
 	uint8_t cb_err = err;
-	struct bt_aics *inst = lookup_aics_by_handle(params->single.handle);
+	struct bt_aics *inst = lookup_aics_by_handle(conn,
+						     params->single.handle);
 	struct aics_state_t *state = (struct aics_state_t *)data;
 
 	if (!inst) {
@@ -144,7 +147,8 @@ static uint8_t aics_client_read_gain_settings_cb(
 	const void *data, uint16_t length)
 {
 	uint8_t cb_err = err;
-	struct bt_aics *inst = lookup_aics_by_handle(params->single.handle);
+	struct bt_aics *inst = lookup_aics_by_handle(conn,
+						     params->single.handle);
 	struct aics_gain_settings_t *gain_settings =
 		(struct aics_gain_settings_t *)data;
 
@@ -184,7 +188,8 @@ static uint8_t aics_client_read_type_cb(struct bt_conn *conn, uint8_t err,
 {
 	uint8_t cb_err = err;
 	uint8_t *input_type = (uint8_t *)data;
-	struct bt_aics *inst = lookup_aics_by_handle(params->single.handle);
+	struct bt_aics *inst = lookup_aics_by_handle(conn,
+						     params->single.handle);
 
 	if (!inst) {
 		BT_DBG("Instance not found");
@@ -217,7 +222,8 @@ static uint8_t aics_client_read_status_cb(struct bt_conn *conn, uint8_t err,
 {
 	uint8_t cb_err = err;
 	uint8_t *status = (uint8_t *)data;
-	struct bt_aics *inst = lookup_aics_by_handle(params->single.handle);
+	struct bt_aics *inst = lookup_aics_by_handle(conn,
+						     params->single.handle);
 
 	if (!inst) {
 		BT_DBG("Instance not found");
@@ -291,7 +297,8 @@ static uint8_t internal_read_state_cb(struct bt_conn *conn, uint8_t err,
 				      const void *data, uint16_t length)
 {
 	uint8_t cb_err = 0;
-	struct bt_aics *inst = lookup_aics_by_handle(params->single.handle);
+	struct bt_aics *inst = lookup_aics_by_handle(conn,
+						     params->single.handle);
 	struct aics_state_t *state = (struct aics_state_t *)data;
 
 	if (!inst) {
@@ -349,7 +356,7 @@ static uint8_t internal_read_state_cb(struct bt_conn *conn, uint8_t err,
 static void aics_client_write_aics_cp_cb(struct bt_conn *conn, uint8_t err,
 					 struct bt_gatt_write_params *params)
 {
-	struct bt_aics *inst = lookup_aics_by_handle(params->handle);
+	struct bt_aics *inst = lookup_aics_by_handle(conn, params->handle);
 
 	if (!inst) {
 		BT_DBG("Instance not found");
@@ -419,7 +426,8 @@ static uint8_t aics_client_read_desc_cb(struct bt_conn *conn, uint8_t err,
 {
 	uint8_t cb_err = err;
 	char desc[MIN(CONFIG_BT_L2CAP_RX_MTU, BT_ATT_MAX_ATTRIBUTE_LEN) + 1];
-	struct bt_aics *inst = lookup_aics_by_handle(params->single.handle);
+	struct bt_aics *inst = lookup_aics_by_handle(conn,
+						     params->single.handle);
 
 	if (!inst) {
 		BT_DBG("Instance not found");
@@ -464,12 +472,13 @@ static uint8_t aics_discover_func(struct bt_conn *conn,
 				  const struct bt_gatt_attr *attr,
 				  struct bt_gatt_discover_params *params)
 {
+	struct bt_aics *inst = (struct bt_aics *)CONTAINER_OF(
+				params, struct aics_client, discover_params);
+
 	if (!attr) {
-		struct bt_aics *inst = discov_inst;
-
-		discov_inst = NULL;
-
 		BT_DBG("Discovery complete for AICS %p", inst);
+
+		inst->cli.busy = false;
 
 		if (inst->cli.cb && inst->cli.cb->discover) {
 			int err = valid_inst_discovered(inst) ? 0 : -ENOENT;
@@ -487,41 +496,41 @@ static uint8_t aics_discover_func(struct bt_conn *conn,
 		struct bt_gatt_chrc *chrc;
 
 		chrc = (struct bt_gatt_chrc *)attr->user_data;
-		if (discov_inst->cli.start_handle == 0) {
-			discov_inst->cli.start_handle = chrc->value_handle;
+		if (inst->cli.start_handle == 0) {
+			inst->cli.start_handle = chrc->value_handle;
 		}
-		discov_inst->cli.end_handle = chrc->value_handle;
+		inst->cli.end_handle = chrc->value_handle;
 
 		if (!bt_uuid_cmp(chrc->uuid, BT_UUID_AICS_STATE)) {
 			BT_DBG("Audio Input state");
-			discov_inst->cli.state_handle = chrc->value_handle;
-			sub_params = &discov_inst->cli.state_sub_params;
+			inst->cli.state_handle = chrc->value_handle;
+			sub_params = &inst->cli.state_sub_params;
 		} else if (!bt_uuid_cmp(chrc->uuid,
 					BT_UUID_AICS_GAIN_SETTINGS)) {
 			BT_DBG("Gain settings");
-			discov_inst->cli.gain_handle = chrc->value_handle;
+			inst->cli.gain_handle = chrc->value_handle;
 		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_AICS_INPUT_TYPE)) {
 			BT_DBG("Input type");
-			discov_inst->cli.type_handle = chrc->value_handle;
+			inst->cli.type_handle = chrc->value_handle;
 		} else if (!bt_uuid_cmp(chrc->uuid,
 					BT_UUID_AICS_INPUT_STATUS)) {
 			BT_DBG("Input status");
-			discov_inst->cli.status_handle = chrc->value_handle;
-			sub_params = &discov_inst->cli.status_sub_params;
+			inst->cli.status_handle = chrc->value_handle;
+			sub_params = &inst->cli.status_sub_params;
 		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_AICS_CONTROL)) {
 			BT_DBG("Control point");
-			discov_inst->cli.control_handle = chrc->value_handle;
+			inst->cli.control_handle = chrc->value_handle;
 		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_AICS_DESCRIPTION)) {
 			BT_DBG("Description");
-			discov_inst->cli.desc_handle = chrc->value_handle;
+			inst->cli.desc_handle = chrc->value_handle;
 			if (chrc->properties & BT_GATT_CHRC_NOTIFY) {
 				sub_params =
-					&discov_inst->cli.desc_sub_params;
+					&inst->cli.desc_sub_params;
 			}
 
 			if (chrc->properties &
 				BT_GATT_CHRC_WRITE_WITHOUT_RESP) {
-				discov_inst->cli.desc_writable = true;
+				inst->cli.desc_writable = true;
 			}
 		}
 
@@ -584,8 +593,8 @@ int bt_aics_discover(struct bt_conn *conn, struct bt_aics *inst,
 		return -EINVAL;
 	}
 
-	CHECKIF(discov_inst) {
-		BT_DBG("Discovery already in progress");
+	CHECKIF(inst->cli.busy) {
+		BT_DBG("Instance is busy");
 		return -EBUSY;
 	}
 
@@ -593,6 +602,7 @@ int bt_aics_discover(struct bt_conn *conn, struct bt_aics *inst,
 
 	(void)memset(&inst->cli.discover_params, 0,
 		     sizeof(inst->cli.discover_params));
+	inst->cli.conn = conn;
 	inst->cli.discover_params.start_handle = param->start_handle;
 	inst->cli.discover_params.end_handle = param->end_handle;
 	inst->cli.discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
@@ -601,9 +611,9 @@ int bt_aics_discover(struct bt_conn *conn, struct bt_aics *inst,
 	err = bt_gatt_discover(conn, &inst->cli.discover_params);
 	if (err) {
 		BT_DBG("Discover failed (err %d)", err);
+	} else {
+		inst->cli.busy = true;
 	}
-
-	discov_inst = inst;
 
 	return err;
 }

@@ -102,6 +102,7 @@ struct aics_client {
 	struct bt_gatt_read_params read_params;
 	struct bt_gatt_discover_params discover_params;
 	struct bt_aics_cb *cb;
+	struct bt_conn *conn;
 };
 
 struct aics_state_t {
