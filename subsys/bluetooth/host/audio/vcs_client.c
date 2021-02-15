@@ -56,8 +56,6 @@ struct vcs_instance_t {
 /* Callback functions */
 static struct bt_vcs_cb_t *vcs_client_cb;
 
-static struct vcs_instance_t *cur_vcs_inst;
-
 static struct vcs_instance_t vcs_inst;
 static int vcs_client_common_vcs_cp(struct bt_conn *conn, uint8_t opcode);
 
@@ -327,7 +325,6 @@ static uint8_t vcs_discover_include_func(struct bt_conn *conn,
 		       vcs_inst.vocs_inst_cnt);
 		(void)memset(params, 0, sizeof(*params));
 
-		cur_vcs_inst = NULL;
 		if (vcs_client_cb && vcs_client_cb->discover) {
 			vcs_client_cb->discover(conn, 0, vcs_inst.vocs_inst_cnt,
 						vcs_inst.aics_inst_cnt);
@@ -361,7 +358,6 @@ static uint8_t vcs_discover_include_func(struct bt_conn *conn,
 					       &param);
 			if (err) {
 				BT_DBG("AICS Discover failed (err %d)", err);
-				cur_vcs_inst = NULL;
 				if (vcs_client_cb && vcs_client_cb->discover) {
 					vcs_client_cb->discover(conn, err, 0,
 								0);
@@ -391,7 +387,6 @@ static uint8_t vcs_discover_include_func(struct bt_conn *conn,
 					       &param);
 			if (err) {
 				BT_DBG("VOCS Discover failed (err %d)", err);
-				cur_vcs_inst = NULL;
 				if (vcs_client_cb && vcs_client_cb->discover) {
 					vcs_client_cb->discover(conn, err, 0,
 								0);
@@ -435,13 +430,11 @@ static uint8_t vcs_discover_func(struct bt_conn *conn,
 		err = bt_gatt_discover(conn, &vcs_inst.discover_params);
 		if (err) {
 			BT_DBG("Discover failed (err %d)", err);
-			cur_vcs_inst = NULL;
 			if (vcs_client_cb && vcs_client_cb->discover) {
 				vcs_client_cb->discover(conn, err, 0, 0);
 			}
 		}
 #else
-		cur_vcs_inst = NULL;
 		if (vcs_client_cb && vcs_client_cb->discover) {
 			vcs_client_cb->discover(conn, err, 0, 0);
 		}
@@ -498,7 +491,6 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 
 	if (!attr) {
 		BT_DBG("Could not find a VCS instance on the server");
-		cur_vcs_inst = NULL;
 		if (vcs_client_cb && vcs_client_cb->discover) {
 			vcs_client_cb->discover(conn, -ENODATA, 0, 0);
 		}
@@ -512,7 +504,6 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 		prim_service = (struct bt_gatt_service_val *)attr->user_data;
 		vcs_inst.discover_params.start_handle = attr->handle + 1;
 
-		cur_vcs_inst = &vcs_inst;
 		vcs_inst.start_handle = attr->handle + 1;
 		vcs_inst.end_handle = prim_service->end_handle;
 
@@ -526,7 +517,6 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 		err = bt_gatt_discover(conn, &vcs_inst.discover_params);
 		if (err) {
 			BT_DBG("Discover failed (err %d)", err);
-			cur_vcs_inst = NULL;
 			if (vcs_client_cb && vcs_client_cb->discover) {
 				vcs_client_cb->discover(conn, err, 0, 0);
 			}
@@ -580,7 +570,6 @@ static void aics_discover_cb(struct bt_conn *conn, struct bt_aics *inst,
 
 	if (err) {
 		BT_DBG("Discover failed (err %d)", err);
-		cur_vcs_inst = NULL;
 		if (vcs_client_cb && vcs_client_cb->discover) {
 			vcs_client_cb->discover(conn, err, 0, 0);
 		}
@@ -597,7 +586,6 @@ static void vocs_discover_cb(struct bt_conn *conn, struct bt_vocs *inst,
 
 	if (err) {
 		BT_DBG("Discover failed (err %d)", err);
-		cur_vcs_inst = NULL;
 		if (vcs_client_cb && vcs_client_cb->discover) {
 			vcs_client_cb->discover(conn, err, 0, 0);
 		}
@@ -638,7 +626,7 @@ int bt_vcs_discover(struct bt_conn *conn)
 
 	if (!conn) {
 		return -ENOTCONN;
-	} else if (cur_vcs_inst || vcs_inst.busy) {
+	} else if (vcs_inst.busy) {
 		return -EBUSY;
 	}
 
