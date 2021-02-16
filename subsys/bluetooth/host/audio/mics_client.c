@@ -44,7 +44,6 @@ struct mics_instance_t {
 static struct bt_mics_cb_t *mics_client_cb;
 
 static struct bt_gatt_discover_params discover_params;
-static struct mics_instance_t *cur_mics_inst;
 
 static struct mics_instance_t mics_inst;
 static struct bt_uuid_16 uuid = BT_UUID_INIT_16(0);
@@ -140,7 +139,6 @@ static void aics_discover_cb(struct bt_conn *conn, struct bt_aics *inst,
 
 	if (err) {
 		BT_DBG("Discover failed (err %d)", err);
-		cur_mics_inst = NULL;
 		if (mics_client_cb && mics_client_cb->discover) {
 			mics_client_cb->discover(conn, err, 0);
 		}
@@ -160,7 +158,6 @@ static uint8_t mics_discover_include_func(
 		       mics_inst.aics_inst_cnt);
 		(void)memset(params, 0, sizeof(*params));
 
-		cur_mics_inst = NULL;
 		if (mics_client_cb && mics_client_cb->discover) {
 			mics_client_cb->discover(conn, 0, 0);
 		}
@@ -192,7 +189,6 @@ static uint8_t mics_discover_include_func(
 					       &param);
 			if (err) {
 				BT_DBG("AICS Discover failed (err %d)", err);
-				cur_mics_inst = NULL;
 				if (mics_client_cb &&
 				    mics_client_cb->discover) {
 					mics_client_cb->discover(conn, err, 0);
@@ -232,14 +228,12 @@ static uint8_t mics_discover_func(struct bt_conn *conn,
 			err = bt_gatt_discover(conn, &discover_params);
 			if (err) {
 				BT_DBG("Discover failed (err %d)", err);
-				cur_mics_inst = NULL;
 				if (mics_client_cb &&
 				    mics_client_cb->discover) {
 					mics_client_cb->discover(conn, err, 0);
 				}
 			}
 		} else {
-			cur_mics_inst = NULL;
 			if (mics_client_cb && mics_client_cb->discover) {
 				mics_client_cb->discover(conn, err, 0);
 			}
@@ -288,7 +282,6 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 
 	if (!attr) {
 		BT_DBG("Could not find a MICS instance on the server");
-		cur_mics_inst = NULL;
 		if (mics_client_cb && mics_client_cb->discover) {
 			mics_client_cb->discover(conn, -ENODATA, 0);
 		}
@@ -300,7 +293,6 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 	if (params->type == BT_GATT_DISCOVER_PRIMARY) {
 		BT_DBG("Primary discover complete");
 		prim_service = (struct bt_gatt_service_val *)attr->user_data;
-		cur_mics_inst = &mics_inst;
 		mics_inst.start_handle = attr->handle + 1;
 		mics_inst.end_handle = prim_service->end_handle;
 
@@ -315,7 +307,6 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 		err = bt_gatt_discover(conn, &discover_params);
 		if (err) {
 			BT_DBG("Discover failed (err %d)", err);
-			cur_mics_inst = NULL;
 			if (mics_client_cb && mics_client_cb->discover) {
 				mics_client_cb->discover(conn, err, 0);
 			}
@@ -383,8 +374,6 @@ int bt_mics_discover(struct bt_conn *conn)
 
 	if (!conn) {
 		return -ENOTCONN;
-	} else if (cur_mics_inst) {
-		return -EBUSY;
 	}
 
 	memset(&discover_params, 0, sizeof(discover_params));
