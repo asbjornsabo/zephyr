@@ -9,6 +9,8 @@
 #include <zephyr.h>
 #include <zephyr/types.h>
 
+#include <sys/check.h>
+
 #include <device.h>
 #include <init.h>
 
@@ -44,17 +46,25 @@ struct mics_instance_t {
 /* Callback functions */
 static struct bt_mics_cb_t *mics_client_cb;
 
-static struct mics_instance_t mics_inst;
+static struct mics_instance_t mics_insts[CONFIG_BT_MAX_CONN];
 static struct bt_uuid_16 uuid = BT_UUID_INIT_16(0);
 
-bool bt_mics_client_valid_aics_inst(struct bt_aics *aics)
+bool bt_mics_client_valid_aics_inst(struct bt_conn *conn, struct bt_aics *aics)
 {
+	uint8_t conn_index;
+
+	CHECKIF(!conn) {
+		return -EINVAL;
+	}
+
+	conn_index = bt_conn_index(conn);
+
 	if (!aics) {
 		return false;
 	}
 
-	for (int i = 0; i < ARRAY_SIZE(mics_inst.aics); i++) {
-		if (mics_inst.aics[i] == aics) {
+	for (int i = 0; i < ARRAY_SIZE(mics_insts[conn_index].aics); i++) {
+		if (mics_insts[conn_index].aics[i] == aics) {
 			return true;
 		}
 	}
@@ -91,8 +101,9 @@ static uint8_t mics_client_read_mute_cb(struct bt_conn *conn, uint8_t err,
 {
 	uint8_t cb_err = err;
 	uint8_t *mute_val = NULL;
+	struct mics_instance_t *mics_inst = &mics_insts[bt_conn_index(conn)];
 
-	mics_inst.busy = false;
+	mics_inst->busy = false;
 
 	if (err) {
 		BT_DBG("err: 0x%02X", err);
@@ -117,9 +128,11 @@ static uint8_t mics_client_read_mute_cb(struct bt_conn *conn, uint8_t err,
 static void mics_client_write_mics_mute_cb(struct bt_conn *conn, uint8_t err,
 					   struct bt_gatt_write_params *params)
 {
+	struct mics_instance_t *mics_inst = &mics_insts[bt_conn_index(conn)];
+
 	BT_DBG("Write %s (0x%02X)", err ? "failed" : "successful", err);
 
-	mics_inst.busy = false;
+	mics_inst->busy = false;
 
 	if (mics_client_cb && mics_client_cb->mute_write) {
 		mics_client_cb->mute_write(conn, err,
@@ -131,9 +144,11 @@ static void mics_client_write_mics_mute_cb(struct bt_conn *conn, uint8_t err,
 static void aics_discover_cb(struct bt_conn *conn, struct bt_aics *inst,
 			     int err)
 {
+	struct mics_instance_t *mics_inst = &mics_insts[bt_conn_index(conn)];
+
 	if (!err) {
 		/* Continue discovery of included services */
-		err = bt_gatt_discover(conn, &mics_inst.discover_params);
+		err = bt_gatt_discover(conn, &mics_inst->discover_params);
 	}
 
 	if (err) {
@@ -148,10 +163,11 @@ static uint8_t mics_discover_include_func(
 	struct bt_conn *conn, const struct bt_gatt_attr *attr,
 	struct bt_gatt_discover_params *params)
 {
+	struct mics_instance_t *mics_inst = &mics_insts[bt_conn_index(conn)];
 
 	if (!attr) {
 		BT_DBG("Discover include complete for MICS: %u AICS",
-		       mics_inst.aics_inst_cnt);
+		       mics_inst->aics_inst_cnt);
 		(void)memset(params, 0, sizeof(*params));
 
 		if (mics_client_cb && mics_client_cb->discover) {
@@ -167,7 +183,7 @@ static uint8_t mics_discover_include_func(
 		BT_DBG("Include UUID %s", bt_uuid_str(include->uuid));
 
 		if (!bt_uuid_cmp(include->uuid, BT_UUID_AICS) &&
-		    mics_inst.aics_inst_cnt <
+		    mics_inst->aics_inst_cnt <
 			CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
 			uint8_t inst_idx;
 			int err;
@@ -179,11 +195,11 @@ static uint8_t mics_discover_include_func(
 			/* Update discover params so we can continue where we
 			 * left off after bt_vocs_discover
 			 */
-			mics_inst.discover_params.start_handle =
+			mics_inst->discover_params.start_handle =
 				attr->handle + 1;
 
-			inst_idx = mics_inst.aics_inst_cnt++;
-			err = bt_aics_discover(conn, mics_inst.aics[inst_idx],
+			inst_idx = mics_inst->aics_inst_cnt++;
+			err = bt_aics_discover(conn, mics_inst->aics[inst_idx],
 					       &param);
 			if (err) {
 				BT_DBG("AICS Discover failed (err %d)", err);
@@ -208,6 +224,8 @@ static uint8_t mics_discover_func(struct bt_conn *conn,
 				  const struct bt_gatt_attr *attr,
 				  struct bt_gatt_discover_params *params)
 {
+	struct mics_instance_t *mics_inst = &mics_insts[bt_conn_index(conn)];
+
 	if (!attr) {
 		int err = 0;
 
@@ -215,17 +233,17 @@ static uint8_t mics_discover_func(struct bt_conn *conn,
 		(void)memset(params, 0, sizeof(*params));
 		if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
 			/* Discover included services */
-			mics_inst.discover_params.start_handle =
-				mics_inst.start_handle;
-			mics_inst.discover_params.end_handle =
-				mics_inst.end_handle;
-			mics_inst.discover_params.type =
+			mics_inst->discover_params.start_handle =
+				mics_inst->start_handle;
+			mics_inst->discover_params.end_handle =
+				mics_inst->end_handle;
+			mics_inst->discover_params.type =
 				BT_GATT_DISCOVER_INCLUDE;
-			mics_inst.discover_params.func =
+			mics_inst->discover_params.func =
 				mics_discover_include_func;
 
 			err = bt_gatt_discover(conn,
-					       &mics_inst.discover_params);
+					       &mics_inst->discover_params);
 			if (err) {
 				BT_DBG("Discover failed (err %d)", err);
 				if (mics_client_cb &&
@@ -249,8 +267,8 @@ static uint8_t mics_discover_func(struct bt_conn *conn,
 
 		if (!bt_uuid_cmp(chrc->uuid, BT_UUID_MICS_MUTE)) {
 			BT_DBG("Mute");
-			mics_inst.mute_handle = chrc->value_handle;
-			sub_params = &mics_inst.mute_sub_params;
+			mics_inst->mute_handle = chrc->value_handle;
+			sub_params = &mics_inst->mute_sub_params;
 		}
 
 		if (sub_params) {
@@ -279,6 +297,8 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 				     const struct bt_gatt_attr *attr,
 				     struct bt_gatt_discover_params *params)
 {
+	struct mics_instance_t *mics_inst = &mics_insts[bt_conn_index(conn)];
+
 	if (!attr) {
 		BT_DBG("Could not find a MICS instance on the server");
 		if (mics_client_cb && mics_client_cb->discover) {
@@ -295,20 +315,17 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 		int err;
 
 		BT_DBG("Primary discover complete");
+		mics_inst->start_handle = attr->handle + 1;
+		mics_inst->end_handle = prim_service->end_handle;
 
-		mics_inst.start_handle = attr->handle + 1;
-		mics_inst.end_handle = prim_service->end_handle;
+		/* Discover characteristics */
+		mics_inst->discover_params.uuid = NULL;
+		mics_inst->discover_params.start_handle = mics_inst->start_handle;
+		mics_inst->discover_params.end_handle = mics_inst->end_handle;
+		mics_inst->discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
+		mics_inst->discover_params.func = mics_discover_func;
 
-		/* Discover characeristics */
-		mics_inst.discover_params.start_handle = attr->handle + 1;
-		mics_inst.discover_params.uuid = NULL;
-		mics_inst.discover_params.start_handle = mics_inst.start_handle;
-		mics_inst.discover_params.end_handle = mics_inst.end_handle;
-		mics_inst.discover_params.type =
-			BT_GATT_DISCOVER_CHARACTERISTIC;
-		mics_inst.discover_params.func = mics_discover_func;
-
-		err = bt_gatt_discover(conn, &mics_inst.discover_params);
+		err = bt_gatt_discover(conn, &mics_inst->discover_params);
 		if (err) {
 			BT_DBG("Discover failed (err %d)", err);
 			if (mics_client_cb && mics_client_cb->discover) {
@@ -326,46 +343,52 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 int bt_mics_client_write_mute(struct bt_conn *conn, bool mute)
 {
 	int err;
+	struct mics_instance_t *mics_inst;
 
 	if (!conn) {
 		return -ENOTCONN;
 	}
 
-	if (!mics_inst.mute_handle) {
+	mics_inst = &mics_insts[bt_conn_index(conn)];
+
+	if (!mics_inst->mute_handle) {
 		BT_DBG("Handle not set");
 		return -EINVAL;
-	} else if (mics_inst.busy) {
+	} else if (mics_inst->busy) {
 		return -EBUSY;
 	}
 
-	mics_inst.write_buf[0] = mute;
-	mics_inst.write_params.offset = 0;
-	mics_inst.write_params.data = mics_inst.write_buf;
-	mics_inst.write_params.length = sizeof(mute);
-	mics_inst.write_params.handle = mics_inst.mute_handle;
-	mics_inst.write_params.func = mics_client_write_mics_mute_cb;
+	mics_inst->write_buf[0] = mute;
+	mics_inst->write_params.offset = 0;
+	mics_inst->write_params.data = mics_inst->write_buf;
+	mics_inst->write_params.length = sizeof(mute);
+	mics_inst->write_params.handle = mics_inst->mute_handle;
+	mics_inst->write_params.func = mics_client_write_mics_mute_cb;
 
-	err = bt_gatt_write(conn, &mics_inst.write_params);
+	err = bt_gatt_write(conn, &mics_inst->write_params);
 	if (!err) {
-		mics_inst.busy = true;
+		mics_inst->busy = true;
 	}
 	return err;
 }
 
 static void mics_client_reset(struct bt_conn *conn)
 {
-	mics_inst.start_handle = 0;
-	mics_inst.end_handle = 0;
-	mics_inst.mute_handle = 0;
-	mics_inst.aics_inst_cnt = 0;
+	struct mics_instance_t *mics_inst = &mics_insts[bt_conn_index(conn)];
+
+	mics_inst->start_handle = 0;
+	mics_inst->end_handle = 0;
+	mics_inst->mute_handle = 0;
+	mics_inst->aics_inst_cnt = 0;
 
 	/* It's okay if these fail */
-	(void)bt_gatt_unsubscribe(conn, &mics_inst.mute_sub_params);
+	(void)bt_gatt_unsubscribe(conn, &mics_inst->mute_sub_params);
 }
 
 int bt_mics_discover(struct bt_conn *conn)
 {
 	static bool initialized;
+	struct mics_instance_t *mics_inst;
 	/*
 	 * This will initiate a discover procedure. The procedure will do the
 	 * following sequence:
@@ -380,43 +403,50 @@ int bt_mics_discover(struct bt_conn *conn)
 		return -ENOTCONN;
 	}
 
-	memset(&mics_inst.discover_params, 0,
-	       sizeof(mics_inst.discover_params));
+	mics_inst = &mics_insts[bt_conn_index(conn)];
+
+	memset(&mics_inst->discover_params, 0,
+	       sizeof(mics_inst->discover_params));
 	mics_client_reset(conn);
 	memcpy(&uuid, BT_UUID_MICS, sizeof(uuid));
 
 	if (IS_ENABLED(CONFIG_BT_AICS_CLIENT) &&
 	    CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-		for (int i = 0; i < ARRAY_SIZE(mics_inst.aics); i++) {
+		for (int i = 0; i < ARRAY_SIZE(mics_inst->aics); i++) {
 			if (!initialized) {
-				mics_inst.aics[i] =
+				mics_inst->aics[i] =
 					bt_aics_client_free_instance_get();
 
-				if (!mics_inst.aics[i]) {
+				if (!mics_inst->aics[i]) {
 					return -ENOMEM;
 				}
 
 				bt_aics_client_cb_register(
-					mics_inst.aics[i],
+					mics_inst->aics[i],
 					&mics_client_cb->aics_cb);
 			}
 		}
 	}
 
-	mics_inst.discover_params.func = primary_discover_func;
-	mics_inst.discover_params.uuid = &uuid.uuid;
-	mics_inst.discover_params.type = BT_GATT_DISCOVER_PRIMARY;
-	mics_inst.discover_params.start_handle = FIRST_HANDLE;
-	mics_inst.discover_params.end_handle = LAST_HANDLE;
+	mics_inst->discover_params.func = primary_discover_func;
+	mics_inst->discover_params.uuid = &uuid.uuid;
+	mics_inst->discover_params.type = BT_GATT_DISCOVER_PRIMARY;
+	mics_inst->discover_params.start_handle = FIRST_HANDLE;
+	mics_inst->discover_params.end_handle = LAST_HANDLE;
 
 	initialized = true;
-	return bt_gatt_discover(conn, &mics_inst.discover_params);
+	return bt_gatt_discover(conn, &mics_inst->discover_params);
 }
 
 void bt_mics_client_cb_register(struct bt_mics_cb_t *cb)
 {
+	int i, j;
+
 	mics_client_cb = cb;
+
 	if (IS_ENABLED(CONFIG_BT_AICS_CLIENT)) {
+		struct bt_aics_cb *aics_cb = NULL;
+
 		if (cb) {
 			if (cb->aics_cb.discover) {
 				BT_WARN("MICS overwrote discover callback "
@@ -424,11 +454,14 @@ void bt_mics_client_cb_register(struct bt_mics_cb_t *cb)
 			}
 			cb->aics_cb.discover = aics_discover_cb;
 
-			for (int i = 0; i < ARRAY_SIZE(mics_inst.aics); i++) {
-				if (mics_inst.aics[i]) {
+			aics_cb = &cb->aics_cb;
+		}
+
+		for (i = 0; i < ARRAY_SIZE(mics_insts); i++) {
+			for (j = 0; j < ARRAY_SIZE(mics_insts[i].aics); j++) {
+				if (mics_insts[i].aics[j]) {
 					bt_aics_client_cb_register(
-						mics_inst.aics[i],
-						&cb->aics_cb);
+						mics_insts[i].aics[j], aics_cb);
 				}
 			}
 		}
@@ -437,18 +470,20 @@ void bt_mics_client_cb_register(struct bt_mics_cb_t *cb)
 
 int bt_mics_client_service_get(struct bt_conn *conn, struct bt_mics *service)
 {
-	static struct bt_aics *aics[CONFIG_BT_MICS_CLIENT_MAX_AICS_INST];
+	struct mics_instance_t *mics_inst;
+
+	CHECKIF(!conn) {
+		return -EINVAL;
+	}
 
 	if (!service) {
 		return -EINVAL;
 	}
 
-	service->aics_cnt = mics_inst.aics_inst_cnt;
-	for (int i = 0; i < mics_inst.aics_inst_cnt; i++) {
-		aics[i] = (struct bt_aics *)&mics_inst.aics[i];
-	}
+	mics_inst = &mics_insts[bt_conn_index(conn)];
 
-	service->aics = aics;
+	service->aics_cnt = mics_inst->aics_inst_cnt;
+	service->aics = mics_inst->aics;
 
 	return 0;
 }
@@ -456,26 +491,29 @@ int bt_mics_client_service_get(struct bt_conn *conn, struct bt_mics *service)
 int bt_mics_client_mute_get(struct bt_conn *conn)
 {
 	int err;
+	struct mics_instance_t *mics_inst;
 
 	if (!conn) {
 		return -ENOTCONN;
 	}
 
-	if (!mics_inst.mute_handle) {
+	mics_inst = &mics_insts[bt_conn_index(conn)];
+
+	if (!mics_inst->mute_handle) {
 		BT_DBG("Handle not set");
 		return -EINVAL;
-	} else if (mics_inst.busy) {
+	} else if (mics_inst->busy) {
 		return -EBUSY;
 	}
 
-	mics_inst.read_params.func = mics_client_read_mute_cb;
-	mics_inst.read_params.handle_count = 1;
-	mics_inst.read_params.single.handle = mics_inst.mute_handle;
-	mics_inst.read_params.single.offset = 0U;
+	mics_inst->read_params.func = mics_client_read_mute_cb;
+	mics_inst->read_params.handle_count = 1;
+	mics_inst->read_params.single.handle = mics_inst->mute_handle;
+	mics_inst->read_params.single.offset = 0U;
 
-	err = bt_gatt_read(conn, &mics_inst.read_params);
+	err = bt_gatt_read(conn, &mics_inst->read_params);
 	if (!err) {
-		mics_inst.busy = true;
+		mics_inst->busy = true;
 	}
 	return err;
 }
