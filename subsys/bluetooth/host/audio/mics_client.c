@@ -35,6 +35,7 @@ struct mics_instance_t {
 	uint8_t write_buf[1];
 	struct bt_gatt_write_params write_params;
 	struct bt_gatt_read_params read_params;
+	struct bt_gatt_discover_params discover_params;
 
 	uint8_t aics_inst_cnt;
 	struct bt_aics *aics[CONFIG_BT_MICS_CLIENT_MAX_AICS_INST];
@@ -42,8 +43,6 @@ struct mics_instance_t {
 
 /* Callback functions */
 static struct bt_mics_cb_t *mics_client_cb;
-
-static struct bt_gatt_discover_params discover_params;
 
 static struct mics_instance_t mics_inst;
 static struct bt_uuid_16 uuid = BT_UUID_INIT_16(0);
@@ -134,7 +133,7 @@ static void aics_discover_cb(struct bt_conn *conn, struct bt_aics *inst,
 {
 	if (!err) {
 		/* Continue discovery of included services */
-		err = bt_gatt_discover(conn, &discover_params);
+		err = bt_gatt_discover(conn, &mics_inst.discover_params);
 	}
 
 	if (err) {
@@ -182,7 +181,8 @@ static uint8_t mics_discover_include_func(
 			/* Update discover params so we can continue where we
 			 * left off after bt_vocs_discover
 			 */
-			discover_params.start_handle = attr->handle + 1;
+			mics_inst.discover_params.start_handle =
+				attr->handle + 1;
 
 			inst_idx = mics_inst.aics_inst_cnt++;
 			err = bt_aics_discover(conn, mics_inst.aics[inst_idx],
@@ -220,12 +220,17 @@ static uint8_t mics_discover_func(struct bt_conn *conn,
 		if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
 
 			/* Discover included services */
-			discover_params.start_handle = mics_inst.start_handle;
-			discover_params.end_handle = mics_inst.end_handle;
-			discover_params.type = BT_GATT_DISCOVER_INCLUDE;
-			discover_params.func = mics_discover_include_func;
+			mics_inst.discover_params.start_handle =
+				mics_inst.start_handle;
+			mics_inst.discover_params.end_handle =
+				mics_inst.end_handle;
+			mics_inst.discover_params.type =
+				BT_GATT_DISCOVER_INCLUDE;
+			mics_inst.discover_params.func =
+				mics_discover_include_func;
 
-			err = bt_gatt_discover(conn, &discover_params);
+			err = bt_gatt_discover(conn,
+					       &mics_inst.discover_params);
 			if (err) {
 				BT_DBG("Discover failed (err %d)", err);
 				if (mics_client_cb &&
@@ -297,14 +302,15 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 		mics_inst.end_handle = prim_service->end_handle;
 
 		/* Discover characeristics */
-		discover_params.start_handle = attr->handle + 1;
-		discover_params.uuid = NULL;
-		discover_params.start_handle = mics_inst.start_handle;
-		discover_params.end_handle = mics_inst.end_handle;
-		discover_params.type = BT_GATT_DISCOVER_CHARACTERISTIC;
-		discover_params.func = mics_discover_func;
+		mics_inst.discover_params.start_handle = attr->handle + 1;
+		mics_inst.discover_params.uuid = NULL;
+		mics_inst.discover_params.start_handle = mics_inst.start_handle;
+		mics_inst.discover_params.end_handle = mics_inst.end_handle;
+		mics_inst.discover_params.type =
+			BT_GATT_DISCOVER_CHARACTERISTIC;
+		mics_inst.discover_params.func = mics_discover_func;
 
-		err = bt_gatt_discover(conn, &discover_params);
+		err = bt_gatt_discover(conn, &mics_inst.discover_params);
 		if (err) {
 			BT_DBG("Discover failed (err %d)", err);
 			if (mics_client_cb && mics_client_cb->discover) {
@@ -376,7 +382,8 @@ int bt_mics_discover(struct bt_conn *conn)
 		return -ENOTCONN;
 	}
 
-	memset(&discover_params, 0, sizeof(discover_params));
+	memset(&mics_inst.discover_params, 0,
+	       sizeof(mics_inst.discover_params));
 	mics_client_reset(conn);
 	memcpy(&uuid, BT_UUID_MICS, sizeof(uuid));
 
@@ -398,14 +405,14 @@ int bt_mics_discover(struct bt_conn *conn)
 		}
 	}
 
-	discover_params.func = primary_discover_func;
-	discover_params.uuid = &uuid.uuid;
-	discover_params.type = BT_GATT_DISCOVER_PRIMARY;
-	discover_params.start_handle = FIRST_HANDLE;
-	discover_params.end_handle = LAST_HANDLE;
+	mics_inst.discover_params.func = primary_discover_func;
+	mics_inst.discover_params.uuid = &uuid.uuid;
+	mics_inst.discover_params.type = BT_GATT_DISCOVER_PRIMARY;
+	mics_inst.discover_params.start_handle = FIRST_HANDLE;
+	mics_inst.discover_params.end_handle = LAST_HANDLE;
 
 	initialized = true;
-	return bt_gatt_discover(conn, &discover_params);
+	return bt_gatt_discover(conn, &mics_inst.discover_params);
 }
 
 void bt_mics_client_cb_register(struct bt_mics_cb_t *cb)
