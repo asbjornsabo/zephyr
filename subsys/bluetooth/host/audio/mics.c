@@ -210,11 +210,11 @@ int bt_mics_mute_disable(void)
 
 void bt_mics_server_cb_register(struct bt_mics_cb_t *cb)
 {
-	int err;
-
 	mics_inst.cb = cb;
 	if (CONFIG_BT_MICS_AICS_INSTANCE_COUNT > 0) {
 		for (int i = 0; i < CONFIG_BT_MICS_AICS_INSTANCE_COUNT; i++) {
+			int err;
+
 			if (cb) {
 				err = bt_aics_cb_register(
 					mics_inst.aics_insts[i],

@@ -54,7 +54,6 @@ uint8_t aics_client_notify_handler(struct bt_conn *conn,
 	struct bt_aics *inst = lookup_aics_by_handle(conn, handle);
 	struct aics_state_t *state;
 	uint8_t *status;
-	char desc[MIN(CONFIG_BT_L2CAP_RX_MTU, BT_ATT_MAX_ATTRIBUTE_LEN) + 1];
 
 	if (!inst) {
 		BT_DBG("Instance not found");
@@ -89,6 +88,8 @@ uint8_t aics_client_notify_handler(struct bt_conn *conn,
 				}
 			}
 		} else if (handle == inst->cli.desc_handle) {
+			char desc[MIN(CONFIG_BT_L2CAP_RX_MTU, BT_ATT_MAX_ATTRIBUTE_LEN) + 1];
+
 			/* Truncate if too large */
 			length = MIN(sizeof(desc) - 1, length);
 

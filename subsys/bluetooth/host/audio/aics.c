@@ -351,8 +351,6 @@ void *bt_aics_svc_decl_get(struct bt_aics *aics)
 int bt_aics_init(struct bt_aics *aics, struct bt_aics_init *init)
 {
 	int err;
-	struct bt_gatt_attr *attr;
-	struct bt_gatt_chrc *chrc;
 
 	__ASSERT(init, "AICS init struct cannot be null");
 
@@ -424,11 +422,15 @@ int bt_aics_init(struct bt_aics *aics, struct bt_aics_init *init)
 	 */
 	if (init->desc_writable) {
 		for (int i = 1; i < aics->srv.service_p->attr_count; i++) {
+			struct bt_gatt_attr *attr;
+
 			attr = &aics->srv.service_p->attrs[i];
 
 			if (!bt_uuid_cmp(attr->uuid,
 					 BT_UUID_AICS_DESCRIPTION)) {
 				/* Update attr and chrc to be writable */
+				struct bt_gatt_chrc *chrc;
+
 				chrc = aics->srv.service_p->attrs[i - 1]
 					.user_data;
 				attr->write = write_input_desc;

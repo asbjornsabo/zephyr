@@ -148,9 +148,6 @@ static uint8_t mics_discover_include_func(
 	struct bt_conn *conn, const struct bt_gatt_attr *attr,
 	struct bt_gatt_discover_params *params)
 {
-	struct bt_gatt_include *include;
-	uint8_t inst_idx;
-	int err;
 
 	if (!attr) {
 		BT_DBG("Discover include complete for MICS: %u AICS",
@@ -166,13 +163,14 @@ static uint8_t mics_discover_include_func(
 	BT_DBG("[ATTRIBUTE] handle 0x%04X", attr->handle);
 
 	if (params->type == BT_GATT_DISCOVER_INCLUDE) {
-		include = (struct bt_gatt_include *)attr->user_data;
+		struct bt_gatt_include *include = (struct bt_gatt_include *)attr->user_data;
 		BT_DBG("Include UUID %s", bt_uuid_str(include->uuid));
 
 		if (!bt_uuid_cmp(include->uuid, BT_UUID_AICS) &&
 		    mics_inst.aics_inst_cnt <
 			CONFIG_BT_MICS_CLIENT_MAX_AICS_INST) {
-
+			uint8_t inst_idx;
+			int err;
 			struct bt_aics_discover_param param = {
 				.start_handle = include->start_handle,
 				.end_handle = include->end_handle,
@@ -210,15 +208,12 @@ static uint8_t mics_discover_func(struct bt_conn *conn,
 				  const struct bt_gatt_attr *attr,
 				  struct bt_gatt_discover_params *params)
 {
-	int err = 0;
-	struct bt_gatt_chrc *chrc;
-	struct bt_gatt_subscribe_params *sub_params = NULL;
-
 	if (!attr) {
+		int err = 0;
+
 		BT_DBG("Setup complete for MICS");
 		(void)memset(params, 0, sizeof(*params));
 		if (CONFIG_BT_MICS_CLIENT_MAX_AICS_INST > 0) {
-
 			/* Discover included services */
 			mics_inst.discover_params.start_handle =
 				mics_inst.start_handle;
@@ -249,7 +244,9 @@ static uint8_t mics_discover_func(struct bt_conn *conn,
 	BT_DBG("[ATTRIBUTE] handle 0x%04X", attr->handle);
 
 	if (params->type == BT_GATT_DISCOVER_CHARACTERISTIC) {
-		chrc = (struct bt_gatt_chrc *)attr->user_data;
+		struct bt_gatt_chrc *chrc = (struct bt_gatt_chrc *)attr->user_data;
+		struct bt_gatt_subscribe_params *sub_params = NULL;
+
 		if (!bt_uuid_cmp(chrc->uuid, BT_UUID_MICS_MUTE)) {
 			BT_DBG("Mute");
 			mics_inst.mute_handle = chrc->value_handle;
@@ -282,9 +279,6 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 				     const struct bt_gatt_attr *attr,
 				     struct bt_gatt_discover_params *params)
 {
-	int err;
-	struct bt_gatt_service_val *prim_service;
-
 	if (!attr) {
 		BT_DBG("Could not find a MICS instance on the server");
 		if (mics_client_cb && mics_client_cb->discover) {
@@ -296,8 +290,12 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 	BT_DBG("[ATTRIBUTE] handle 0x%04X", attr->handle);
 
 	if (params->type == BT_GATT_DISCOVER_PRIMARY) {
+		struct bt_gatt_service_val *prim_service =
+			(struct bt_gatt_service_val *)attr->user_data;
+		int err;
+
 		BT_DBG("Primary discover complete");
-		prim_service = (struct bt_gatt_service_val *)attr->user_data;
+
 		mics_inst.start_handle = attr->handle + 1;
 		mics_inst.end_handle = prim_service->end_handle;
 

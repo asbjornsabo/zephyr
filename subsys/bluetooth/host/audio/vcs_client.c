@@ -484,7 +484,6 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 				     const struct bt_gatt_attr *attr,
 				     struct bt_gatt_discover_params *params)
 {
-	int err;
 	struct bt_gatt_service_val *prim_service;
 
 	if (!attr) {
@@ -498,6 +497,8 @@ static uint8_t primary_discover_func(struct bt_conn *conn,
 	BT_DBG("[ATTRIBUTE] handle 0x%04X", attr->handle);
 
 	if (params->type == BT_GATT_DISCOVER_PRIMARY) {
+		int err;
+
 		BT_DBG("Primary discover complete");
 		prim_service = (struct bt_gatt_service_val *)attr->user_data;
 		vcs_inst.discover_params.start_handle = attr->handle + 1;
