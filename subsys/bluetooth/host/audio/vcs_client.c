@@ -732,7 +732,7 @@ int bt_vcs_client_get(struct bt_conn *conn, struct bt_vcs *client)
 
 	client->aics_cnt = vcs_inst.aics_inst_cnt;
 	for (int i = 0; i < vcs_inst.aics_inst_cnt; i++) {
-		aics[i] = (struct bt_aics *)&vcs_inst.aics[i];
+		aics[i] = vcs_inst.aics[i];
 	}
 
 	client->vocs = vocs;
