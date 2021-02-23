@@ -124,9 +124,9 @@ static int cmd_mics_init(
 		snprintf(input_desc[i], sizeof(input_desc[i]),
 			 "Input %d", i + 1);
 		mics_init.aics_init[i].input_desc = input_desc[i];
-		mics_init.aics_init[i].input_type = AICS_INPUT_TYPE_LOCAL;
+		mics_init.aics_init[i].input_type = BT_AICS_INPUT_TYPE_LOCAL;
 		mics_init.aics_init[i].input_state = true;
-		mics_init.aics_init[i].mode = AICS_MODE_MANUAL;
+		mics_init.aics_init[i].mode = BT_AICS_MODE_MANUAL;
 		mics_init.aics_init[i].units = 1;
 		mics_init.aics_init[i].min_gain = -100;
 		mics_init.aics_init[i].max_gain = 100;

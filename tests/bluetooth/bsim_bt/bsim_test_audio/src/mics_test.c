@@ -188,7 +188,7 @@ static int test_aics_standalone(void)
 	printk("AICS gain setting get\n");
 
 	printk("Getting AICS input type\n");
-	expected_input_type = AICS_INPUT_TYPE_DIGITAL;
+	expected_input_type = BT_AICS_INPUT_TYPE_DIGITAL;
 	err = bt_mics_aics_type_get(NULL, mics.aics[0]);
 	if (err) {
 		FAIL("Could not get AICS input type (err %d)\n", err);
@@ -219,7 +219,7 @@ static int test_aics_standalone(void)
 	printk("AICS description get\n");
 
 	printk("Setting AICS mute\n");
-	expected_input_mute = AICS_STATE_MUTED;
+	expected_input_mute = BT_AICS_STATE_MUTED;
 	err = bt_mics_aics_mute(NULL, mics.aics[0]);
 	if (err) {
 		FAIL("Could not set AICS mute (err %d)\n", err);
@@ -229,7 +229,7 @@ static int test_aics_standalone(void)
 	printk("AICS mute set\n");
 
 	printk("Setting AICS unmute\n");
-	expected_input_mute = AICS_STATE_UNMUTED;
+	expected_input_mute = BT_AICS_STATE_UNMUTED;
 	err = bt_mics_aics_unmute(NULL, mics.aics[0]);
 	if (err) {
 		FAIL("Could not set AICS unmute (err %d)\n", err);
@@ -239,7 +239,7 @@ static int test_aics_standalone(void)
 	printk("AICS unmute set\n");
 
 	printk("Setting AICS auto mode\n");
-	expected_mode = AICS_MODE_AUTO;
+	expected_mode = BT_AICS_MODE_AUTO;
 	err = bt_mics_aics_automatic_gain_set(NULL, mics.aics[0]);
 	if (err) {
 		FAIL("Could not set AICS auto mode (err %d)\n", err);
@@ -249,7 +249,7 @@ static int test_aics_standalone(void)
 	printk("AICS auto mode set\n");
 
 	printk("Setting AICS manual mode\n");
-	expected_mode = AICS_MODE_MANUAL;
+	expected_mode = BT_AICS_MODE_MANUAL;
 	err = bt_mics_aics_manual_gain_set(NULL, mics.aics[0]);
 	if (err) {
 		FAIL("Could not set AICS manual mode (err %d)\n", err);
@@ -307,9 +307,9 @@ static void test_standalone(void)
 		snprintf(input_desc[i], sizeof(input_desc[i]),
 			 "Input %d", i + 1);
 		mics_init.aics_init[i].input_desc = input_desc[i];
-		mics_init.aics_init[i].input_type = AICS_INPUT_TYPE_DIGITAL;
+		mics_init.aics_init[i].input_type = BT_AICS_INPUT_TYPE_DIGITAL;
 		mics_init.aics_init[i].input_state = g_aics_active;
-		mics_init.aics_init[i].mode = AICS_MODE_MANUAL;
+		mics_init.aics_init[i].mode = BT_AICS_MODE_MANUAL;
 		mics_init.aics_init[i].units = 1;
 		mics_init.aics_init[i].min_gain = 0;
 		mics_init.aics_init[i].max_gain = 100;

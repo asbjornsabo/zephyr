@@ -61,11 +61,11 @@
 #define AICS_CLIENT_INST_COUNT (MICS_CLIENT_COUNT + VCS_CLIENT_COUNT)
 
 #define AICS_INPUT_MODE_IMMUTABLE(mode) \
-	((mode) == AICS_MODE_MANUAL_ONLY || (mode) == AICS_MODE_AUTO_ONLY)
+	((mode) == BT_AICS_MODE_MANUAL_ONLY || (mode) == BT_AICS_MODE_AUTO_ONLY)
 
 
 #define AICS_INPUT_MODE_SETTABLE(mode) \
-	((mode) == AICS_MODE_MANUAL_ONLY || (mode) == AICS_MODE_MANUAL)
+	((mode) == BT_AICS_MODE_MANUAL_ONLY || (mode) == BT_AICS_MODE_MANUAL)
 
 struct aics_control_t {
 	uint8_t opcode;

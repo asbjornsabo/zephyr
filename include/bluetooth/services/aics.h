@@ -14,9 +14,9 @@
  *  @ingroup bluetooth
  *  @{
  *
- *  AICS is currently only implemented as a secondary service, and as such do
- *  not have any public API, but defines the callbacks used by the primary
- *  services that include AICS.
+ *  Audio Input Control Service is a secondary service,
+ *  and as such should not be used own its own,
+ *  but rather in the context of another (primary) service.
  *
  *  [Experimental] Users should note that the APIs can change
  *  as a part of ongoing development.
@@ -29,35 +29,35 @@
 extern "C" {
 #endif
 
-/* AICS mute states */
-#define AICS_STATE_UNMUTED                      0x00
-#define AICS_STATE_MUTED                        0x01
-#define AICS_STATE_MUTE_DISABLED                0x02
+/* Audio Input Control Service mute states */
+#define BT_AICS_STATE_UNMUTED                      0x00
+#define BT_AICS_STATE_MUTED                        0x01
+#define BT_AICS_STATE_MUTE_DISABLED                0x02
 
-/* AICS input modes */
-#define AICS_MODE_MANUAL_ONLY                   0x00
-#define AICS_MODE_AUTO_ONLY                     0x01
-#define AICS_MODE_MANUAL                        0x02
-#define AICS_MODE_AUTO                          0x03
+/* Audio Input Control Service input modes */
+#define BT_AICS_MODE_MANUAL_ONLY                   0x00
+#define BT_AICS_MODE_AUTO_ONLY                     0x01
+#define BT_AICS_MODE_MANUAL                        0x02
+#define BT_AICS_MODE_AUTO                          0x03
 
-/* AICS input types (Values are TBD) */
-#define AICS_INPUT_TYPE_LOCAL                   0x00
-#define AICS_INPUT_TYPE_ISO                     0x01
-#define AICS_INPUT_TYPE_ANALOG                  0x02
-#define AICS_INPUT_TYPE_DIGITAL                 0x03
-#define AICS_INPUT_TYPE_RADIO                   0x04
-#define AICS_INPUT_TYPE_PHYS_MEDIA              0x05
-#define AICS_INPUT_TYPE_NETWORK                 0x06
-#define AICS_INPUT_TYPE_OTHER                   0x255
+/* Audio Input Control Service input types */
+#define BT_AICS_INPUT_TYPE_LOCAL                   0x00
+#define BT_AICS_INPUT_TYPE_ISO                     0x01
+#define BT_AICS_INPUT_TYPE_ANALOG                  0x02
+#define BT_AICS_INPUT_TYPE_DIGITAL                 0x03
+#define BT_AICS_INPUT_TYPE_RADIO                   0x04
+#define BT_AICS_INPUT_TYPE_PHYS_MEDIA              0x05
+#define BT_AICS_INPUT_TYPE_NETWORK                 0x06
+#define BT_AICS_INPUT_TYPE_OTHER                   0x255
 
-/* AICS Error codes */
-#define AICS_ERR_INVALID_COUNTER                0x80
-#define AICS_ERR_OP_NOT_SUPPORTED               0x81
-#define AICS_ERR_MUTE_DISABLED                  0x82
-#define AICS_ERR_OUT_OF_RANGE                   0x83
-#define AICS_ERR_GAIN_MODE_NO_SUPPORT           0x84
+/* Audio Input Control Service Error codes */
+#define BT_AICS_ERR_INVALID_COUNTER                0x80
+#define BT_AICS_ERR_OP_NOT_SUPPORTED               0x81
+#define BT_AICS_ERR_MUTE_DISABLED                  0x82
+#define BT_AICS_ERR_OUT_OF_RANGE                   0x83
+#define BT_AICS_ERR_GAIN_MODE_NO_SUPPORT           0x84
 
-/** @brief Opaque AICS instance. */
+/** @brief Opaque Audio Input Control Service instance. */
 struct bt_aics;
 
 /** @brief Structure for initializing a Audio Input Control Service instance.

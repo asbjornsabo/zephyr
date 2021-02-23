@@ -182,7 +182,7 @@ ssize_t write_aics_control(struct bt_conn *conn,
 	/* Check opcode before length */
 	if (!VALID_AICS_OPCODE(cp->cp.opcode)) {
 		BT_DBG("Invalid opcode %u", cp->cp.opcode);
-		return BT_GATT_ERR(AICS_ERR_OP_NOT_SUPPORTED);
+		return BT_GATT_ERR(BT_AICS_ERR_OP_NOT_SUPPORTED);
 	}
 
 	if ((len < AICS_CP_LEN) ||
@@ -194,7 +194,7 @@ ssize_t write_aics_control(struct bt_conn *conn,
 
 	BT_DBG("Opcode %u, counter %u", cp->cp.opcode, cp->cp.counter);
 	if (cp->cp.counter != inst->state.change_counter) {
-		return BT_GATT_ERR(AICS_ERR_INVALID_COUNTER);
+		return BT_GATT_ERR(BT_AICS_ERR_INVALID_COUNTER);
 	}
 
 	switch (cp->cp.opcode) {
@@ -202,7 +202,7 @@ ssize_t write_aics_control(struct bt_conn *conn,
 		BT_DBG("Set gain %d", cp->gain_setting);
 		if (cp->gain_setting < inst->gain_settings.minimum ||
 		    cp->gain_setting > inst->gain_settings.maximum) {
-			return BT_GATT_ERR(AICS_ERR_OUT_OF_RANGE);
+			return BT_GATT_ERR(BT_AICS_ERR_OUT_OF_RANGE);
 		}
 		if (AICS_INPUT_MODE_SETTABLE(inst->state.mode) &&
 		    inst->state.gain != cp->gain_setting) {
@@ -212,46 +212,46 @@ ssize_t write_aics_control(struct bt_conn *conn,
 		break;
 	case AICS_OPCODE_UNMUTE:
 		BT_DBG("Unmute");
-		if (inst->state.mute == AICS_STATE_MUTE_DISABLED) {
-			return BT_GATT_ERR(AICS_ERR_MUTE_DISABLED);
+		if (inst->state.mute == BT_AICS_STATE_MUTE_DISABLED) {
+			return BT_GATT_ERR(BT_AICS_ERR_MUTE_DISABLED);
 		}
-		if (inst->state.mute != AICS_STATE_UNMUTED) {
-			inst->state.mute = AICS_STATE_UNMUTED;
+		if (inst->state.mute != BT_AICS_STATE_UNMUTED) {
+			inst->state.mute = BT_AICS_STATE_UNMUTED;
 			notify = true;
 		}
 		break;
 	case AICS_OPCODE_MUTE:
 		BT_DBG("Mute");
-		if (inst->state.mute == AICS_STATE_MUTE_DISABLED) {
-			return BT_GATT_ERR(AICS_ERR_MUTE_DISABLED);
+		if (inst->state.mute == BT_AICS_STATE_MUTE_DISABLED) {
+			return BT_GATT_ERR(BT_AICS_ERR_MUTE_DISABLED);
 		}
-		if (inst->state.mute != AICS_STATE_MUTED) {
-			inst->state.mute = AICS_STATE_MUTED;
+		if (inst->state.mute != BT_AICS_STATE_MUTED) {
+			inst->state.mute = BT_AICS_STATE_MUTED;
 			notify = true;
 		}
 		break;
 	case AICS_OPCODE_SET_MANUAL:
 		BT_DBG("Set manual mode");
 		if (AICS_INPUT_MODE_IMMUTABLE(inst->state.mode)) {
-			return BT_GATT_ERR(AICS_ERR_GAIN_MODE_NO_SUPPORT);
+			return BT_GATT_ERR(BT_AICS_ERR_GAIN_MODE_NO_SUPPORT);
 		}
-		if (inst->state.mode != AICS_MODE_MANUAL) {
-			inst->state.mode = AICS_MODE_MANUAL;
+		if (inst->state.mode != BT_AICS_MODE_MANUAL) {
+			inst->state.mode = BT_AICS_MODE_MANUAL;
 			notify = true;
 		}
 		break;
 	case AICS_OPCODE_SET_AUTO:
 		BT_DBG("Set automatic mode");
 		if (AICS_INPUT_MODE_IMMUTABLE(inst->state.mode)) {
-			return BT_GATT_ERR(AICS_ERR_GAIN_MODE_NO_SUPPORT);
+			return BT_GATT_ERR(BT_AICS_ERR_GAIN_MODE_NO_SUPPORT);
 		}
-		if (inst->state.mode != AICS_MODE_AUTO) {
-			inst->state.mode = AICS_MODE_AUTO;
+		if (inst->state.mode != BT_AICS_MODE_AUTO) {
+			inst->state.mode = BT_AICS_MODE_AUTO;
 			notify = true;
 		}
 		break;
 	default:
-		return BT_GATT_ERR(AICS_ERR_OP_NOT_SUPPORTED);
+		return BT_GATT_ERR(BT_AICS_ERR_OP_NOT_SUPPORTED);
 	}
 
 	if (notify) {
@@ -360,18 +360,18 @@ int bt_aics_init(struct bt_aics *aics, struct bt_aics_init *init)
 		return -EALREADY;
 	}
 
-	if (init->mute > AICS_STATE_MUTE_DISABLED) {
+	if (init->mute > BT_AICS_STATE_MUTE_DISABLED) {
 		BT_DBG("Invalid AICS mute value: %u", init->mute);
 		return -EINVAL;
 	}
 
-	if (init->mode > AICS_MODE_AUTO) {
+	if (init->mode > BT_AICS_MODE_AUTO) {
 		BT_DBG("Invalid AICS mode value: %u", init->mode);
 		return -EINVAL;
 	}
 
-	if (init->input_type > AICS_INPUT_TYPE_NETWORK &&
-	    init->input_type != AICS_INPUT_TYPE_OTHER) {
+	if (init->input_type > BT_AICS_INPUT_TYPE_NETWORK &&
+	    init->input_type != BT_AICS_INPUT_TYPE_OTHER) {
 		BT_DBG("Invalid AICS input type value: %u", init->input_type);
 		return -EINVAL;
 	}

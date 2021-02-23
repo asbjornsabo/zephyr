@@ -268,7 +268,7 @@ static int test_aics_standalone(void)
 	printk("AICS gain setting get\n");
 
 	printk("Getting AICS input type\n");
-	expected_input_type = AICS_INPUT_TYPE_DIGITAL;
+	expected_input_type = BT_AICS_INPUT_TYPE_DIGITAL;
 	err = bt_vcs_aics_type_get(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not get AICS input type (err %d)\n", err);
@@ -299,7 +299,7 @@ static int test_aics_standalone(void)
 	printk("AICS description get\n");
 
 	printk("Setting AICS mute\n");
-	expected_input_mute = AICS_STATE_MUTED;
+	expected_input_mute = BT_AICS_STATE_MUTED;
 	err = bt_vcs_aics_mute(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not set AICS mute (err %d)\n", err);
@@ -309,7 +309,7 @@ static int test_aics_standalone(void)
 	printk("AICS mute set\n");
 
 	printk("Setting AICS unmute\n");
-	expected_input_mute = AICS_STATE_UNMUTED;
+	expected_input_mute = BT_AICS_STATE_UNMUTED;
 	err = bt_vcs_aics_unmute(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not set AICS unmute (err %d)\n", err);
@@ -319,7 +319,7 @@ static int test_aics_standalone(void)
 	printk("AICS unmute set\n");
 
 	printk("Setting AICS auto mode\n");
-	expected_mode = AICS_MODE_AUTO;
+	expected_mode = BT_AICS_MODE_AUTO;
 	err = bt_vcs_aics_automatic_gain_set(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not set AICS auto mode (err %d)\n", err);
@@ -329,7 +329,7 @@ static int test_aics_standalone(void)
 	printk("AICS auto mode set\n");
 
 	printk("Setting AICS manual mode\n");
-	expected_mode = AICS_MODE_MANUAL;
+	expected_mode = BT_AICS_MODE_MANUAL;
 	err = bt_vcs_aics_manual_gain_set(NULL, vcs.aics[0]);
 	if (err) {
 		FAIL("Could not set AICS manual mode (err %d)\n", err);
@@ -492,9 +492,9 @@ static void test_standalone(void)
 		snprintf(input_desc[i], sizeof(input_desc[i]),
 			 "Input %d", i + 1);
 		vcs_init.aics_init[i].input_desc = input_desc[i];
-		vcs_init.aics_init[i].input_type = AICS_INPUT_TYPE_DIGITAL;
+		vcs_init.aics_init[i].input_type = BT_AICS_INPUT_TYPE_DIGITAL;
 		vcs_init.aics_init[i].input_state = g_aics_active;
-		vcs_init.aics_init[i].mode = AICS_MODE_MANUAL;
+		vcs_init.aics_init[i].mode = BT_AICS_MODE_MANUAL;
 		vcs_init.aics_init[i].units = 1;
 		vcs_init.aics_init[i].min_gain = 0;
 		vcs_init.aics_init[i].max_gain = 100;
@@ -681,9 +681,9 @@ static void test_main(void)
 		snprintf(input_desc[i], sizeof(input_desc[i]),
 			 "Input %d", i + 1);
 		vcs_init.aics_init[i].input_desc = input_desc[i];
-		vcs_init.aics_init[i].input_type = AICS_INPUT_TYPE_DIGITAL;
+		vcs_init.aics_init[i].input_type = BT_AICS_INPUT_TYPE_DIGITAL;
 		vcs_init.aics_init[i].input_state = g_aics_active;
-		vcs_init.aics_init[i].mode = AICS_MODE_MANUAL;
+		vcs_init.aics_init[i].mode = BT_AICS_MODE_MANUAL;
 		vcs_init.aics_init[i].units = 1;
 		vcs_init.aics_init[i].min_gain = 0;
 		vcs_init.aics_init[i].max_gain = 100;

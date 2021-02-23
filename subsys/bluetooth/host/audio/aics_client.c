@@ -357,7 +357,7 @@ static void aics_client_write_aics_cp_cb(struct bt_conn *conn, uint8_t err,
 
 	BT_DBG("Inst %p: err: 0x%02X", inst, err);
 
-	if (err == AICS_ERR_INVALID_COUNTER && inst->cli.state_handle) {
+	if (err == BT_AICS_ERR_INVALID_COUNTER && inst->cli.state_handle) {
 		int read_err;
 
 		inst->cli.read_params.func = internal_read_state_cb;
