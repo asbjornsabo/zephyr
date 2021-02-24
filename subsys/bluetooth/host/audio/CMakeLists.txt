@@ -3,7 +3,6 @@
 zephyr_library()
 zephyr_library_link_libraries(subsys__bluetooth)
 
-zephyr_library_sources_ifdef(CONFIG_BT_ISO iso.c)
 zephyr_library_sources_ifdef(CONFIG_BT_CCID ccid.c)
 zephyr_library_sources_ifdef(CONFIG_BT_CSIS csis.c)
 zephyr_library_sources_ifdef(CONFIG_BT_CSIP csip.c)
