@@ -596,7 +596,7 @@ static int bt_bass_init(const struct device *unused)
 	return 0;
 }
 
-DEVICE_DEFINE(bt_tbs, "bt_bass", &bt_bass_init, NULL, NULL, NULL,
+DEVICE_DEFINE(bt_bass, "bt_bass", &bt_bass_init, NULL, NULL, NULL,
 	      APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEVICE, NULL);
 
 /****************************** PUBLIC API ******************************/
