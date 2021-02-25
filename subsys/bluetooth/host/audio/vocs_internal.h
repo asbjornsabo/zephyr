@@ -14,7 +14,7 @@
 #if defined(CONFIG_BT_VOCS)
 #define VOCS_MAX_DESC_SIZE CONFIG_BT_VOCS_MAX_OUTPUT_DESCRIPTION_SIZE
 #else
-#define VOCS_MAX_DESC_SIZE 0
+#define VOCS_MAX_DESC_SIZE 1
 #endif /* CONFIG_BT_VOCS */
 
 /* VOCS opcodes */

@@ -16,7 +16,7 @@
 #if defined(CONFIG_BT_AICS)
 #define AICS_MAX_DESC_SIZE CONFIG_BT_AICS_MAX_INPUT_DESCRIPTION_SIZE
 #else
-#define AICS_MAX_DESC_SIZE 0
+#define AICS_MAX_DESC_SIZE 1
 #endif /* CONFIG_BT_AICS */
 
 /* AICS opcodes */
