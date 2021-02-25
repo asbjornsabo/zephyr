@@ -41,7 +41,7 @@ struct vcs_instance_t {
 	struct bt_gatt_subscribe_params flag_sub_params;
 
 	bool busy;
-	uint8_t write_buf[sizeof(struct vcs_control_vol)];
+	struct vcs_control_vol cp_val;
 	struct bt_gatt_write_params write_params;
 	struct bt_gatt_read_params read_params;
 	struct bt_gatt_discover_params discover_params;
@@ -237,8 +237,7 @@ static uint8_t internal_read_volume_state_cb(
 	const void *data, uint16_t length)
 {
 	uint8_t cb_err = 0;
-	uint8_t opcode = vcs_inst.write_buf[0];
-	struct vcs_control_vol *cp_val = (struct vcs_control_vol *)vcs_inst.write_buf;
+	uint8_t opcode = vcs_inst.cp_val.cp.opcode;
 
 	if (err) {
 		BT_WARN("Volume state read failed: %d", err);
@@ -255,8 +254,8 @@ static uint8_t internal_read_volume_state_cb(
 
 			/* clear busy flag to reuse function */
 			vcs_inst.busy = false;
-			if (cp_val->cp.opcode == VCS_OPCODE_SET_ABS_VOL) {
-				write_err = bt_vcs_client_set_volume(conn, cp_val->volume);
+			if (vcs_inst.cp_val.cp.opcode == VCS_OPCODE_SET_ABS_VOL) {
+				write_err = bt_vcs_client_set_volume(conn, vcs_inst.cp_val.volume);
 			} else {
 				write_err = vcs_client_common_vcs_cp(conn,
 								     opcode);
@@ -282,7 +281,7 @@ static uint8_t internal_read_volume_state_cb(
 static void vcs_client_write_vcs_cp_cb(struct bt_conn *conn, uint8_t err,
 				       struct bt_gatt_write_params *params)
 {
-	uint8_t opcode = vcs_inst.write_buf[0];
+	uint8_t opcode = vcs_inst.cp_val.cp.opcode;
 
 	BT_DBG("err: 0x%02X", err);
 
@@ -543,12 +542,11 @@ static int vcs_client_common_vcs_cp(struct bt_conn *conn, uint8_t opcode)
 	}
 
 	vcs_inst.busy = true;
-	vcs_inst.write_buf[0] = opcode;
-	vcs_inst.write_buf[1] = vcs_inst.state.change_counter;
+	vcs_inst.cp_val.cp.opcode = opcode;
+	vcs_inst.cp_val.cp.counter = vcs_inst.state.change_counter;
 	vcs_inst.write_params.offset = 0;
-	vcs_inst.write_params.data = vcs_inst.write_buf;
-	vcs_inst.write_params.length =
-		sizeof(opcode) + sizeof(vcs_inst.state.change_counter);
+	vcs_inst.write_params.data = &vcs_inst.cp_val.cp;
+	vcs_inst.write_params.length = sizeof(vcs_inst.cp_val.cp);
 	vcs_inst.write_params.handle = vcs_inst.control_handle;
 	vcs_inst.write_params.func = vcs_client_write_vcs_cp_cb;
 
@@ -817,11 +815,6 @@ int bt_vcs_client_unmute_volume_up(struct bt_conn *conn)
 int bt_vcs_client_set_volume(struct bt_conn *conn, uint8_t volume)
 {
 	int err;
-	struct vcs_control_vol cp = {
-		.cp = {.opcode = VCS_OPCODE_SET_ABS_VOL,
-		       .counter = vcs_inst.state.change_counter },
-		.volume = volume
-	};
 
 	if (!conn) {
 		return -ENOTCONN;
@@ -834,11 +827,14 @@ int bt_vcs_client_set_volume(struct bt_conn *conn, uint8_t volume)
 		return -EBUSY;
 	}
 
-	memcpy(vcs_inst.write_buf, &cp, sizeof(cp));
+	vcs_inst.cp_val.cp.opcode = VCS_OPCODE_SET_ABS_VOL;
+	vcs_inst.cp_val.cp.counter = vcs_inst.state.change_counter;
+	vcs_inst.cp_val.volume = volume;
+
 	vcs_inst.busy = true;
 	vcs_inst.write_params.offset = 0;
-	vcs_inst.write_params.data = vcs_inst.write_buf;
-	vcs_inst.write_params.length = sizeof(cp);
+	vcs_inst.write_params.data = &vcs_inst.cp_val;
+	vcs_inst.write_params.length = sizeof(vcs_inst.cp_val);
 	vcs_inst.write_params.handle = vcs_inst.control_handle;
 	vcs_inst.write_params.func = vcs_client_write_vcs_cp_cb;
 
