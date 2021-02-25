@@ -41,7 +41,7 @@ struct vcs_instance_t {
 	struct bt_gatt_subscribe_params flag_sub_params;
 
 	bool busy;
-	uint8_t write_buf[sizeof(struct vcs_control_t)];
+	uint8_t write_buf[sizeof(struct vcs_control_vol)];
 	struct bt_gatt_write_params write_params;
 	struct bt_gatt_read_params read_params;
 	struct bt_gatt_discover_params discover_params;
@@ -238,7 +238,7 @@ static uint8_t internal_read_volume_state_cb(
 {
 	uint8_t cb_err = 0;
 	uint8_t opcode = vcs_inst.write_buf[0];
-	struct vcs_control_t *cp = (struct vcs_control_t *)vcs_inst.write_buf;
+	struct vcs_control_vol *cp_val = (struct vcs_control_vol *)vcs_inst.write_buf;
 
 	if (err) {
 		BT_WARN("Volume state read failed: %d", err);
@@ -255,9 +255,8 @@ static uint8_t internal_read_volume_state_cb(
 
 			/* clear busy flag to reuse function */
 			vcs_inst.busy = false;
-			if (cp->opcode == VCS_OPCODE_SET_ABS_VOL) {
-				write_err = bt_vcs_client_set_volume(
-						conn, cp->volume);
+			if (cp_val->cp.opcode == VCS_OPCODE_SET_ABS_VOL) {
+				write_err = bt_vcs_client_set_volume(conn, cp_val->volume);
 			} else {
 				write_err = vcs_client_common_vcs_cp(conn,
 								     opcode);
@@ -818,9 +817,9 @@ int bt_vcs_client_unmute_volume_up(struct bt_conn *conn)
 int bt_vcs_client_set_volume(struct bt_conn *conn, uint8_t volume)
 {
 	int err;
-	struct vcs_control_t cp = {
-		.opcode = VCS_OPCODE_SET_ABS_VOL,
-		.counter = vcs_inst.state.change_counter,
+	struct vcs_control_vol cp = {
+		.cp = {.opcode = VCS_OPCODE_SET_ABS_VOL,
+		       .counter = vcs_inst.state.change_counter },
 		.volume = volume
 	};
 

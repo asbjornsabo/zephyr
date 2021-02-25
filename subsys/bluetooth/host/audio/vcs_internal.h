@@ -25,9 +25,13 @@ struct vcs_state_t {
 	uint8_t change_counter;
 } __packed;
 
-struct vcs_control_t {
+struct vcs_control {
 	uint8_t opcode;
 	uint8_t counter;
+} __packed;
+
+struct vcs_control_vol {
+	struct vcs_control cp;
 	uint8_t volume;
 } __packed;
 

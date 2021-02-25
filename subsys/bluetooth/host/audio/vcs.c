@@ -27,9 +27,6 @@
 
 #if defined(CONFIG_BT_VCS)
 
-#define VCS_CP_LEN                      0x02
-#define VCS_CP_ABS_VOL_LEN              0x03
-
 #define VOLUME_DOWN(current_vol) \
 	((uint8_t)MAX(0, (int)current_vol - vcs_inst.volume_step))
 #define VOLUME_UP(current_vol) \
@@ -76,7 +73,7 @@ static ssize_t write_vcs_control(struct bt_conn *conn,
 				 const void *buf, uint16_t len, uint16_t offset,
 				 uint8_t flags)
 {
-	const struct vcs_control_t *cp = buf;
+	const struct vcs_control_vol *cp_val = buf;
 	bool notify = false;
 	bool volume_change = false;
 
@@ -89,25 +86,25 @@ static ssize_t write_vcs_control(struct bt_conn *conn,
 	}
 
 	/* Check opcode before length */
-	if (!VALID_VCS_OPCODE(cp->opcode)) {
-		BT_DBG("Invalid opcode %u", cp->opcode);
+	if (!VALID_VCS_OPCODE(cp_val->cp.opcode)) {
+		BT_DBG("Invalid opcode %u", cp_val->cp.opcode);
 		return BT_GATT_ERR(VCS_ERR_OP_NOT_SUPPORTED);
 	}
 
-	if ((len < VCS_CP_LEN) ||
-	    (len == VCS_CP_ABS_VOL_LEN &&
-	    cp->opcode != VCS_OPCODE_SET_ABS_VOL) ||
-	    (len > VCS_CP_ABS_VOL_LEN)) {
+	if ((len < sizeof(struct vcs_control)) ||
+	    (len == sizeof(struct vcs_control_vol) &&
+	    cp_val->cp.opcode != VCS_OPCODE_SET_ABS_VOL) ||
+	    (len > sizeof(struct vcs_control_vol))) {
 		return BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
 	}
 
-	BT_DBG("Opcode %u, counter %u", cp->opcode, cp->counter);
+	BT_DBG("Opcode %u, counter %u", cp_val->cp.opcode, cp_val->cp.counter);
 
-	if (cp->counter != vcs_inst.state.change_counter) {
+	if (cp_val->cp.counter != vcs_inst.state.change_counter) {
 		return BT_GATT_ERR(VCS_ERR_INVALID_COUNTER);
 	}
 
-	switch (cp->opcode) {
+	switch (cp_val->cp.opcode) {
 	case VCS_OPCODE_REL_VOL_DOWN:
 		BT_DBG("Relative Volume Down (0x00)");
 		if (vcs_inst.state.volume) {
@@ -153,8 +150,8 @@ static ssize_t write_vcs_control(struct bt_conn *conn,
 		volume_change = true;
 		break;
 	case VCS_OPCODE_SET_ABS_VOL:
-		if (vcs_inst.state.volume != cp->volume) {
-			vcs_inst.state.volume = cp->volume;
+		if (vcs_inst.state.volume != cp_val->volume) {
+			vcs_inst.state.volume = cp_val->volume;
 			notify = true;
 		}
 		volume_change = true;
@@ -551,11 +548,11 @@ int bt_vcs_volume_down(struct bt_conn *conn)
 
 #if defined(CONFIG_BT_VCS)
 	if (!conn) {
-		const struct vcs_control_t cp = {
+		const struct vcs_control cp = {
 			.opcode = VCS_OPCODE_REL_VOL_DOWN,
 			.counter = vcs_inst.state.change_counter,
 		};
-		int err = write_vcs_control(NULL, NULL, &cp, VCS_CP_LEN, 0, 0);
+		int err = write_vcs_control(NULL, NULL, &cp, sizeof(cp), 0, 0);
 
 		return err > 0 ? 0 : err;
 	}
@@ -573,11 +570,11 @@ int bt_vcs_volume_up(struct bt_conn *conn)
 
 #if defined(CONFIG_BT_VCS)
 	if (!conn) {
-		const struct vcs_control_t cp = {
+		const struct vcs_control cp = {
 			.opcode = VCS_OPCODE_REL_VOL_UP,
 			.counter = vcs_inst.state.change_counter,
 		};
-		int err = write_vcs_control(NULL, NULL, &cp, VCS_CP_LEN, 0, 0);
+		int err = write_vcs_control(NULL, NULL, &cp, sizeof(cp), 0, 0);
 
 		return err > 0 ? 0 : err;
 	}
@@ -595,11 +592,11 @@ int bt_vcs_unmute_volume_down(struct bt_conn *conn)
 
 #if defined(CONFIG_BT_VCS)
 	if (!conn) {
-		const struct vcs_control_t cp = {
+		const struct vcs_control cp = {
 			.opcode = VCS_OPCODE_UNMUTE_REL_VOL_DOWN,
 			.counter = vcs_inst.state.change_counter,
 		};
-		int err = write_vcs_control(NULL, NULL, &cp, VCS_CP_LEN, 0, 0);
+		int err = write_vcs_control(NULL, NULL, &cp, sizeof(cp), 0, 0);
 
 		return err > 0 ? 0 : err;
 	}
@@ -617,11 +614,11 @@ int bt_vcs_unmute_volume_up(struct bt_conn *conn)
 
 #if defined(CONFIG_BT_VCS)
 	if (!conn) {
-		const struct vcs_control_t cp = {
+		const struct vcs_control cp = {
 			.opcode = VCS_OPCODE_UNMUTE_REL_VOL_UP,
 			.counter = vcs_inst.state.change_counter,
 		};
-		int err = write_vcs_control(NULL, NULL, &cp, VCS_CP_LEN, 0, 0);
+		int err = write_vcs_control(NULL, NULL, &cp, sizeof(cp), 0, 0);
 
 		return err > 0 ? 0 : err;
 	}
@@ -639,12 +636,12 @@ int bt_vcs_volume_set(struct bt_conn *conn, uint8_t volume)
 
 #if defined(CONFIG_BT_VCS)
 	if (!conn) {
-		const struct vcs_control_t cp = {
-			.opcode = VCS_OPCODE_SET_ABS_VOL,
-			.counter = vcs_inst.state.change_counter,
+		const struct vcs_control_vol cp = {
+			.cp = {.opcode = VCS_OPCODE_SET_ABS_VOL,
+			       .counter = vcs_inst.state.change_counter },
 			.volume = volume
 		};
-		int err = write_vcs_control(NULL, NULL, &cp, VCS_CP_ABS_VOL_LEN,
+		int err = write_vcs_control(NULL, NULL, &cp, sizeof(cp),
 					    0, 0);
 
 		return err > 0 ? 0 : err;
@@ -663,11 +660,11 @@ int bt_vcs_unmute(struct bt_conn *conn)
 
 #if defined(CONFIG_BT_VCS)
 	if (!conn) {
-		const struct vcs_control_t cp = {
+		const struct vcs_control cp = {
 			.opcode = VCS_OPCODE_UNMUTE,
 			.counter = vcs_inst.state.change_counter,
 		};
-		int err = write_vcs_control(NULL, NULL, &cp, VCS_CP_LEN, 0, 0);
+		int err = write_vcs_control(NULL, NULL, &cp, sizeof(cp), 0, 0);
 
 		return err > 0 ? 0 : err;
 	}
@@ -685,11 +682,11 @@ int bt_vcs_mute(struct bt_conn *conn)
 
 #if defined(CONFIG_BT_VCS)
 	if (!conn) {
-		const struct vcs_control_t cp = {
+		const struct vcs_control cp = {
 			.opcode = VCS_OPCODE_MUTE,
 			.counter = vcs_inst.state.change_counter,
 		};
-		int err = write_vcs_control(NULL, NULL, &cp, VCS_CP_LEN, 0, 0);
+		int err = write_vcs_control(NULL, NULL, &cp, sizeof(cp), 0, 0);
 
 		return err > 0 ? 0 : err;
 	}
