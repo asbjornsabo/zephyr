@@ -97,7 +97,7 @@ struct aics_client {
 	uint8_t subscribe_cnt;
 
 	bool busy;
-	uint8_t write_buf[sizeof(struct aics_gain_control_t)];
+	struct aics_gain_control_t cp_val;
 	struct bt_gatt_write_params write_params;
 	struct bt_gatt_read_params read_params;
 	struct bt_gatt_discover_params discover_params;

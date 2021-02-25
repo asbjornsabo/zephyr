@@ -253,14 +253,11 @@ static uint8_t aics_client_read_status_cb(struct bt_conn *conn, uint8_t err,
 static void aics_cp_notify_app(struct bt_conn *conn, struct bt_aics *inst,
 			       uint8_t err)
 {
-	struct aics_control_t *cp =
-		(struct aics_control_t *)inst->cli.write_buf;
-
 	if (!inst->cli.cb) {
 		return;
 	}
 
-	switch (cp->opcode) {
+	switch (inst->cli.cp_val.cp.opcode) {
 	case AICS_OPCODE_SET_GAIN:
 		if (inst->cli.cb->set_gain) {
 			inst->cli.cb->set_gain(conn, inst, err);
@@ -287,7 +284,7 @@ static void aics_cp_notify_app(struct bt_conn *conn, struct bt_aics *inst,
 		}
 		break;
 	default:
-		BT_DBG("Unknown opcode 0x%02x", cp->opcode);
+		BT_DBG("Unknown opcode 0x%02x", inst->cli.cp_val.cp.opcode);
 		break;
 	}
 }
@@ -312,7 +309,6 @@ static uint8_t internal_read_state_cb(struct bt_conn *conn, uint8_t err,
 	} else if (data) {
 		if (length == sizeof(*state)) {
 			int write_err;
-			struct aics_control_t *cp;
 
 			BT_DBG("Gain %d, mute %u, mode %u, counter %u",
 			       state->gain, state->mute, state->mode,
@@ -322,16 +318,12 @@ static uint8_t internal_read_state_cb(struct bt_conn *conn, uint8_t err,
 			/* clear busy flag to reuse function */
 			inst->cli.busy = false;
 
-			cp = (struct aics_control_t *)inst->cli.write_buf;
-			if (cp->opcode == AICS_OPCODE_SET_GAIN) {
-				struct aics_gain_control_t *set_gain_cp =
-					(struct aics_gain_control_t *)cp;
-
+			if (inst->cli.cp_val.cp.opcode == AICS_OPCODE_SET_GAIN) {
 				write_err = bt_aics_client_gain_set(
-					conn, inst, set_gain_cp->gain_setting);
+					conn, inst, inst->cli.cp_val.gain_setting);
 			} else {
 				write_err = aics_client_common_control(
-					conn, cp->opcode, inst);
+					conn, inst->cli.cp_val.cp.opcode, inst);
 			}
 
 			if (write_err) {
@@ -391,7 +383,6 @@ static int aics_client_common_control(struct bt_conn *conn, uint8_t opcode,
 				      struct bt_aics *inst)
 {
 	int err;
-	struct aics_control_t *cp;
 
 	if (!conn) {
 		return -ENOTCONN;
@@ -402,13 +393,12 @@ static int aics_client_common_control(struct bt_conn *conn, uint8_t opcode,
 		return -EBUSY;
 	}
 
-	cp = (struct aics_control_t *)inst->cli.write_buf;
-	cp->opcode = opcode;
-	cp->counter = inst->cli.change_counter;
+	inst->cli.cp_val.cp.opcode = opcode;
+	inst->cli.cp_val.cp.counter = inst->cli.change_counter;
+
 	inst->cli.write_params.offset = 0;
-	inst->cli.write_params.data = inst->cli.write_buf;
-	inst->cli.write_params.length =
-		sizeof(opcode) + sizeof(inst->cli.change_counter);
+	inst->cli.write_params.data = &inst->cli.cp_val.cp;
+	inst->cli.write_params.length = sizeof(inst->cli.cp_val.cp);
 	inst->cli.write_params.handle = inst->cli.control_handle;
 	inst->cli.write_params.func = aics_client_write_aics_cp_cb;
 
@@ -746,10 +736,6 @@ int bt_aics_client_gain_set(struct bt_conn *conn, struct bt_aics *inst,
 			    int8_t gain)
 {
 	int err;
-	struct aics_gain_control_t cp = {
-		.cp.opcode = AICS_OPCODE_SET_GAIN,
-		.gain_setting = gain
-	};
 
 	if (!inst->cli.control_handle) {
 		BT_DBG("Handle not set");
@@ -758,12 +744,13 @@ int bt_aics_client_gain_set(struct bt_conn *conn, struct bt_aics *inst,
 		return -EBUSY;
 	}
 
-	cp.cp.counter = inst->cli.change_counter;
+	inst->cli.cp_val.cp.opcode = AICS_OPCODE_SET_GAIN;
+	inst->cli.cp_val.cp.counter = inst->cli.change_counter;
+	inst->cli.cp_val.gain_setting = gain;
 
-	memcpy(inst->cli.write_buf, &cp, sizeof(cp));
 	inst->cli.write_params.offset = 0;
-	inst->cli.write_params.data = inst->cli.write_buf;
-	inst->cli.write_params.length = sizeof(cp);
+	inst->cli.write_params.data = &inst->cli.cp_val;
+	inst->cli.write_params.length = sizeof(inst->cli.cp_val);
 	inst->cli.write_params.handle = inst->cli.control_handle;
 	inst->cli.write_params.func = aics_client_write_aics_cp_cb;
 
