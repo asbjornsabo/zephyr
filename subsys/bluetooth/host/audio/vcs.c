@@ -35,8 +35,7 @@
 #define VOLUME_UP(current_vol) \
 	((uint8_t)MIN(UINT8_MAX, (int)current_vol + vcs_inst.volume_step))
 
-#define VALID_VCS_OPCODE(opcode) \
-	((opcode) >= VCS_OPCODE_REL_VOL_DOWN && (opcode) <= VCS_OPCODE_MUTE)
+#define VALID_VCS_OPCODE(opcode) ((opcode) <= VCS_OPCODE_MUTE)
 
 struct vcs_inst_t {
 	struct vcs_state_t state;
