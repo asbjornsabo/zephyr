@@ -335,7 +335,7 @@ static int test_aics(void)
 	printk("AICS gain setting get\n");
 
 	printk("Getting AICS input type\n");
-	expected_input_type = AICS_INPUT_TYPE_DIGITAL;
+	expected_input_type = BT_AICS_INPUT_TYPE_DIGITAL;
 	g_cb = false;
 	err = bt_vcs_aics_type_get(g_conn, vcs.aics[0]);
 	if (err) {
@@ -367,7 +367,7 @@ static int test_aics(void)
 	printk("AICS description get\n");
 
 	printk("Setting AICS mute\n");
-	expected_input_mute = AICS_STATE_MUTED;
+	expected_input_mute = BT_AICS_STATE_MUTED;
 	g_write_complete = g_cb = false;
 	err = bt_vcs_aics_mute(g_conn, vcs.aics[0]);
 	if (err) {
@@ -379,7 +379,7 @@ static int test_aics(void)
 	printk("AICS mute set\n");
 
 	printk("Setting AICS unmute\n");
-	expected_input_mute = AICS_STATE_UNMUTED;
+	expected_input_mute = BT_AICS_STATE_UNMUTED;
 	g_write_complete = g_cb = false;
 	err = bt_vcs_aics_unmute(g_conn, vcs.aics[0]);
 	if (err) {
@@ -391,7 +391,7 @@ static int test_aics(void)
 	printk("AICS unmute set\n");
 
 	printk("Setting AICS auto mode\n");
-	expected_mode = AICS_MODE_AUTO;
+	expected_mode = BT_AICS_MODE_AUTO;
 	g_write_complete = g_cb = false;
 	err = bt_vcs_aics_automatic_gain_set(g_conn, vcs.aics[0]);
 	if (err) {
@@ -402,7 +402,7 @@ static int test_aics(void)
 	printk("AICS auto mode set\n");
 
 	printk("Setting AICS manual mode\n");
-	expected_mode = AICS_MODE_MANUAL;
+	expected_mode = BT_AICS_MODE_MANUAL;
 	g_write_complete = g_cb = false;
 	err = bt_vcs_aics_manual_gain_set(g_conn, vcs.aics[0]);
 	if (err) {
