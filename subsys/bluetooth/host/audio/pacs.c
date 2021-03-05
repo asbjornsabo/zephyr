@@ -158,7 +158,7 @@ static ssize_t supported_context_read(struct bt_conn *conn,
 #endif /* CONFIG_BT_PAC_SNK || CONFIG_BT_PAC_SRC */
 
 #if defined(CONFIG_BT_PAC_SNK)
-static struct k_delayed_work snks_work;
+static struct k_work_delayable snks_work;
 static uint32_t snk_loc = CONFIG_BT_PAC_SNK_LOC;
 
 static ssize_t snk_read(struct bt_conn *conn, const struct bt_gatt_attr *attr,
@@ -210,7 +210,7 @@ static void snk_loc_cfg_changed(const struct bt_gatt_attr *attr, uint16_t value)
 #endif /* CONFIG_BT_PAC_SNK */
 
 #if defined(CONFIG_BT_PAC_SRC)
-static struct k_delayed_work srcs_work;
+static struct k_work_delayable srcs_work;
 static uint32_t src_loc = CONFIG_BT_PAC_SRC_LOC;
 
 static ssize_t src_read(struct bt_conn *conn, const struct bt_gatt_attr *attr,
@@ -311,7 +311,7 @@ BT_GATT_SERVICE_DEFINE(pacs_svc,
 );
 #endif /* CONFIG_BT_PAC_SNK || CONFIG_BT_PAC_SRC */
 
-static struct k_delayed_work *bt_pacs_get_work(uint8_t type)
+static struct k_work_delayable *bt_pacs_get_work(uint8_t type)
 {
 	switch (type) {
 #if defined(CONFIG_BT_PAC_SNK)
@@ -352,7 +352,7 @@ static void pac_indicate(struct k_work *work)
 
 void bt_pacs_add_capability(uint8_t type)
 {
-	struct k_delayed_work *work;
+	struct k_work_delayable *work;
 
 	work = bt_pacs_get_work(type);
 	if (!work) {
@@ -361,22 +361,22 @@ void bt_pacs_add_capability(uint8_t type)
 
 	/* Initialize handler if it hasn't been initialized */
 	if (!work->work.handler) {
-		k_delayed_work_init(work, pac_indicate);
+		k_work_init_delayable(work, pac_indicate);
 	}
 
-	k_delayed_work_submit(work, PAC_INDICATE_TIMEOUT);
+	k_work_reschedule(work, PAC_INDICATE_TIMEOUT);
 
 	return;
 }
 
 void bt_pacs_remove_capability(uint8_t type)
 {
-	struct k_delayed_work *work;
+	struct k_work_delayable *work;
 
 	work = bt_pacs_get_work(type);
 	if (!work) {
 		return;
 	}
 
-	k_delayed_work_submit(work, PAC_INDICATE_TIMEOUT);
+	k_work_reschedule(work, PAC_INDICATE_TIMEOUT);
 }
