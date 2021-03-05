@@ -48,7 +48,7 @@ struct tbs_service_inst_t {
 	bool notify_current_calls;
 	bool notify_call_states;
 	bool pending_signal_strength_notification;
-	struct k_delayed_work reporting_interval_work;
+	struct k_work_delayable reporting_interval_work;
 
 	/* TODO: The TBS (service) and the Telephone Bearers should be separated
 	 * into two different instances. This is due to the addition of GTBS,
@@ -76,7 +76,7 @@ struct gtbs_service_inst_t {
 	bool notify_current_calls;
 	bool notify_call_states;
 	bool pending_signal_strength_notification;
-	struct k_delayed_work reporting_interval_work;
+	struct k_work_delayable reporting_interval_work;
 
 	/* TODO: The TBS (service) and the Telephone Bearers should be separated
 	 * into two different instances. This is due to the addition of GTBS,
@@ -1780,7 +1780,7 @@ static void signal_interval_timeout(struct k_work *work)
 				    sizeof(inst->signal_strength));
 
 		if (inst->signal_strength_interval) {
-			k_delayed_work_submit(
+			k_work_reschedule(
 				&inst->reporting_interval_work,
 				K_SECONDS(inst->signal_strength_interval));
 		}
@@ -1794,7 +1794,7 @@ static void signal_interval_timeout(struct k_work *work)
 				    sizeof(gtbs_inst.signal_strength));
 
 		if (gtbs_inst.signal_strength_interval) {
-			k_delayed_work_submit(
+			k_work_reschedule(
 				&gtbs_inst.reporting_interval_work,
 				K_SECONDS(gtbs_inst.signal_strength_interval));
 		}
@@ -1821,7 +1821,7 @@ static int bt_tbs_init(const struct device *unused)
 		gtbs_inst.ccid = ccid_get_value();
 		strcpy(gtbs_inst.uci, "un000");
 
-		k_delayed_work_init(&gtbs_inst.reporting_interval_work,
+		k_work_init_delayable(&gtbs_inst.reporting_interval_work,
 				    signal_interval_timeout);
 	}
 
@@ -1841,7 +1841,7 @@ static int bt_tbs_init(const struct device *unused)
 		svc_insts[i].status_flags =
 			CONFIG_BT_TBS_STATUS_FLAGS;
 
-		k_delayed_work_init(&svc_insts[i].reporting_interval_work,
+		k_work_init_delayable(&svc_insts[i].reporting_interval_work,
 				    signal_interval_timeout);
 	}
 
@@ -2280,7 +2280,7 @@ int bt_tbs_set_signal_strength(uint8_t bearer_idx, uint8_t new_signal_strength)
 	const struct bt_gatt_attr *attr;
 	uint32_t timer_status;
 	uint8_t interval;
-	struct k_delayed_work *reporting_interval_work;
+	struct k_work_delayable *reporting_interval_work;
 	struct tbs_service_inst_t *inst;
 
 	if (new_signal_strength > BT_CCP_SIGNAL_STRENGTH_MAX &&
@@ -2300,7 +2300,7 @@ int bt_tbs_set_signal_strength(uint8_t bearer_idx, uint8_t new_signal_strength)
 
 		gtbs_inst.signal_strength = new_signal_strength;
 		attr = gtbs_inst.service_p->attrs;
-		timer_status = k_delayed_work_remaining_get(
+		timer_status = k_work_delayable_remaining_get(
 					&gtbs_inst.reporting_interval_work);
 		interval = gtbs_inst.signal_strength_interval;
 		reporting_interval_work = &gtbs_inst.reporting_interval_work;
@@ -2312,7 +2312,7 @@ int bt_tbs_set_signal_strength(uint8_t bearer_idx, uint8_t new_signal_strength)
 
 		inst->signal_strength = new_signal_strength;
 		attr = inst->service_p->attrs;
-		timer_status = k_delayed_work_remaining_get(
+		timer_status = k_work_delayable_remaining_get(
 					&inst->reporting_interval_work);
 		interval = inst->signal_strength_interval;
 		reporting_interval_work = &inst->reporting_interval_work;
@@ -2325,7 +2325,7 @@ int bt_tbs_set_signal_strength(uint8_t bearer_idx, uint8_t new_signal_strength)
 				    attr, &new_signal_strength,
 				    sizeof(new_signal_strength));
 		if (interval) {
-			k_delayed_work_submit(reporting_interval_work, delay);
+			k_work_reschedule(reporting_interval_work, delay);
 		}
 	} else {
 		if (bearer_idx == BT_CCP_GTBS_INDEX) {
