@@ -442,6 +442,19 @@ static void mcc_otc_obj_metadata_cb(struct bt_conn *conn, int err)
 	shell_print(ctx_shell, "Reading object metadata succeeded\n");
 }
 #endif /* CONFIG_BT_DEBUG_MCC */
+static void mcc_icon_object_read_cb(struct bt_conn *conn, int err,
+				    struct net_buf_simple *buf)
+{
+	if (err) {
+		shell_error(ctx_shell,
+			    "Icon Object read failed (%d)", err);
+		return;
+	}
+
+	shell_print(ctx_shell, "Icon content (%d octets)", buf->len);
+	shell_hexdump(ctx_shell, buf->data, buf->len);
+}
+
 #endif /* CONFIG_BT_MCC_OTS */
 
 
@@ -492,6 +505,7 @@ int cmd_mcc_init(const struct shell *shell, size_t argc, char **argv)
 #ifdef CONFIG_BT_MCC_OTS
 	cb.otc_obj_selected = &mcc_otc_obj_selected_cb;
 	cb.otc_obj_metadata = &mcc_otc_obj_metadata_cb;
+	cb.otc_icon_object  = &mcc_icon_object_read_cb;
 #endif /* CONFIG_BT_MCC_OTS */
 
 	/* Initialize the module */

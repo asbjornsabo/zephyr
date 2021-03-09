@@ -15,6 +15,7 @@
 
 #include <zephyr/types.h>
 #include <bluetooth/conn.h>
+#include <net/buf.h>
 
 /* Todo: Decide placement of headers below, fix */
 #include "../subsys/bluetooth/host/audio/mpl.h"
@@ -318,6 +319,18 @@ typedef void (*bt_mcc_otc_obj_selected_cb_t)(struct bt_conn *conn, int err);
 typedef void (*bt_mcc_otc_obj_metadata_cb_t)(struct bt_conn *conn, int err);
 
 #endif /* CONFIG_BT_DEBUG_MCC */
+
+/** @brief Callback function for bt_mcc_otc_read_icon_object
+ *
+ * @param conn          The connection that was used to initialise MCC
+ * @param err           Error value. 0 on success, GATT error or ERRNO on fail
+ * @param buf           Buffer containing the object contents
+ *
+ * If err is EMSGSIZE, the object contents have been truncated.
+ */
+typedef void (*bt_mcc_otc_read_icon_object_cb_t)(struct bt_conn *conn, int err,
+						 struct net_buf_simple *buf);
+
 #endif /* CONFIG_BT_OTC */
 
 
@@ -363,6 +376,7 @@ struct bt_mcc_cb_t {
 	bt_mcc_otc_obj_selected_cb_t              otc_obj_selected;
 	bt_mcc_otc_obj_metadata_cb_t              otc_obj_metadata;
 #endif /* CONFIG_BT_DEBUG_MCC */
+	bt_mcc_otc_read_icon_object_cb_t          otc_icon_object;
 #endif /* CONFIG_BT_OTC */
 };
 
