@@ -478,8 +478,8 @@ int cmd_mcc_init(const struct shell *shell, size_t argc, char **argv)
 	cb.scp_ntf            = &mcc_scp_ntf_cb;
 	cb.search_results_obj_id_read = &mcc_search_results_obj_id_read_cb;
 
-	cb.otc_obj_selected = &mcc_otc_obj_selected_cb,
-	cb.otc_obj_metadata = &mcc_otc_obj_metadata_cb,
+	cb.otc_obj_selected = &mcc_otc_obj_selected_cb;
+	cb.otc_obj_metadata = &mcc_otc_obj_metadata_cb;
 #endif /* CONFIG_BT_MCC_OTS */
 
 	/* Initialize the module */
