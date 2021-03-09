@@ -407,6 +407,16 @@ static void mcc_search_results_obj_id_read_cb(struct bt_conn *conn, int err,
 }
 #endif /* CONFIG_BT_MCC_OTS */
 
+static void mcc_content_control_id_read_cb(struct bt_conn *conn, int err, uint8_t ccid)
+{
+	if (err) {
+		shell_error(ctx_shell, "Content Control ID read failed (%d)", err);
+		return;
+	}
+
+	shell_print(ctx_shell, "Content Control ID: %d", ccid);
+}
+
 #ifdef CONFIG_BT_MCC_OTS
 #if CONFIG_BT_DEBUG_MCC
 /**** Callback functions for the included Object Transfer service *************/
@@ -477,7 +487,9 @@ int cmd_mcc_init(const struct shell *shell, size_t argc, char **argv)
 	cb.scp_set            = &mcc_scp_set_cb;
 	cb.scp_ntf            = &mcc_scp_ntf_cb;
 	cb.search_results_obj_id_read = &mcc_search_results_obj_id_read_cb;
-
+#endif /* CONFIG_BT_MCC_OTS */
+	cb.content_control_id_read = &mcc_content_control_id_read_cb;
+#ifdef CONFIG_BT_MCC_OTS
 	cb.otc_obj_selected = &mcc_otc_obj_selected_cb;
 	cb.otc_obj_metadata = &mcc_otc_obj_metadata_cb;
 #endif /* CONFIG_BT_MCC_OTS */
