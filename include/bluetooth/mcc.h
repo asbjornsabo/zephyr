@@ -298,7 +298,7 @@ typedef void (*bt_mcc_search_results_obj_id_read_cb_t)(struct bt_conn *conn,
  * @param ccid          The Content Control ID
  */
 typedef void (*bt_mcc_content_control_id_read_cb_t)(struct bt_conn *conn,
-						    int err, int8_t ccid);
+						    int err, uint8_t ccid);
 #ifdef CONFIG_BT_OTC
 #if CONFIG_BT_DEBUG_MCC
 /**** Callback functions for the included Object Transfer service *************/

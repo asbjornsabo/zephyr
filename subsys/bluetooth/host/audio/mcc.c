@@ -799,7 +799,7 @@ static uint8_t mcc_read_content_control_id_cb(struct bt_conn *conn, uint8_t err,
 		cb_err = BT_GATT_ERR(BT_ATT_ERR_INVALID_ATTRIBUTE_LEN);
 
 	} else {
-		ccid = *(int8_t *)data;
+		ccid = *(uint8_t *)data;
 		BT_DBG("Content control ID: %d", ccid);
 	}
 
