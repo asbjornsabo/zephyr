@@ -34,6 +34,7 @@ static struct bt_mcc_cb_t mcc_cb;
 
 uint64_t g_icon_object_id;
 uint64_t g_current_track_object_id;
+uint64_t g_next_track_object_id;
 uint64_t g_track_segments_object_id;
 uint64_t g_current_group_object_id;
 
@@ -44,6 +45,7 @@ CREATE_FLAG(discovery_done);
 CREATE_FLAG(icon_object_id_read);
 CREATE_FLAG(track_segments_object_id_read);
 CREATE_FLAG(current_track_object_id_read);
+CREATE_FLAG(next_track_object_id_read);
 CREATE_FLAG(current_group_object_id_read);
 CREATE_FLAG(object_selected);
 CREATE_FLAG(metadata_read);
@@ -108,6 +110,19 @@ static void mcc_current_track_obj_id_read_cb(struct bt_conn *conn, int err,
 	printk("Current Track Object ID read succeeded\n");
 	g_current_track_object_id = id;
 	SET_FLAG(current_track_object_id_read);
+}
+
+static void mcc_next_track_obj_id_read_cb(struct bt_conn *conn, int err,
+					     uint64_t id)
+{
+	if (err) {
+		FAIL("Next Track Object ID read failed (%d)\n", err);
+		return;
+	}
+
+	printk("Next Track Object ID read succeeded\n");
+	g_next_track_object_id = id;
+	SET_FLAG(next_track_object_id_read);
 }
 
 static void mcc_current_group_obj_id_read_cb(struct bt_conn *conn, int err,
@@ -181,6 +196,18 @@ static void mcc_otc_read_current_track_object_cb(struct bt_conn *conn, int err,
 	SET_FLAG(object_read);
 }
 
+static void mcc_otc_read_next_track_object_cb(struct bt_conn *conn, int err,
+						 struct net_buf_simple *buf)
+{
+	if (err) {
+		FAIL("Next Track Object read failed (%d)", err);
+		return;
+	}
+
+	printk("Next Track Object read succeeded\n");
+	SET_FLAG(object_read);
+}
+
 int do_mcc_init(void)
 {
 	/* Set up the callbacks */
@@ -188,6 +215,7 @@ int do_mcc_init(void)
 	mcc_cb.discover_mcs     = &mcc_discover_mcs_cb;
 	mcc_cb.icon_obj_id_read = &mcc_icon_obj_id_read_cb;
 	mcc_cb.current_track_obj_id_read = &mcc_current_track_obj_id_read_cb;
+	mcc_cb.next_track_obj_id_read    = &mcc_next_track_obj_id_read_cb;
 	mcc_cb.segments_obj_id_read      = &mcc_segments_obj_id_read_cb;
 	mcc_cb.current_group_obj_id_read = &mcc_current_group_obj_id_read_cb;
 	mcc_cb.otc_obj_selected = &mcc_otc_obj_selected_cb;
@@ -195,6 +223,7 @@ int do_mcc_init(void)
 	mcc_cb.otc_icon_object  = &mcc_icon_object_read_cb;
 	mcc_cb.otc_track_segments_object = &mcc_track_segments_object_read_cb;
 	mcc_cb.otc_current_track_object  = &mcc_otc_read_current_track_object_cb;
+	mcc_cb.otc_next_track_object     = &mcc_otc_read_next_track_object_cb;
 
 	/* Initialize the module */
 	return bt_mcc_init(default_conn, &mcc_cb);
@@ -392,6 +421,50 @@ void test_main(void)
 
 	if (err) {
 		FAIL("Failed to current track object\n");
+		return;
+	}
+
+	WAIT_FOR_FLAG(object_read);
+	UNSET_FLAG(object_read);
+
+
+	/* Read next track object ******************************************/
+	/* Involves reading the object ID, selecting the object, */
+	/* reading the object metadata and reading the object */
+	err = bt_mcc_read_next_track_obj_id(default_conn);
+	if (err) {
+		FAIL("Failed to read next track object ID: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(next_track_object_id_read);
+
+	/* TODO: Fix the instance pointer - it is neither valid nor used */
+	err = bt_otc_select_id(default_conn, bt_mcc_otc_inst(),
+			       g_next_track_object_id);
+	if (err) {
+		FAIL("Failed to select object\n");
+		return;
+	}
+
+	WAIT_FOR_FLAG(object_selected);
+	UNSET_FLAG(object_selected);    /* Clear flag for later use */
+
+	/* TODO: Fix the instance pointer - it is neither valid nor used */
+	err = bt_otc_obj_metadata_read(default_conn, bt_mcc_otc_inst(),
+				       BT_OTC_METADATA_REQ_ALL);
+	if (err) {
+		FAIL("Failed to read object metadata\n");
+		return;
+	}
+
+	WAIT_FOR_FLAG(metadata_read);
+	UNSET_FLAG(metadata_read);
+
+	err = bt_mcc_otc_read_next_track_object(default_conn);
+
+	if (err) {
+		FAIL("Failed to read next track object\n");
 		return;
 	}
 
