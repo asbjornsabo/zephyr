@@ -2109,22 +2109,26 @@ static void decode_track_segments(struct net_buf_simple *buff,
 	uint16_t i;
 	struct track_seg_t *seg;
 	uint8_t *name;
+	struct net_buf_simple tmp_buf;
 
-	while (buff->len &&
+	/* Copy the buf, to not consume the original in this debug function */
+	net_buf_simple_clone(buff, &tmp_buf);
+
+	while (tmp_buf.len &&
 	       track_segs->cnt < CONFIG_BT_MCC_TRACK_SEGS_MAX_CNT) {
 
 		i = track_segs->cnt++;
 		seg = &track_segs->segs[i];
 
-		seg->name_len =  net_buf_simple_pull_u8(buff);
-		if (seg->name_len + sizeof(int32_t) > buff->len) {
+		seg->name_len =  net_buf_simple_pull_u8(&tmp_buf);
+		if (seg->name_len + sizeof(int32_t) > tmp_buf.len) {
 			BT_WARN("Segment too long");
 			return;
 		}
 
 		if (seg->name_len) {
 
-			name = net_buf_simple_pull_mem(buff, seg->name_len);
+			name = net_buf_simple_pull_mem(&tmp_buf, seg->name_len);
 
 			if (seg->name_len >= CONFIG_BT_MCS_SEGMENT_NAME_MAX) {
 				seg->name_len =
@@ -2134,7 +2138,7 @@ static void decode_track_segments(struct net_buf_simple *buff,
 		}
 		seg->name[seg->name_len] = '\0';
 
-		track_segs->segs[i].pos = (int32_t)net_buf_simple_pull_le32(buff);
+		track_segs->segs[i].pos = (int32_t)net_buf_simple_pull_le32(&tmp_buf);
 	}
 }
 
