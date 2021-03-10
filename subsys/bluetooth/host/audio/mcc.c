@@ -2298,9 +2298,14 @@ struct id_list_t {
 static void decode_current_group(struct net_buf_simple *buff,
 				 struct id_list_t *ids)
 {
-	while ((buff->len) && (ids->cnt < CONFIG_BT_MCC_GROUP_RECORDS_MAX)) {
-		ids->ids[ids->cnt].type = net_buf_simple_pull_u8(buff);
-		ids->ids[ids->cnt++].id = net_buf_simple_pull_le48(buff);
+	struct net_buf_simple tmp_buf;
+
+	/* Copy the buf, to not consume the original in this debug function */
+	net_buf_simple_clone(buff, &tmp_buf);
+
+	while ((tmp_buf.len) && (ids->cnt < CONFIG_BT_MCC_GROUP_RECORDS_MAX)) {
+		ids->ids[ids->cnt].type = net_buf_simple_pull_u8(&tmp_buf);
+		ids->ids[ids->cnt++].id = net_buf_simple_pull_le48(&tmp_buf);
 	}
 }
 #endif /* CONFIG_BT_DEBUG_MCC */
