@@ -2089,60 +2089,6 @@ void on_obj_selected(struct bt_conn *conn, int result,
 }
 
 
-struct track_seg_t {
-	uint8_t            name_len;
-	char               name[CONFIG_BT_MCS_SEGMENT_NAME_MAX];
-	int32_t            pos;
-};
-
-
-struct track_segs_t {
-	uint16_t              cnt;
-	struct track_seg_t    segs[CONFIG_BT_MCC_TRACK_SEGS_MAX_CNT];
-};
-
-
-
-static void decode_track_segments(struct net_buf_simple *buff,
-				  struct track_segs_t *track_segs)
-{
-	uint16_t i;
-	struct track_seg_t *seg;
-	uint8_t *name;
-	struct net_buf_simple tmp_buf;
-
-	/* Copy the buf, to not consume the original in this debug function */
-	net_buf_simple_clone(buff, &tmp_buf);
-
-	while (tmp_buf.len &&
-	       track_segs->cnt < CONFIG_BT_MCC_TRACK_SEGS_MAX_CNT) {
-
-		i = track_segs->cnt++;
-		seg = &track_segs->segs[i];
-
-		seg->name_len =  net_buf_simple_pull_u8(&tmp_buf);
-		if (seg->name_len + sizeof(int32_t) > tmp_buf.len) {
-			BT_WARN("Segment too long");
-			return;
-		}
-
-		if (seg->name_len) {
-
-			name = net_buf_simple_pull_mem(&tmp_buf, seg->name_len);
-
-			if (seg->name_len >= CONFIG_BT_MCS_SEGMENT_NAME_MAX) {
-				seg->name_len =
-					CONFIG_BT_MCS_SEGMENT_NAME_MAX - 1;
-			}
-			memcpy(seg->name, name, seg->name_len);
-		}
-		seg->name[seg->name_len] = '\0';
-
-		track_segs->segs[i].pos = (int32_t)net_buf_simple_pull_le32(&tmp_buf);
-	}
-}
-
-
 struct id_list_elem_t {
 	uint8_t  type;
 	uint64_t id;
@@ -2197,24 +2143,82 @@ int on_icon_content(struct bt_conn *conn, uint32_t offset, uint32_t len,
 	return BT_OTC_CONTINUE;
 }
 
+#if CONFIG_BT_DEBUG_MCC
+struct track_seg_t {
+	uint8_t            name_len;
+	char               name[CONFIG_BT_MCS_SEGMENT_NAME_MAX];
+	int32_t            pos;
+};
+
+struct track_segs_t {
+	uint16_t              cnt;
+	struct track_seg_t    segs[CONFIG_BT_MCC_TRACK_SEGS_MAX_CNT];
+};
+
+static void decode_track_segments(struct net_buf_simple *buff,
+				  struct track_segs_t *track_segs)
+{
+	uint16_t i;
+	struct track_seg_t *seg;
+	uint8_t *name;
+	struct net_buf_simple tmp_buf;
+
+	/* Copy the buf, to not consume the original in this debug function */
+	net_buf_simple_clone(buff, &tmp_buf);
+
+	while (tmp_buf.len &&
+	       track_segs->cnt < CONFIG_BT_MCC_TRACK_SEGS_MAX_CNT) {
+
+		i = track_segs->cnt++;
+		seg = &track_segs->segs[i];
+
+		seg->name_len =  net_buf_simple_pull_u8(&tmp_buf);
+		if (seg->name_len + sizeof(int32_t) > tmp_buf.len) {
+			BT_WARN("Segment too long");
+			return;
+		}
+
+		if (seg->name_len) {
+
+			name = net_buf_simple_pull_mem(&tmp_buf, seg->name_len);
+
+			if (seg->name_len >= CONFIG_BT_MCS_SEGMENT_NAME_MAX) {
+				seg->name_len =
+					CONFIG_BT_MCS_SEGMENT_NAME_MAX - 1;
+			}
+			memcpy(seg->name, name, seg->name_len);
+		}
+		seg->name[seg->name_len] = '\0';
+
+		track_segs->segs[i].pos = (int32_t)net_buf_simple_pull_le32(&tmp_buf);
+	}
+}
+#endif /* CONFIG_BT_DEBUG_MCC */
+
 int on_track_segments_content(struct bt_conn *conn, uint32_t offset,
 			      uint32_t len, uint8_t *data_p, bool is_complete,
 			      struct bt_otc_instance_t *otc_inst)
 {
-	static struct track_segs_t track_segments;
+	int cb_err = 0;
 
-	BT_INFO("Received Segments content, %i bytes at offset %i",
+	BT_DBG("Received Track Segments content, %i bytes at offset %i",
 		len, offset);
 
 	if (len > net_buf_simple_tailroom(&otc_obj_buf)) {
-		BT_DBG("Can not fit whole object");
+		BT_WARN("Can not fit whole object");
+		cb_err = -EMSGSIZE;
 	}
 
 	net_buf_simple_add_mem(&otc_obj_buf, data_p,
 			       MIN(net_buf_simple_tailroom(&otc_obj_buf), len));
 
 	if (is_complete) {
-		BT_INFO("Track segment object received");
+		BT_DBG("Track segment object received");
+
+#if CONFIG_BT_DEBUG_MCC
+		struct track_segs_t track_segments;
+
+		track_segments.cnt = 0;
 		decode_track_segments(&otc_obj_buf, &track_segments);
 		for (int i = 0; i < track_segments.cnt; i++) {
 			BT_DBG("Track segment %i:", i);
@@ -2222,10 +2226,14 @@ int on_track_segments_content(struct bt_conn *conn, uint32_t offset,
 			       log_strdup(track_segments.segs[i].name));
 			BT_DBG("\t-Position\t:%d", track_segments.segs[i].pos);
 		}
-		/* Reset buf in case the same object is read again without */
-		/* calling select in between */
+#endif /* CONFIG_BT_DEBUG_MCC */
+
+		if (mcc_cb && mcc_cb->otc_track_segments_object) {
+			mcc_cb->otc_track_segments_object(conn,
+							   cb_err, &otc_obj_buf);
+		}
+
 		net_buf_simple_reset(&otc_obj_buf);
-		track_segments.cnt = 0;
 	}
 
 	return BT_OTC_CONTINUE;

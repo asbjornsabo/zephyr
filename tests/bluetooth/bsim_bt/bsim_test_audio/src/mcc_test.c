@@ -157,6 +157,17 @@ static void mcc_icon_object_read_cb(struct bt_conn *conn, int err,
 	SET_FLAG(object_read);
 }
 
+static void mcc_track_segments_object_read_cb(struct bt_conn *conn, int err,
+					      struct net_buf_simple *buf)
+{
+	if (err) {
+		FAIL("Reading Track Segments Object failed (%d)", err);
+		return;
+	}
+
+	printk("Reading Track Segments Object succeeded\n");
+	SET_FLAG(object_read);
+}
 
 int do_mcc_init(void)
 {
@@ -170,6 +181,7 @@ int do_mcc_init(void)
 	mcc_cb.otc_obj_selected = &mcc_otc_obj_selected_cb;
 	mcc_cb.otc_obj_metadata = &mcc_otc_obj_metadata_cb;
 	mcc_cb.otc_icon_object  = &mcc_icon_object_read_cb;
+	mcc_cb.otc_track_segments_object = &mcc_track_segments_object_read_cb;
 
 	/* Initialize the module */
 	return bt_mcc_init(default_conn, &mcc_cb);
@@ -376,14 +388,8 @@ void test_main(void)
 		return;
 	}
 
-	/* TODO */
-	/* In principle, this should also result in a callback. */
-	/* But there is no application level callback for reading the current */
-	/* track yet. */
-	/* Therefore, the test ends here for now, without verifying that the */
-	/* object was actually returned to us. */
-
-	printk("Succeeded to read track segments object\n");
+	WAIT_FOR_FLAG(object_read);
+	UNSET_FLAG(object_read);
 
 
 	/* Read current group object ******************************************/
