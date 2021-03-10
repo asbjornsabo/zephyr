@@ -42,8 +42,8 @@ CREATE_FLAG(ble_link_is_ready);
 CREATE_FLAG(mcc_is_initialized);
 CREATE_FLAG(discovery_done);
 CREATE_FLAG(icon_object_id_read);
-CREATE_FLAG(current_track_object_id_read);
 CREATE_FLAG(track_segments_object_id_read);
+CREATE_FLAG(current_track_object_id_read);
 CREATE_FLAG(current_group_object_id_read);
 CREATE_FLAG(object_selected);
 CREATE_FLAG(metadata_read);
@@ -84,19 +84,6 @@ static void mcc_icon_obj_id_read_cb(struct bt_conn *conn, int err, uint64_t id)
 	SET_FLAG(icon_object_id_read);
 }
 
-static void mcc_current_track_obj_id_read_cb(struct bt_conn *conn, int err,
-					     uint64_t id)
-{
-	if (err) {
-		FAIL("Current Track Object ID read failed (%d)\n", err);
-		return;
-	}
-
-	printk("Current Track Object ID read succeeded\n");
-	g_current_track_object_id = id;
-	SET_FLAG(current_track_object_id_read);
-}
-
 static void mcc_segments_obj_id_read_cb(struct bt_conn *conn, int err,
 					uint64_t id)
 {
@@ -108,6 +95,19 @@ static void mcc_segments_obj_id_read_cb(struct bt_conn *conn, int err,
 	printk("Track Segments Object ID read succeeded\n");
 	g_track_segments_object_id = id;
 	SET_FLAG(track_segments_object_id_read);
+}
+
+static void mcc_current_track_obj_id_read_cb(struct bt_conn *conn, int err,
+					     uint64_t id)
+{
+	if (err) {
+		FAIL("Current Track Object ID read failed (%d)\n", err);
+		return;
+	}
+
+	printk("Current Track Object ID read succeeded\n");
+	g_current_track_object_id = id;
+	SET_FLAG(current_track_object_id_read);
 }
 
 static void mcc_current_group_obj_id_read_cb(struct bt_conn *conn, int err,
@@ -313,6 +313,48 @@ void test_main(void)
 	UNSET_FLAG(object_read);
 
 
+	/* Read track segments object *****************************************/
+	err = bt_mcc_read_segments_obj_id(default_conn);
+	if (err) {
+		FAIL("Failed to read track segments object ID: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(track_segments_object_id_read);
+
+	/* TODO: Fix the instance pointer - it is neither valid nor used */
+	err = bt_otc_select_id(default_conn, bt_mcc_otc_inst(),
+			       g_track_segments_object_id);
+	if (err) {
+		FAIL("Failed to select current track object\n");
+		return;
+	}
+
+	WAIT_FOR_FLAG(object_selected);
+	UNSET_FLAG(object_selected);    /* Clear flag for later use */
+
+	/* TODO: Fix the instance pointer - it is neither valid nor used */
+	err = bt_otc_obj_metadata_read(default_conn, bt_mcc_otc_inst(),
+				       BT_OTC_METADATA_REQ_ALL);
+	if (err) {
+		FAIL("Failed to read current track object metadata\n");
+		return;
+	}
+
+	WAIT_FOR_FLAG(metadata_read);
+	UNSET_FLAG(metadata_read);
+
+	err = bt_mcc_otc_read_track_segments_object(default_conn);
+
+	if (err) {
+		FAIL("Failed to read current track object\n");
+		return;
+	}
+
+	WAIT_FOR_FLAG(object_read);
+	UNSET_FLAG(object_read);
+
+
 	/* Read current track object ******************************************/
 	/* Involves reading the object ID, selecting the object, */
 	/* reading the object metadata and reading the object */
@@ -350,48 +392,6 @@ void test_main(void)
 
 	if (err) {
 		FAIL("Failed to current track object\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(object_read);
-	UNSET_FLAG(object_read);
-
-
-	/* Read track segments object *****************************************/
-	err = bt_mcc_read_segments_obj_id(default_conn);
-	if (err) {
-		FAIL("Failed to read track segments object ID: %d", err);
-		return;
-	}
-
-	WAIT_FOR_FLAG(track_segments_object_id_read);
-
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_select_id(default_conn, bt_mcc_otc_inst(),
-			       g_track_segments_object_id);
-	if (err) {
-		FAIL("Failed to select current track object\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(object_selected);
-	UNSET_FLAG(object_selected);    /* Clear flag for later use */
-
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_obj_metadata_read(default_conn, bt_mcc_otc_inst(),
-				       BT_OTC_METADATA_REQ_ALL);
-	if (err) {
-		FAIL("Failed to read current track object metadata\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(metadata_read);
-	UNSET_FLAG(metadata_read);
-
-	err = bt_mcc_otc_read_track_segments_object(default_conn);
-
-	if (err) {
-		FAIL("Failed to read current track object\n");
 		return;
 	}
 
