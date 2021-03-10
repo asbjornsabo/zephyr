@@ -2322,8 +2322,8 @@ int on_current_group_content(struct bt_conn *conn, uint32_t offset,
 	BT_HEXDUMP_DBG(data_p, len, "Group content");
 
 	if (len > net_buf_simple_tailroom(&otc_obj_buf)) {
-		BT_DBG("Can not fit whole object");
-		cb_err = -ENOMEM;
+		BT_WARN("Can not fit whole object");
+		cb_err = -EMSGSIZE;
 	}
 
 	net_buf_simple_add_mem(&otc_obj_buf, data_p,
@@ -2345,6 +2345,10 @@ int on_current_group_content(struct bt_conn *conn, uint32_t offset,
 			       group.ids[i].type, log_strdup(t));
 		}
 #endif /* CONFIG_BT_DEBUG_MCC */
+
+		if (mcc_cb && mcc_cb->otc_current_group_object) {
+			mcc_cb->otc_current_group_object(conn, cb_err, &otc_obj_buf);
+		}
 
 		net_buf_simple_reset(&otc_obj_buf);
 	}
