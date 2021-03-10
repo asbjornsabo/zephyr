@@ -342,6 +342,17 @@ typedef void (*bt_mcc_otc_read_icon_object_cb_t)(struct bt_conn *conn, int err,
 typedef void (*bt_mcc_otc_read_track_segments_object_cb_t)(struct bt_conn *conn, int err,
 							   struct net_buf_simple *buf);
 
+/** @brief Callback function for bt_mcc_otc_read_current_track_object
+ *
+ * @param conn          The connection that was used to initialise MCC
+ * @param err           Error value. 0 on success, GATT error or ERRNO on fail
+ * @param buf           Buffer containing the object contents
+ *
+ * If err is EMSGSIZE, the object contents have been truncated.
+ */
+typedef void (*bt_mcc_otc_read_current_track_object_cb_t)(struct bt_conn *conn, int err,
+							  struct net_buf_simple *buf);
+
 #endif /* CONFIG_BT_OTC */
 
 
@@ -389,6 +400,7 @@ struct bt_mcc_cb_t {
 #endif /* CONFIG_BT_DEBUG_MCC */
 	bt_mcc_otc_read_icon_object_cb_t          otc_icon_object;
 	bt_mcc_otc_read_track_segments_object_cb_t otc_track_segments_object;
+	bt_mcc_otc_read_current_track_object_cb_t  otc_current_track_object;
 #endif /* CONFIG_BT_OTC */
 };
 
