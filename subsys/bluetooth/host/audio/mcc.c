@@ -2239,9 +2239,9 @@ int on_track_segments_content(struct bt_conn *conn, uint32_t offset,
 	return BT_OTC_CONTINUE;
 }
 
-int on_track_content(struct bt_conn *conn, uint32_t offset, uint32_t len,
-		     uint8_t *data_p, bool is_complete,
-		     struct bt_otc_instance_t *otc_inst)
+int on_current_track_content(struct bt_conn *conn, uint32_t offset,
+			     uint32_t len, uint8_t *data_p, bool is_complete,
+			     struct bt_otc_instance_t *otc_inst)
 {
 	BT_INFO("Received Current Track content, %i bytes at offset %i",
 		len, offset);
@@ -2371,7 +2371,7 @@ int bt_mcc_otc_read_current_track_object(struct bt_conn *conn)
 	/* TODO: Add handling for busy - either MCS or OTS */
 
 	/* TODO: Assumes object is already selected */
-	cur_mcs_inst->otc.cb->content_cb = on_track_content;
+	cur_mcs_inst->otc.cb->content_cb = on_current_track_content;
 
 	err = bt_otc_read(conn, &cur_mcs_inst->otc);
 	if (err) {
