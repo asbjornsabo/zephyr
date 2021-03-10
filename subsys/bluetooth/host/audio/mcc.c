@@ -2275,10 +2275,30 @@ int on_next_track_content(struct bt_conn *conn, uint32_t offset, uint32_t len,
 			  uint8_t *data_p, bool is_complete,
 			  struct bt_otc_instance_t *otc_inst)
 {
-	BT_INFO("Received Next Track content, %i bytes at offset %i",
-		len, offset);
+	int cb_err = 0;
+
+	BT_DBG("Received Next Track content, %i bytes at offset %i",
+	       len, offset);
 
 	BT_HEXDUMP_DBG(data_p, len, "Track content");
+
+	if (len > net_buf_simple_tailroom(&otc_obj_buf)) {
+		BT_WARN("Can not fit whole object");
+		cb_err = -EMSGSIZE;
+	}
+
+	net_buf_simple_add_mem(&otc_obj_buf, data_p,
+			       MIN(net_buf_simple_tailroom(&otc_obj_buf), len));
+
+	if (is_complete) {
+		BT_DBG("Next Track Object received");
+
+		if (mcc_cb && mcc_cb->otc_next_track_object) {
+			mcc_cb->otc_next_track_object(conn, cb_err, &otc_obj_buf);
+		}
+
+		net_buf_simple_reset(&otc_obj_buf);
+	}
 
 	return BT_OTC_CONTINUE;
 }
