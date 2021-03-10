@@ -2088,26 +2088,6 @@ void on_obj_selected(struct bt_conn *conn, int result,
 #endif /* CONFIG_BT_DEBUG_MCC */
 }
 
-
-struct id_list_elem_t {
-	uint8_t  type;
-	uint64_t id;
-};
-
-struct id_list_t {
-	struct id_list_elem_t ids[CONFIG_BT_MCC_GROUP_RECORDS_MAX];
-	uint16_t cnt;
-};
-
-static void decode_current_group(struct net_buf_simple *buff,
-				 struct id_list_t *ids)
-{
-	while ((buff->len) && (ids->cnt < CONFIG_BT_MCC_GROUP_RECORDS_MAX)) {
-		ids->ids[ids->cnt].type = net_buf_simple_pull_u8(buff);
-		ids->ids[ids->cnt++].id = net_buf_simple_pull_le48(buff);
-	}
-}
-
 /* TODO: Merge the object callback functions into one */
 /* Use a notion of the "active" object, as done in mpl.c, for tracking  */
 int on_icon_content(struct bt_conn *conn, uint32_t offset, uint32_t len,
@@ -2303,24 +2283,53 @@ int on_next_track_content(struct bt_conn *conn, uint32_t offset, uint32_t len,
 	return BT_OTC_CONTINUE;
 }
 
-int on_group_content(struct bt_conn *conn, uint32_t offset, uint32_t len,
-		     uint8_t *data_p, bool is_complete,
-		     struct bt_otc_instance_t *otc_inst)
-{
-	struct id_list_t group = {0};
 
-	BT_INFO("Received Current Group content, %i bytes at offset %i",
+#if CONFIG_BT_DEBUG_MCC
+struct id_list_elem_t {
+	uint8_t  type;
+	uint64_t id;
+};
+
+struct id_list_t {
+	struct id_list_elem_t ids[CONFIG_BT_MCC_GROUP_RECORDS_MAX];
+	uint16_t cnt;
+};
+
+static void decode_current_group(struct net_buf_simple *buff,
+				 struct id_list_t *ids)
+{
+	while ((buff->len) && (ids->cnt < CONFIG_BT_MCC_GROUP_RECORDS_MAX)) {
+		ids->ids[ids->cnt].type = net_buf_simple_pull_u8(buff);
+		ids->ids[ids->cnt++].id = net_buf_simple_pull_le48(buff);
+	}
+}
+#endif /* CONFIG_BT_DEBUG_MCC */
+
+int on_current_group_content(struct bt_conn *conn, uint32_t offset,
+			     uint32_t len, uint8_t *data_p, bool is_complete,
+			     struct bt_otc_instance_t *otc_inst)
+{
+	int cb_err = 0;
+
+	BT_DBG("Received Current Group content, %i bytes at offset %i",
 		len, offset);
+
+	BT_HEXDUMP_DBG(data_p, len, "Group content");
 
 	if (len > net_buf_simple_tailroom(&otc_obj_buf)) {
 		BT_DBG("Can not fit whole object");
+		cb_err = -ENOMEM;
 	}
 
 	net_buf_simple_add_mem(&otc_obj_buf, data_p,
 			       MIN(net_buf_simple_tailroom(&otc_obj_buf), len));
 
 	if (is_complete) {
-		BT_INFO("Current Group object received");
+		BT_DBG("Current Group object received");
+
+#if CONFIG_BT_DEBUG_MCC
+		struct id_list_t group = {0};
+
 		decode_current_group(&otc_obj_buf, &group);
 		for (int i = 0; i < group.cnt; i++) {
 			char t[BT_OTS_OBJ_ID_STR_LEN];
@@ -2330,8 +2339,8 @@ int on_group_content(struct bt_conn *conn, uint32_t offset, uint32_t len,
 			BT_DBG("Object type: %d, object  ID: %s",
 			       group.ids[i].type, log_strdup(t));
 		}
-		/* Reset buf in case the same object is read again without */
-		/* calling select in between */
+#endif /* CONFIG_BT_DEBUG_MCC */
+
 		net_buf_simple_reset(&otc_obj_buf);
 	}
 
@@ -2445,7 +2454,7 @@ int bt_mcc_otc_read_current_group_object(struct bt_conn *conn)
 	/* TODO: Add handling for busy - either MCS or OTS */
 
 	/* TODO: Assumes object is already selected */
-	cur_mcs_inst->otc.cb->content_cb = on_group_content;
+	cur_mcs_inst->otc.cb->content_cb = on_current_group_content;
 
 	err = bt_otc_read(conn, &cur_mcs_inst->otc);
 	if (err) {
@@ -2464,7 +2473,7 @@ int bt_mcc_otc_read_parent_group_object(struct bt_conn *conn)
 	/* TODO: Assumes object is already selected */
 
 	/* Reuse callback for current group */
-	cur_mcs_inst->otc.cb->content_cb = on_group_content;
+	cur_mcs_inst->otc.cb->content_cb = on_current_group_content;
 
 	err = bt_otc_read(conn, &cur_mcs_inst->otc);
 	if (err) {
