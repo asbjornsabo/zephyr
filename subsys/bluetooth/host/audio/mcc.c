@@ -2295,8 +2295,8 @@ struct id_list_t {
 	uint16_t cnt;
 };
 
-static void decode_current_group(struct net_buf_simple *buff,
-				 struct id_list_t *ids)
+static void decode_group(struct net_buf_simple *buff,
+			 struct id_list_t *ids)
 {
 	struct net_buf_simple tmp_buf;
 
@@ -2335,7 +2335,7 @@ int on_current_group_content(struct bt_conn *conn, uint32_t offset,
 #if CONFIG_BT_DEBUG_MCC
 		struct id_list_t group = {0};
 
-		decode_current_group(&otc_obj_buf, &group);
+		decode_group(&otc_obj_buf, &group);
 		for (int i = 0; i < group.cnt; i++) {
 			char t[BT_OTS_OBJ_ID_STR_LEN];
 
@@ -2348,6 +2348,52 @@ int on_current_group_content(struct bt_conn *conn, uint32_t offset,
 
 		if (mcc_cb && mcc_cb->otc_current_group_object) {
 			mcc_cb->otc_current_group_object(conn, cb_err, &otc_obj_buf);
+		}
+
+		net_buf_simple_reset(&otc_obj_buf);
+	}
+
+	return BT_OTC_CONTINUE;
+}
+
+int on_parent_group_content(struct bt_conn *conn, uint32_t offset,
+			    uint32_t len, uint8_t *data_p, bool is_complete,
+			    struct bt_otc_instance_t *otc_inst)
+{
+	int cb_err = 0;
+
+	BT_DBG("Received Parent Group content, %i bytes at offset %i",
+		len, offset);
+
+	BT_HEXDUMP_DBG(data_p, len, "Group content");
+
+	if (len > net_buf_simple_tailroom(&otc_obj_buf)) {
+		BT_WARN("Can not fit whole object");
+		cb_err = -EMSGSIZE;
+	}
+
+	net_buf_simple_add_mem(&otc_obj_buf, data_p,
+			       MIN(net_buf_simple_tailroom(&otc_obj_buf), len));
+
+	if (is_complete) {
+		BT_DBG("Parent Group object received");
+
+#if CONFIG_BT_DEBUG_MCC
+		struct id_list_t group = {0};
+
+		decode_group(&otc_obj_buf, &group);
+		for (int i = 0; i < group.cnt; i++) {
+			char t[BT_OTS_OBJ_ID_STR_LEN];
+
+			(void)bt_ots_obj_id_to_str(group.ids[i].id, t,
+						   BT_OTS_OBJ_ID_STR_LEN);
+			BT_DBG("Object type: %d, object  ID: %s",
+			       group.ids[i].type, log_strdup(t));
+		}
+#endif /* CONFIG_BT_DEBUG_MCC */
+
+		if (mcc_cb && mcc_cb->otc_parent_group_object) {
+			mcc_cb->otc_parent_group_object(conn, cb_err, &otc_obj_buf);
 		}
 
 		net_buf_simple_reset(&otc_obj_buf);
@@ -2482,7 +2528,7 @@ int bt_mcc_otc_read_parent_group_object(struct bt_conn *conn)
 	/* TODO: Assumes object is already selected */
 
 	/* Reuse callback for current group */
-	cur_mcs_inst->otc.cb->content_cb = on_current_group_content;
+	cur_mcs_inst->otc.cb->content_cb = on_parent_group_content;
 
 	err = bt_otc_read(conn, &cur_mcs_inst->otc);
 	if (err) {

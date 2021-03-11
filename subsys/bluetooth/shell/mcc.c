@@ -508,6 +508,19 @@ static void mcc_otc_read_current_group_object_cb(struct bt_conn *conn, int err,
 	shell_hexdump(ctx_shell, buf->data, buf->len);
 }
 
+static void mcc_otc_read_parent_group_object_cb(struct bt_conn *conn, int err,
+						struct net_buf_simple *buf)
+{
+	if (err) {
+		shell_error(ctx_shell,
+			    "Parent Group Object read failed (%d)", err);
+		return;
+	}
+
+	shell_print(ctx_shell, "Parent Group content (%d octets)", buf->len);
+	shell_hexdump(ctx_shell, buf->data, buf->len);
+}
+
 #endif /* CONFIG_BT_MCC_OTS */
 
 
@@ -563,6 +576,7 @@ int cmd_mcc_init(const struct shell *shell, size_t argc, char **argv)
 	cb.otc_current_track_object  = &mcc_otc_read_current_track_object_cb;
 	cb.otc_next_track_object     = &mcc_otc_read_next_track_object_cb;
 	cb.otc_current_group_object  = &mcc_otc_read_current_group_object_cb;
+	cb.otc_parent_group_object   = &mcc_otc_read_parent_group_object_cb;
 #endif /* CONFIG_BT_MCC_OTS */
 
 	/* Initialize the module */
