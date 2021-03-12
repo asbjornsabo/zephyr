@@ -418,7 +418,6 @@ static void mcc_content_control_id_read_cb(struct bt_conn *conn, int err, uint8_
 }
 
 #ifdef CONFIG_BT_MCC_OTS
-#if CONFIG_BT_DEBUG_MCC
 /**** Callback functions for the included Object Transfer service *************/
 static void mcc_otc_obj_selected_cb(struct bt_conn *conn, int err)
 {
@@ -441,7 +440,7 @@ static void mcc_otc_obj_metadata_cb(struct bt_conn *conn, int err)
 
 	shell_print(ctx_shell, "Reading object metadata succeeded\n");
 }
-#endif /* CONFIG_BT_DEBUG_MCC */
+
 static void mcc_icon_object_read_cb(struct bt_conn *conn, int err,
 				    struct net_buf_simple *buf)
 {

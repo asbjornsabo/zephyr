@@ -301,7 +301,6 @@ typedef void (*bt_mcc_search_results_obj_id_read_cb_t)(struct bt_conn *conn,
 typedef void (*bt_mcc_content_control_id_read_cb_t)(struct bt_conn *conn,
 						    int err, uint8_t ccid);
 #ifdef CONFIG_BT_OTC
-#if CONFIG_BT_DEBUG_MCC
 /**** Callback functions for the included Object Transfer service *************/
 
 /** @brief Callback function for object selected
@@ -317,8 +316,6 @@ typedef void (*bt_mcc_otc_obj_selected_cb_t)(struct bt_conn *conn, int err);
  * @param err           Error value. 0 on success, ERRNO on fail
  */
 typedef void (*bt_mcc_otc_obj_metadata_cb_t)(struct bt_conn *conn, int err);
-
-#endif /* CONFIG_BT_DEBUG_MCC */
 
 /** @brief Callback function for bt_mcc_otc_read_icon_object
  *
@@ -427,10 +424,8 @@ struct bt_mcc_cb_t {
 #endif /* CONFIG_BT_OTC */
 	bt_mcc_content_control_id_read_cb_t       content_control_id_read;
 #ifdef CONFIG_BT_OTC
-#if CONFIG_BT_DEBUG_MCC
 	bt_mcc_otc_obj_selected_cb_t              otc_obj_selected;
 	bt_mcc_otc_obj_metadata_cb_t              otc_obj_metadata;
-#endif /* CONFIG_BT_DEBUG_MCC */
 	bt_mcc_otc_read_icon_object_cb_t          otc_icon_object;
 	bt_mcc_otc_read_track_segments_object_cb_t otc_track_segments_object;
 	bt_mcc_otc_read_current_track_object_cb_t  otc_current_track_object;

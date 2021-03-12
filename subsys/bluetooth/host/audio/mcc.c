@@ -2081,11 +2081,9 @@ void on_obj_selected(struct bt_conn *conn, int result,
 	/* Reset the object buffer */
 	net_buf_simple_reset(&otc_obj_buf);
 
-#if CONFIG_BT_DEBUG_MCC
 	if (mcc_cb && mcc_cb->otc_obj_selected) {
 		mcc_cb->otc_obj_selected(conn, OLCP_RESULT_TO_ERROR(result));
 	}
-#endif /* CONFIG_BT_DEBUG_MCC */
 }
 
 /* TODO: Merge the object callback functions into one */
@@ -2415,11 +2413,9 @@ void on_object_metadata(struct bt_conn *conn, int err,
 
 	bt_otc_metadata_display(&otc_inst->cur_object, 1);
 
-#if CONFIG_BT_DEBUG_MCC
 	if (mcc_cb && mcc_cb->otc_obj_metadata) {
 		mcc_cb->otc_obj_metadata(conn, err);
 	}
-#endif /* CONFIG_BT_DEBUG_MCC */
 }
 
 int bt_mcc_otc_read_object_metadata(struct bt_conn *conn)
