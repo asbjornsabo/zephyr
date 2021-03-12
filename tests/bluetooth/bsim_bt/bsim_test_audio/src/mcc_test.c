@@ -300,6 +300,40 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	SET_FLAG(ble_link_is_ready);
 }
 
+/* Helper function - select object and read the object metadata
+ *
+ * Will FAIL the test on errors calling select and read metadata.
+ * Will WAIT (hang) until callbacks are received.
+ * If callbacks are not received, the test fill FAIL due to timeout.
+ *
+ * @param object_id    ID of the object to select and read metadata for
+ */
+static void select_read_meta(int64_t id)
+{
+	int err;
+
+	/* TODO: Fix the instance pointer - it is neither valid nor used */
+	err = bt_otc_select_id(default_conn, bt_mcc_otc_inst(), id);
+	if (err) {
+		FAIL("Failed to select object\n");
+		return;
+	}
+
+	WAIT_FOR_FLAG(object_selected);
+	UNSET_FLAG(object_selected);    /* Clear flag for later use */
+
+	/* TODO: Fix the instance pointer - it is neither valid nor used */
+	err = bt_otc_obj_metadata_read(default_conn, bt_mcc_otc_inst(),
+				       BT_OTC_METADATA_REQ_ALL);
+	if (err) {
+		FAIL("Failed to read object metadata\n");
+		return;
+	}
+
+	WAIT_FOR_FLAG(metadata_read);
+	UNSET_FLAG(metadata_read);
+}
+
 /* This function tests all commands in the API in sequence
  * The order of the sequence follows the order of the characterstics in the
  * Media Control Service specification
@@ -347,8 +381,6 @@ void test_main(void)
 	WAIT_FOR_FLAG(discovery_done);
 
 	/* Read icon object ******************************************/
-	/* Involves reading the object ID, selecting the object, */
-	/* reading the object metadata and reading the object */
 	err = bt_mcc_read_icon_obj_id(default_conn);
 	if (err) {
 		FAIL("Failed to read icon object ID: %d", err);
@@ -357,28 +389,7 @@ void test_main(void)
 
 	WAIT_FOR_FLAG(icon_object_id_read);
 
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_select_id(default_conn, bt_mcc_otc_inst(),
-			       g_icon_object_id);
-	if (err) {
-		FAIL("Failed to select object\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(object_selected);
-	UNSET_FLAG(object_selected);    /* Clear flag for later use */
-
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_obj_metadata_read(default_conn, bt_mcc_otc_inst(),
-				       BT_OTC_METADATA_REQ_ALL);
-	if (err) {
-		FAIL("Failed to read object metadata\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(metadata_read);
-	UNSET_FLAG(metadata_read);
-
+	select_read_meta(g_icon_object_id);
 	err = bt_mcc_otc_read_icon_object(default_conn);
 
 	if (err) {
@@ -399,28 +410,7 @@ void test_main(void)
 
 	WAIT_FOR_FLAG(track_segments_object_id_read);
 
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_select_id(default_conn, bt_mcc_otc_inst(),
-			       g_track_segments_object_id);
-	if (err) {
-		FAIL("Failed to select current track object\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(object_selected);
-	UNSET_FLAG(object_selected);    /* Clear flag for later use */
-
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_obj_metadata_read(default_conn, bt_mcc_otc_inst(),
-				       BT_OTC_METADATA_REQ_ALL);
-	if (err) {
-		FAIL("Failed to read current track object metadata\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(metadata_read);
-	UNSET_FLAG(metadata_read);
-
+	select_read_meta(g_track_segments_object_id);
 	err = bt_mcc_otc_read_track_segments_object(default_conn);
 
 	if (err) {
@@ -433,8 +423,6 @@ void test_main(void)
 
 
 	/* Read current track object ******************************************/
-	/* Involves reading the object ID, selecting the object, */
-	/* reading the object metadata and reading the object */
 	err = bt_mcc_read_current_track_obj_id(default_conn);
 	if (err) {
 		FAIL("Failed to read current track object ID: %d", err);
@@ -443,28 +431,7 @@ void test_main(void)
 
 	WAIT_FOR_FLAG(current_track_object_id_read);
 
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_select_id(default_conn, bt_mcc_otc_inst(),
-			       g_current_track_object_id);
-	if (err) {
-		FAIL("Failed to select object\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(object_selected);
-	UNSET_FLAG(object_selected);    /* Clear flag for later use */
-
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_obj_metadata_read(default_conn, bt_mcc_otc_inst(),
-				       BT_OTC_METADATA_REQ_ALL);
-	if (err) {
-		FAIL("Failed to read object metadata\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(metadata_read);
-	UNSET_FLAG(metadata_read);
-
+	select_read_meta(g_current_track_object_id);
 	err = bt_mcc_otc_read_current_track_object(default_conn);
 
 	if (err) {
@@ -477,8 +444,6 @@ void test_main(void)
 
 
 	/* Read next track object ******************************************/
-	/* Involves reading the object ID, selecting the object, */
-	/* reading the object metadata and reading the object */
 	err = bt_mcc_read_next_track_obj_id(default_conn);
 	if (err) {
 		FAIL("Failed to read next track object ID: %d", err);
@@ -487,28 +452,7 @@ void test_main(void)
 
 	WAIT_FOR_FLAG(next_track_object_id_read);
 
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_select_id(default_conn, bt_mcc_otc_inst(),
-			       g_next_track_object_id);
-	if (err) {
-		FAIL("Failed to select object\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(object_selected);
-	UNSET_FLAG(object_selected);    /* Clear flag for later use */
-
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_obj_metadata_read(default_conn, bt_mcc_otc_inst(),
-				       BT_OTC_METADATA_REQ_ALL);
-	if (err) {
-		FAIL("Failed to read object metadata\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(metadata_read);
-	UNSET_FLAG(metadata_read);
-
+	select_read_meta(g_next_track_object_id);
 	err = bt_mcc_otc_read_next_track_object(default_conn);
 
 	if (err) {
@@ -529,28 +473,7 @@ void test_main(void)
 
 	WAIT_FOR_FLAG(current_group_object_id_read);
 
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_select_id(default_conn, bt_mcc_otc_inst(),
-			       g_current_group_object_id);
-	if (err) {
-		FAIL("Failed to select current group object\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(object_selected);
-	UNSET_FLAG(object_selected);
-
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_obj_metadata_read(default_conn, bt_mcc_otc_inst(),
-				       BT_OTC_METADATA_REQ_ALL);
-	if (err) {
-		FAIL("Failed to read current group object metadata\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(metadata_read);
-	UNSET_FLAG(metadata_read);
-
+	select_read_meta(g_current_group_object_id);
 	err = bt_mcc_otc_read_current_group_object(default_conn);
 
 	if (err) {
@@ -570,28 +493,7 @@ void test_main(void)
 
 	WAIT_FOR_FLAG(parent_group_object_id_read);
 
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_select_id(default_conn, bt_mcc_otc_inst(),
-			       g_parent_group_object_id);
-	if (err) {
-		FAIL("Failed to select parent group object\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(object_selected);
-	UNSET_FLAG(object_selected);
-
-	/* TODO: Fix the instance pointer - it is neither valid nor used */
-	err = bt_otc_obj_metadata_read(default_conn, bt_mcc_otc_inst(),
-				       BT_OTC_METADATA_REQ_ALL);
-	if (err) {
-		FAIL("Failed to read parent group object metadata\n");
-		return;
-	}
-
-	WAIT_FOR_FLAG(metadata_read);
-	UNSET_FLAG(metadata_read);
-
+	select_read_meta(g_parent_group_object_id);
 	err = bt_mcc_otc_read_parent_group_object(default_conn);
 
 	if (err) {
