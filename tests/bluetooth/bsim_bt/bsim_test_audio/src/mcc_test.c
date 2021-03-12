@@ -300,6 +300,10 @@ static void connected(struct bt_conn *conn, uint8_t err)
 	SET_FLAG(ble_link_is_ready);
 }
 
+/* This function tests all commands in the API in sequence
+ * The order of the sequence follows the order of the characterstics in the
+ * Media Control Service specification
+ */
 void test_main(void)
 {
 	int err;
@@ -320,6 +324,7 @@ void test_main(void)
 
 	bt_conn_cb_register(&conn_callbacks);
 
+	/* Connect ******************************************/
 	err = bt_le_scan_start(BT_LE_SCAN_PASSIVE, device_found);
 	if (err) {
 		FAIL("Failed to start scanning (err %d\n)", err);
@@ -329,10 +334,11 @@ void test_main(void)
 
 	WAIT_FOR_FLAG(ble_link_is_ready);
 
+	/* Initialize MCC  ********************************************/
 	do_mcc_init();
 	WAIT_FOR_FLAG(mcc_is_initialized);
 
-	/* Discover MCS, subscribe to notifications */
+	/* Discover MCS, subscribe to notifications *******************/
 	err = bt_mcc_discover_mcs(default_conn, true);
 	if (err) {
 		FAIL("Failed to start discovery of MCS: %d\n", err);
