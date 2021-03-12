@@ -43,6 +43,7 @@ CREATE_FLAG(ble_is_initialized);
 CREATE_FLAG(ble_link_is_ready);
 CREATE_FLAG(mcc_is_initialized);
 CREATE_FLAG(discovery_done);
+CREATE_FLAG(player_name_read);
 CREATE_FLAG(icon_object_id_read);
 CREATE_FLAG(track_segments_object_id_read);
 CREATE_FLAG(current_track_object_id_read);
@@ -74,6 +75,17 @@ static void mcc_discover_mcs_cb(struct bt_conn *conn, int err)
 
 	printk("Discovery of MCS succeeded\n");
 	SET_FLAG(discovery_done);
+}
+
+static void mcc_player_name_read_cb(struct bt_conn *conn, int err, char *name)
+{
+	if (err) {
+		FAIL("Player Name read failed (%d)\n", err);
+		return;
+	}
+
+	printk("Player Name read succeeded\n");
+	SET_FLAG(player_name_read);
 }
 
 static void mcc_icon_obj_id_read_cb(struct bt_conn *conn, int err, uint64_t id)
@@ -252,6 +264,7 @@ int do_mcc_init(void)
 	/* Set up the callbacks */
 	mcc_cb.init             = &mcc_init_cb;
 	mcc_cb.discover_mcs     = &mcc_discover_mcs_cb;
+	mcc_cb.player_name_read = &mcc_player_name_read_cb;
 	mcc_cb.icon_obj_id_read = &mcc_icon_obj_id_read_cb;
 	mcc_cb.current_track_obj_id_read = &mcc_current_track_obj_id_read_cb;
 	mcc_cb.next_track_obj_id_read    = &mcc_next_track_obj_id_read_cb;
@@ -379,6 +392,15 @@ void test_main(void)
 	}
 
 	WAIT_FOR_FLAG(discovery_done);
+
+	/* Read media player name ******************************************/
+	err = bt_mcc_read_player_name(default_conn);
+	if (err) {
+		FAIL("Failed to read media player name ID: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(player_name_read);
 
 	/* Read icon object ******************************************/
 	err = bt_mcc_read_icon_obj_id(default_conn);
