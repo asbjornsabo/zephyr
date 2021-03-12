@@ -45,6 +45,8 @@ CREATE_FLAG(mcc_is_initialized);
 CREATE_FLAG(discovery_done);
 CREATE_FLAG(player_name_read);
 CREATE_FLAG(icon_object_id_read);
+CREATE_FLAG(icon_uri_read);
+CREATE_FLAG(track_title_read);
 CREATE_FLAG(track_segments_object_id_read);
 CREATE_FLAG(current_track_object_id_read);
 CREATE_FLAG(next_track_object_id_read);
@@ -98,6 +100,28 @@ static void mcc_icon_obj_id_read_cb(struct bt_conn *conn, int err, uint64_t id)
 	printk("Icon Object ID read succeeded\n");
 	g_icon_object_id = id;
 	SET_FLAG(icon_object_id_read);
+}
+
+static void mcc_icon_uri_read_cb(struct bt_conn *conn, int err, char *uri)
+{
+	if (err) {
+		FAIL("Icon URI read failed (%d)", err);
+		return;
+	}
+
+	printk("Icon URI read succeeded\n");
+	SET_FLAG(icon_uri_read);
+}
+
+static void mcc_track_title_read_cb(struct bt_conn *conn, int err, char *title)
+{
+	if (err) {
+		FAIL("Track title read failed (%d)", err);
+		return;
+	}
+
+	printk("Track title read succeeded\n");
+	SET_FLAG(track_title_read);
 }
 
 static void mcc_segments_obj_id_read_cb(struct bt_conn *conn, int err,
@@ -266,6 +290,8 @@ int do_mcc_init(void)
 	mcc_cb.discover_mcs     = &mcc_discover_mcs_cb;
 	mcc_cb.player_name_read = &mcc_player_name_read_cb;
 	mcc_cb.icon_obj_id_read = &mcc_icon_obj_id_read_cb;
+	mcc_cb.icon_uri_read    = &mcc_icon_uri_read_cb;
+	mcc_cb.track_title_read = &mcc_track_title_read_cb;
 	mcc_cb.current_track_obj_id_read = &mcc_current_track_obj_id_read_cb;
 	mcc_cb.next_track_obj_id_read    = &mcc_next_track_obj_id_read_cb;
 	mcc_cb.segments_obj_id_read      = &mcc_segments_obj_id_read_cb;
@@ -422,6 +448,24 @@ void test_main(void)
 	WAIT_FOR_FLAG(object_read);
 	UNSET_FLAG(object_read);
 
+
+	/* Read icon uri *************************************************/
+	err = bt_mcc_read_icon_uri(default_conn);
+	if (err) {
+		FAIL("Failed to read icon uri: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(icon_uri_read);
+
+	/* Read track_title ******************************************/
+	err = bt_mcc_read_track_title(default_conn);
+	if (err) {
+		FAIL("Failed to read track_title: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(track_title_read);
 
 	/* Read track segments object *****************************************/
 	err = bt_mcc_read_segments_obj_id(default_conn);
