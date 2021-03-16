@@ -40,6 +40,7 @@ uint64_t g_current_group_object_id;
 uint64_t g_parent_group_object_id;
 
 static int32_t g_pos;
+static int8_t  g_pb_speed;
 
 CREATE_FLAG(ble_is_initialized);
 CREATE_FLAG(ble_link_is_ready);
@@ -52,6 +53,8 @@ CREATE_FLAG(track_title_read);
 CREATE_FLAG(track_duration_read);
 CREATE_FLAG(track_position_read);
 CREATE_FLAG(track_position_set);
+CREATE_FLAG(playback_speed_read);
+CREATE_FLAG(playback_speed_set);
 CREATE_FLAG(track_segments_object_id_read);
 CREATE_FLAG(current_track_object_id_read);
 CREATE_FLAG(next_track_object_id_read);
@@ -162,6 +165,31 @@ static void mcc_track_position_set_cb(struct bt_conn *conn, int err, int32_t pos
 	g_pos = pos;
 	printk("Track position set succeeded\n");
 	SET_FLAG(track_position_set);
+}
+
+static void mcc_playback_speed_read_cb(struct bt_conn *conn, int err,
+				       int8_t speed)
+{
+	if (err) {
+		FAIL("Playback speed read failed (%d)", err);
+		return;
+	}
+
+	g_pb_speed = speed;
+	printk("Playback speed read succeeded\n");
+	SET_FLAG(playback_speed_read);
+}
+
+static void mcc_playback_speed_set_cb(struct bt_conn *conn, int err, int8_t speed)
+{
+	if (err) {
+		FAIL("Playback speed set failed (%d)", err);
+		return;
+	}
+
+	g_pb_speed = speed;
+	printk("Playback speed set succeeded\n");
+	SET_FLAG(playback_speed_set);
 }
 
 static void mcc_segments_obj_id_read_cb(struct bt_conn *conn, int err,
@@ -335,6 +363,8 @@ int do_mcc_init(void)
 	mcc_cb.track_dur_read   = &mcc_track_dur_read_cb;
 	mcc_cb.track_position_read = &mcc_track_position_read_cb;
 	mcc_cb.track_position_set  = &mcc_track_position_set_cb;
+	mcc_cb.playback_speed_read = &mcc_playback_speed_read_cb;
+	mcc_cb.playback_speed_set  = &mcc_playback_speed_set_cb;
 	mcc_cb.current_track_obj_id_read = &mcc_current_track_obj_id_read_cb;
 	mcc_cb.next_track_obj_id_read    = &mcc_next_track_obj_id_read_cb;
 	mcc_cb.segments_obj_id_read      = &mcc_segments_obj_id_read_cb;
@@ -541,6 +571,28 @@ void test_main(void)
 		/* In this controlled case, we expect that the resulting */
 		/* position is the position given in the set command */
 		FAIL("Incorrect position\n");
+	}
+
+	/* Read and set playback speed *************************************/
+	err = bt_mcc_read_playback_speed(default_conn);
+	if (err) {
+		FAIL("Failed to read playback speed: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(playback_speed_read);
+
+	int8_t pb_speed = g_pb_speed + 8; /* 2^(8/64) faster than current speed */
+
+	err = bt_mcc_set_playback_speed(default_conn, pb_speed);
+	if (err) {
+		FAIL("Failed to set playback speed: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(playback_speed_set);
+	if (g_pb_speed != pb_speed) {
+		FAIL("Incorrect playback speed\n");
 	}
 
 	/* Read track segments object *****************************************/
