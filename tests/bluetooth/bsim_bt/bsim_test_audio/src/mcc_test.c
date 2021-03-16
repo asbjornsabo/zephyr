@@ -32,12 +32,12 @@ static uint8_t passes;
 static struct bt_conn *default_conn;
 static struct bt_mcc_cb_t mcc_cb;
 
-uint64_t g_icon_object_id;
-uint64_t g_track_segments_object_id;
-uint64_t g_current_track_object_id;
-uint64_t g_next_track_object_id;
-uint64_t g_current_group_object_id;
-uint64_t g_parent_group_object_id;
+static uint64_t g_icon_object_id;
+static uint64_t g_track_segments_object_id;
+static uint64_t g_current_track_object_id;
+static uint64_t g_next_track_object_id;
+static uint64_t g_current_group_object_id;
+static uint64_t g_parent_group_object_id;
 
 static int32_t g_pos;
 static int8_t  g_pb_speed;
