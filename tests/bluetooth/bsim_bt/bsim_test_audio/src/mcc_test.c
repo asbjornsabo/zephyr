@@ -65,6 +65,7 @@ CREATE_FLAG(parent_group_object_id_read);
 CREATE_FLAG(playing_order_read);
 CREATE_FLAG(playing_order_set);
 CREATE_FLAG(playing_orders_supported_read);
+CREATE_FLAG(ccid_read);
 CREATE_FLAG(media_state_read);
 CREATE_FLAG(object_selected);
 CREATE_FLAG(metadata_read);
@@ -322,6 +323,17 @@ static void mcc_media_state_read_cb(struct bt_conn *conn, int err, uint8_t state
 	SET_FLAG(media_state_read);
 }
 
+static void mcc_content_control_id_read_cb(struct bt_conn *conn, int err, uint8_t ccid)
+{
+	if (err) {
+		FAIL("Content control ID read failed (%d)", err);
+		return;
+	}
+
+	printk("Content control ID read succeeded\n");
+	SET_FLAG(ccid_read);
+}
+
 static void mcc_otc_obj_selected_cb(struct bt_conn *conn, int err)
 {
 	if (err) {
@@ -440,6 +452,7 @@ int do_mcc_init(void)
 	mcc_cb.playing_order_set         = &mcc_playing_order_set_cb;
 	mcc_cb.playing_orders_supported_read = &mcc_playing_orders_supported_read_cb;
 	mcc_cb.media_state_read = &mcc_media_state_read_cb;
+	mcc_cb.content_control_id_read = &mcc_content_control_id_read_cb;
 	mcc_cb.otc_obj_selected = &mcc_otc_obj_selected_cb;
 	mcc_cb.otc_obj_metadata = &mcc_otc_obj_metadata_cb;
 	mcc_cb.otc_icon_object  = &mcc_icon_object_read_cb;
@@ -822,6 +835,15 @@ void test_main(void)
 	}
 
 	WAIT_FOR_FLAG(media_state_read);
+
+	/* Read content control ID  *******************************************/
+	err = bt_mcc_read_content_control_id(default_conn);
+	if (err) {
+		FAIL("Failed to read content control ID: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(ccid_read);
 
 	PASS("MCC passed\n");
 }
