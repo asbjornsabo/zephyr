@@ -41,6 +41,7 @@ uint64_t g_parent_group_object_id;
 
 static int32_t g_pos;
 static int8_t  g_pb_speed;
+static uint8_t g_playing_order;
 
 CREATE_FLAG(ble_is_initialized);
 CREATE_FLAG(ble_link_is_ready);
@@ -61,6 +62,8 @@ CREATE_FLAG(current_track_object_id_read);
 CREATE_FLAG(next_track_object_id_read);
 CREATE_FLAG(current_group_object_id_read);
 CREATE_FLAG(parent_group_object_id_read);
+CREATE_FLAG(playing_order_read);
+CREATE_FLAG(playing_order_set);
 CREATE_FLAG(object_selected);
 CREATE_FLAG(metadata_read);
 CREATE_FLAG(object_read);
@@ -270,6 +273,30 @@ static void mcc_parent_group_obj_id_read_cb(struct bt_conn *conn, int err,
 	SET_FLAG(parent_group_object_id_read);
 }
 
+static void mcc_playing_order_read_cb(struct bt_conn *conn, int err, uint8_t order)
+{
+	if (err) {
+		FAIL("Playing order read failed (%d)", err);
+		return;
+	}
+
+	g_playing_order = order;
+	printk("Playing order read succeeded\n");
+	SET_FLAG(playing_order_read);
+}
+
+static void mcc_playing_order_set_cb(struct bt_conn *conn, int err, uint8_t order)
+{
+	if (err) {
+		FAIL("Playing order set failed (%d)", err);
+		return;
+	}
+
+	g_playing_order = order;
+	printk("Playing order set succeeded\n");
+	SET_FLAG(playing_order_set);
+}
+
 static void mcc_otc_obj_selected_cb(struct bt_conn *conn, int err)
 {
 	if (err) {
@@ -384,6 +411,8 @@ int do_mcc_init(void)
 	mcc_cb.segments_obj_id_read      = &mcc_segments_obj_id_read_cb;
 	mcc_cb.current_group_obj_id_read = &mcc_current_group_obj_id_read_cb;
 	mcc_cb.parent_group_obj_id_read  = &mcc_parent_group_obj_id_read_cb;
+	mcc_cb.playing_order_read        = &mcc_playing_order_read_cb;
+	mcc_cb.playing_order_set         = &mcc_playing_order_set_cb;
 	mcc_cb.otc_obj_selected = &mcc_otc_obj_selected_cb;
 	mcc_cb.otc_obj_metadata = &mcc_otc_obj_metadata_cb;
 	mcc_cb.otc_icon_object  = &mcc_icon_object_read_cb;
@@ -720,6 +749,34 @@ void test_main(void)
 
 	WAIT_FOR_FLAG(object_read);
 	UNSET_FLAG(object_read);
+
+	/* Read and set playing order *************************************/
+	err = bt_mcc_read_playing_order(default_conn);
+	if (err) {
+		FAIL("Failed to read playing order: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(playing_order_read);
+
+	uint8_t playing_order;
+
+	if (g_playing_order != MPL_PLAYING_ORDER_SHUFFLE_ONCE) {
+		playing_order = MPL_PLAYING_ORDER_SHUFFLE_ONCE;
+	} else {
+		playing_order = MPL_PLAYING_ORDER_SINGLE_ONCE;
+	}
+
+	err = bt_mcc_set_playing_order(default_conn, playing_order);
+	if (err) {
+		FAIL("Failed to set playing_order: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(playing_order_set);
+	if (g_playing_order != playing_order) {
+		FAIL("Incorrect playing_order\n");
+	}
 
 	PASS("MCC passed\n");
 }
