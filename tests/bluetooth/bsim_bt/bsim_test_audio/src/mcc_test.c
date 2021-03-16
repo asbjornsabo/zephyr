@@ -64,6 +64,7 @@ CREATE_FLAG(current_group_object_id_read);
 CREATE_FLAG(parent_group_object_id_read);
 CREATE_FLAG(playing_order_read);
 CREATE_FLAG(playing_order_set);
+CREATE_FLAG(playing_orders_supported_read);
 CREATE_FLAG(object_selected);
 CREATE_FLAG(metadata_read);
 CREATE_FLAG(object_read);
@@ -297,6 +298,18 @@ static void mcc_playing_order_set_cb(struct bt_conn *conn, int err, uint8_t orde
 	SET_FLAG(playing_order_set);
 }
 
+static void mcc_playing_orders_supported_read_cb(struct bt_conn *conn, int err,
+						 uint16_t orders)
+{
+	if (err) {
+		FAIL("Playing orders supported read failed (%d)", err);
+		return;
+	}
+
+	printk("Playing orders read succeeded\n");
+	SET_FLAG(playing_orders_supported_read);
+}
+
 static void mcc_otc_obj_selected_cb(struct bt_conn *conn, int err)
 {
 	if (err) {
@@ -413,6 +426,7 @@ int do_mcc_init(void)
 	mcc_cb.parent_group_obj_id_read  = &mcc_parent_group_obj_id_read_cb;
 	mcc_cb.playing_order_read        = &mcc_playing_order_read_cb;
 	mcc_cb.playing_order_set         = &mcc_playing_order_set_cb;
+	mcc_cb.playing_orders_supported_read = &mcc_playing_orders_supported_read_cb;
 	mcc_cb.otc_obj_selected = &mcc_otc_obj_selected_cb;
 	mcc_cb.otc_obj_metadata = &mcc_otc_obj_metadata_cb;
 	mcc_cb.otc_icon_object  = &mcc_icon_object_read_cb;
@@ -777,6 +791,15 @@ void test_main(void)
 	if (g_playing_order != playing_order) {
 		FAIL("Incorrect playing_order\n");
 	}
+
+	/* Read playing orders supported  *************************************/
+	err = bt_mcc_read_playing_orders_supported(default_conn);
+	if (err) {
+		FAIL("Failed to read playing orders supported: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(playing_orders_supported_read);
 
 	PASS("MCC passed\n");
 }
