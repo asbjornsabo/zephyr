@@ -33,9 +33,9 @@ static struct bt_conn *default_conn;
 static struct bt_mcc_cb_t mcc_cb;
 
 uint64_t g_icon_object_id;
+uint64_t g_track_segments_object_id;
 uint64_t g_current_track_object_id;
 uint64_t g_next_track_object_id;
-uint64_t g_track_segments_object_id;
 uint64_t g_current_group_object_id;
 uint64_t g_parent_group_object_id;
 
