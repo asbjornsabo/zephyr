@@ -39,6 +39,8 @@ uint64_t g_track_segments_object_id;
 uint64_t g_current_group_object_id;
 uint64_t g_parent_group_object_id;
 
+static int32_t g_pos;
+
 CREATE_FLAG(ble_is_initialized);
 CREATE_FLAG(ble_link_is_ready);
 CREATE_FLAG(mcc_is_initialized);
@@ -48,6 +50,8 @@ CREATE_FLAG(icon_object_id_read);
 CREATE_FLAG(icon_uri_read);
 CREATE_FLAG(track_title_read);
 CREATE_FLAG(track_duration_read);
+CREATE_FLAG(track_position_read);
+CREATE_FLAG(track_position_set);
 CREATE_FLAG(track_segments_object_id_read);
 CREATE_FLAG(current_track_object_id_read);
 CREATE_FLAG(next_track_object_id_read);
@@ -134,6 +138,30 @@ static void mcc_track_dur_read_cb(struct bt_conn *conn, int err, int32_t dur)
 
 	printk("Track duration read succeeded\n");
 	SET_FLAG(track_duration_read);
+}
+
+static void mcc_track_position_read_cb(struct bt_conn *conn, int err, int32_t pos)
+{
+	if (err) {
+		FAIL("Track position read failed (%d)", err);
+		return;
+	}
+
+	g_pos = pos;
+	printk("Track position read succeeded\n");
+	SET_FLAG(track_position_read);
+}
+
+static void mcc_track_position_set_cb(struct bt_conn *conn, int err, int32_t pos)
+{
+	if (err) {
+		FAIL("Track Position set failed (%d)", err);
+		return;
+	}
+
+	g_pos = pos;
+	printk("Track position set succeeded\n");
+	SET_FLAG(track_position_set);
 }
 
 static void mcc_segments_obj_id_read_cb(struct bt_conn *conn, int err,
@@ -305,6 +333,8 @@ int do_mcc_init(void)
 	mcc_cb.icon_uri_read    = &mcc_icon_uri_read_cb;
 	mcc_cb.track_title_read = &mcc_track_title_read_cb;
 	mcc_cb.track_dur_read   = &mcc_track_dur_read_cb;
+	mcc_cb.track_position_read = &mcc_track_position_read_cb;
+	mcc_cb.track_position_set  = &mcc_track_position_set_cb;
 	mcc_cb.current_track_obj_id_read = &mcc_current_track_obj_id_read_cb;
 	mcc_cb.next_track_obj_id_read    = &mcc_next_track_obj_id_read_cb;
 	mcc_cb.segments_obj_id_read      = &mcc_segments_obj_id_read_cb;
@@ -488,6 +518,30 @@ void test_main(void)
 	}
 
 	WAIT_FOR_FLAG(track_duration_read);
+
+	/* Read and set track_position *************************************/
+	err = bt_mcc_read_track_position(default_conn);
+	if (err) {
+		FAIL("Failed to read track position: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(track_position_read);
+
+	int32_t pos = g_pos + 1200; /*12 seconds further into the track */
+
+	err = bt_mcc_set_track_position(default_conn, pos);
+	if (err) {
+		FAIL("Failed to set track position: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(track_position_set);
+	if (g_pos != pos) {
+		/* In this controlled case, we expect that the resulting */
+		/* position is the position given in the set command */
+		FAIL("Incorrect position\n");
+	}
 
 	/* Read track segments object *****************************************/
 	err = bt_mcc_read_segments_obj_id(default_conn);
