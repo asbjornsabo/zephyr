@@ -47,6 +47,7 @@ CREATE_FLAG(player_name_read);
 CREATE_FLAG(icon_object_id_read);
 CREATE_FLAG(icon_uri_read);
 CREATE_FLAG(track_title_read);
+CREATE_FLAG(track_duration_read);
 CREATE_FLAG(track_segments_object_id_read);
 CREATE_FLAG(current_track_object_id_read);
 CREATE_FLAG(next_track_object_id_read);
@@ -122,6 +123,17 @@ static void mcc_track_title_read_cb(struct bt_conn *conn, int err, char *title)
 
 	printk("Track title read succeeded\n");
 	SET_FLAG(track_title_read);
+}
+
+static void mcc_track_dur_read_cb(struct bt_conn *conn, int err, int32_t dur)
+{
+	if (err) {
+		FAIL("Track duration read failed (%d)", err);
+		return;
+	}
+
+	printk("Track duration read succeeded\n");
+	SET_FLAG(track_duration_read);
 }
 
 static void mcc_segments_obj_id_read_cb(struct bt_conn *conn, int err,
@@ -292,6 +304,7 @@ int do_mcc_init(void)
 	mcc_cb.icon_obj_id_read = &mcc_icon_obj_id_read_cb;
 	mcc_cb.icon_uri_read    = &mcc_icon_uri_read_cb;
 	mcc_cb.track_title_read = &mcc_track_title_read_cb;
+	mcc_cb.track_dur_read   = &mcc_track_dur_read_cb;
 	mcc_cb.current_track_obj_id_read = &mcc_current_track_obj_id_read_cb;
 	mcc_cb.next_track_obj_id_read    = &mcc_next_track_obj_id_read_cb;
 	mcc_cb.segments_obj_id_read      = &mcc_segments_obj_id_read_cb;
@@ -466,6 +479,15 @@ void test_main(void)
 	}
 
 	WAIT_FOR_FLAG(track_title_read);
+
+	/* Read track_duration ******************************************/
+	err = bt_mcc_read_track_dur(default_conn);
+	if (err) {
+		FAIL("Failed to read track_duration: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(track_duration_read);
 
 	/* Read track segments object *****************************************/
 	err = bt_mcc_read_segments_obj_id(default_conn);
