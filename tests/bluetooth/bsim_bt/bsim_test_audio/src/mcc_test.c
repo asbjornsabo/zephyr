@@ -42,6 +42,8 @@ static uint64_t g_parent_group_object_id;
 static int32_t g_pos;
 static int8_t  g_pb_speed;
 static uint8_t g_playing_order;
+static uint8_t g_state;
+static uint8_t g_control_point_result;
 
 CREATE_FLAG(ble_is_initialized);
 CREATE_FLAG(ble_link_is_ready);
@@ -67,6 +69,8 @@ CREATE_FLAG(playing_order_set);
 CREATE_FLAG(playing_orders_supported_read);
 CREATE_FLAG(ccid_read);
 CREATE_FLAG(media_state_read);
+CREATE_FLAG(control_point_set);
+CREATE_FLAG(control_point_notified);
 CREATE_FLAG(object_selected);
 CREATE_FLAG(metadata_read);
 CREATE_FLAG(object_read);
@@ -299,7 +303,31 @@ static void mcc_media_state_read_cb(struct bt_conn *conn, int err, uint8_t state
 		return;
 	}
 
+	g_state = state;
 	SET_FLAG(media_state_read);
+}
+
+static void mcc_cp_set_cb(struct bt_conn *conn, int err, struct mpl_op_t op)
+{
+	if (err) {
+		FAIL("Control point set failed (%d) - operation: %u, param: %d",
+		     err, op.opcode, op.param);
+		return;
+	}
+
+	SET_FLAG(control_point_set);
+}
+
+static void mcc_cp_ntf_cb(struct bt_conn *conn, int err, struct mpl_op_ntf_t ntf)
+{
+	if (err) {
+		FAIL("Control Point notification error (%d) - operation: %u, result: %u",
+		     err, ntf.requested_opcode, ntf.result_code);
+		return;
+	}
+
+	g_control_point_result = ntf.result_code;
+	SET_FLAG(control_point_notified);
 }
 
 static void mcc_content_control_id_read_cb(struct bt_conn *conn, int err, uint8_t ccid)
@@ -422,6 +450,8 @@ int do_mcc_init(void)
 	mcc_cb.playing_order_set         = &mcc_playing_order_set_cb;
 	mcc_cb.playing_orders_supported_read = &mcc_playing_orders_supported_read_cb;
 	mcc_cb.media_state_read = &mcc_media_state_read_cb;
+	mcc_cb.cp_set           = &mcc_cp_set_cb;
+	mcc_cb.cp_ntf           = &mcc_cp_ntf_cb;
 	mcc_cb.content_control_id_read = &mcc_content_control_id_read_cb;
 	mcc_cb.otc_obj_selected = &mcc_otc_obj_selected_cb;
 	mcc_cb.otc_obj_metadata = &mcc_otc_obj_metadata_cb;
@@ -497,6 +527,156 @@ static void select_read_meta(int64_t id)
 
 	WAIT_FOR_FLAG(metadata_read);
 	printk("Reading object metadata succeeded\n");
+}
+
+/* Helper function to read the media state and verify that it is as expected
+ * Will FAIL on error reading the media state
+ * Will FAIL if the state is not as expected
+ *
+ * Returns true if the state is as expected
+ * Returns false in case of errors, or if the state is not as expected
+ */
+static bool test_verify_media_state_wait_flags(uint8_t expected_state)
+{
+	int err;
+
+	UNSET_FLAG(media_state_read);
+	err = bt_mcc_read_media_state(default_conn);
+	if (err) {
+		FAIL("Failed to read media state: %d", err);
+		return false;
+	}
+
+	WAIT_FOR_FLAG(media_state_read);
+	if (g_state != expected_state) {
+		FAIL("Server is not in expected state: %d, expected: %d\n",
+		     g_state, expected_state);
+		return false;
+	}
+
+	return true;
+}
+
+/* Helper function to set the control point, including the flag handling.
+ * Will FAIL on error to set the control point.
+ * Will WAIT for the required flags before returning.
+ */
+static void test_set_cp_wait_flags(struct mpl_op_t op)
+{
+	int err;
+
+	/* Need both flags, even if the notification result is what we care
+	 * about.  The notification may come before the write callback, and if
+	 * the write callback has not yet arrived, we will get EBUSY at the
+	 * next call.
+	 */
+	UNSET_FLAG(control_point_set);
+	UNSET_FLAG(control_point_notified);
+	err = bt_mcc_set_cp(default_conn, op);
+	if (err) {
+		FAIL("Failed to write to control point: %d, operation: %u",
+		     err, op.opcode);
+		return;
+	}
+
+	WAIT_FOR_FLAG(control_point_set);
+	WAIT_FOR_FLAG(control_point_notified);
+}
+
+static void test_cp_play(void)
+{
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_PLAY;
+	op.use_param = false;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("PLAY operation failed\n");
+		return;
+	}
+
+	if (test_verify_media_state_wait_flags(MPL_MEDIA_STATE_PLAYING)) {
+		printk("PLAY operation succeeded\n");
+	}
+}
+
+static void test_cp_pause(void)
+{
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_PAUSE;
+	op.use_param = false;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("PAUSE operation failed\n");
+		return;
+	}
+
+	if (test_verify_media_state_wait_flags(MPL_MEDIA_STATE_PAUSED)) {
+		printk("PAUSE operation succeeded\n");
+	}
+}
+
+static void test_cp_fast_rewind(void)
+{
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_FAST_REWIND;
+	op.use_param = false;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("FAST REWIND operation failed\n");
+		return;
+	}
+
+	if (test_verify_media_state_wait_flags(MPL_MEDIA_STATE_SEEKING)) {
+		printk("FAST REWIND operation succeeded\n");
+	}
+}
+
+static void test_cp_fast_forward(void)
+{
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_FAST_FORWARD;
+	op.use_param = false;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("FAST FORWARD operation failed\n");
+		return;
+	}
+
+	if (test_verify_media_state_wait_flags(MPL_MEDIA_STATE_SEEKING)) {
+		printk("FAST FORWARD operation succeeded\n");
+	}
+}
+
+static void test_cp_stop(void)
+{
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_STOP;
+	op.use_param = false;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("STOP operation failed\n");
+		return;
+	}
+
+	/* There is no "STOPPED" state in the spec - STOP goes to PAUSED */
+	if (test_verify_media_state_wait_flags(MPL_MEDIA_STATE_PAUSED)) {
+		printk("STOP operation succeeded\n");
+	}
 }
 
 /* This function tests all commands in the API in sequence
@@ -869,6 +1049,28 @@ void test_main(void)
 	WAIT_FOR_FLAG(ccid_read);
 	printk("Content control ID read succeeded\n");
 
+	/* Control point - "state" opcodes */
+
+	/* This part of the test not only checks that the opcodes are accepted
+	 * by the server, but also that they actually do lead to the expected
+	 * state changes.  This may lean too much upon knowledge or assumptions,
+	 * and therefore be too fragile.
+	 * It may be more robust to just give commands and check for the success
+	 * code in the control point notifications
+	 */
+
+	/* It is assumed that the server starts the test in the paused state */
+	test_verify_media_state_wait_flags(MPL_MEDIA_STATE_PAUSED);
+
+	/* The tests are ordered to ensure that each operation changes state */
+	test_cp_play();
+	test_cp_fast_forward();
+	test_cp_pause();
+	test_cp_fast_rewind();
+	test_cp_stop();
+
+
+	/* TEST IS COMPLETE */
 	PASS("MCC passed\n");
 }
 
