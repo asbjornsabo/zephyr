@@ -31,6 +31,8 @@ static volatile uint8_t g_aics_gain_min;
 static volatile bool g_aics_active = 1;
 static char g_aics_desc[AICS_DESC_SIZE];
 static volatile bool g_cb;
+static struct bt_conn *g_conn;
+static bool g_is_connected;
 
 static void mics_mute_cb(struct bt_conn *conn, int err, uint8_t mute)
 {
@@ -119,7 +121,9 @@ static void aics_description_cb(struct bt_conn *conn, struct bt_aics *inst,
 		return;
 	}
 
-	strcpy(g_aics_desc, description);
+
+	strncpy(g_aics_desc, description, sizeof(g_aics_desc) - 1);
+	g_aics_desc[sizeof(g_aics_desc) - 1] = '\0';
 
 	if (!conn) {
 		g_cb = true;
@@ -135,6 +139,27 @@ static struct bt_mics_cb_t mics_cb = {
 		.status = aics_status_cb,
 		.description = aics_description_cb
 	}
+};
+
+
+static void connected(struct bt_conn *conn, uint8_t err)
+{
+	char addr[BT_ADDR_LE_STR_LEN];
+
+	bt_addr_le_to_str(bt_conn_get_dst(conn), addr, sizeof(addr));
+
+	if (err) {
+		FAIL("Failed to connect to %s (%u)\n", addr, err);
+		return;
+	}
+	printk("Connected to %s\n", addr);
+	g_conn = conn;
+	g_is_connected = true;
+}
+
+static struct bt_conn_cb conn_callbacks = {
+	.connected = connected,
+	.disconnected = disconnected,
 };
 
 static int test_aics_standalone(void)
@@ -270,7 +295,8 @@ static int test_aics_standalone(void)
 
 	printk("Setting AICS Description\n");
 	strncpy(expected_aics_desc, "New Input Description",
-		sizeof(expected_aics_desc));
+		sizeof(expected_aics_desc) - 1);
+	expected_aics_desc[sizeof(expected_aics_desc) - 1] = '\0';
 	g_cb = false;
 	err = bt_mics_aics_description_set(NULL, mics.aics[0],
 					   expected_aics_desc);
@@ -377,12 +403,77 @@ static void test_standalone(void)
 	PASS("MICS passed\n");
 }
 
+static void test_main(void)
+{
+	int err;
+	struct bt_mics_init mics_init;
+	char input_desc[CONFIG_BT_MICS_AICS_INSTANCE_COUNT][16];
+
+	err = bt_enable(NULL);
+	if (err) {
+		FAIL("Bluetooth init failed (err %d)\n", err);
+		return;
+	}
+
+	printk("Bluetooth initialized\n");
+
+	memset(&mics_init, 0, sizeof(mics_init));
+
+	for (int i = 0; i < ARRAY_SIZE(mics_init.aics_init); i++) {
+		mics_init.aics_init[i].desc_writable = true;
+		snprintf(input_desc[i], sizeof(input_desc[i]),
+			 "Input %d", i + 1);
+		mics_init.aics_init[i].input_desc = input_desc[i];
+		mics_init.aics_init[i].input_type = BT_AICS_INPUT_TYPE_DIGITAL;
+		mics_init.aics_init[i].input_state = g_aics_active;
+		mics_init.aics_init[i].mode = BT_AICS_MODE_MANUAL;
+		mics_init.aics_init[i].units = 1;
+		mics_init.aics_init[i].min_gain = 0;
+		mics_init.aics_init[i].max_gain = 100;
+	}
+
+	err = bt_mics_init(&mics_init);
+	if (err) {
+		FAIL("MICS init failed (err %d)\n", err);
+		return;
+	}
+
+	bt_mics_server_cb_register(&mics_cb);
+	bt_conn_cb_register(&conn_callbacks);
+
+	err = bt_mics_get(NULL, &mics);
+	if (err) {
+		FAIL("MICS get failed (err %d)\n", err);
+		return;
+	}
+
+	printk("MICS initialized\n");
+
+	err = bt_le_adv_start(BT_LE_ADV_CONN_NAME, ad, AD_SIZE, NULL, 0);
+	if (err) {
+		FAIL("Advertising failed to start (err %d)\n", err);
+		return;
+	}
+
+	printk("Advertising successfully started\n");
+
+	WAIT_FOR(g_is_connected);
+
+	PASS("MICS passed\n");
+}
+
 static const struct bst_test_instance test_mics[] = {
 	{
 		.test_id = "mics_standalone",
 		.test_post_init_f = test_init,
 		.test_tick_f = test_tick,
 		.test_main_f = test_standalone
+	},
+	{
+		.test_id = "mics",
+		.test_post_init_f = test_init,
+		.test_tick_f = test_tick,
+		.test_main_f = test_main
 	},
 	BSTEST_END_MARKER
 };
