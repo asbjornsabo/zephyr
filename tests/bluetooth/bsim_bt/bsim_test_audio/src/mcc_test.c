@@ -690,7 +690,7 @@ void test_main(void)
 	err = bt_mcc_otc_read_track_segments_object(default_conn);
 
 	if (err) {
-		FAIL("Failed to read current track object\n");
+		FAIL("Failed to read track segments object\n");
 		return;
 	}
 
@@ -824,7 +824,7 @@ void test_main(void)
 	}
 
 	WAIT_FOR_FLAG(playing_orders_supported_read);
-	printk("Playing orders read succeeded\n");
+	printk("Playing orders supported read succeeded\n");
 
 	/* Read media state  ***************************************************/
 	err = bt_mcc_read_media_state(default_conn);
