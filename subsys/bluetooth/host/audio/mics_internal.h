@@ -13,6 +13,6 @@ int bt_mics_client_service_get(struct bt_conn *conn, struct bt_mics *service);
 int bt_mics_client_mute_get(struct bt_conn *conn);
 int bt_mics_client_mute(struct bt_conn *conn);
 int bt_mics_client_unmute(struct bt_conn *conn);
-bool bt_mics_client_valid_aics_inst(struct bt_aics *aics);
+bool bt_mics_client_valid_aics_inst(struct bt_conn *conn, struct bt_aics *aics);
 
 #endif /* ZEPHYR_INCLUDE_BLUETOOTH_AUDIO_MICS_INTERNAL_ */

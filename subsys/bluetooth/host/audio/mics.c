@@ -337,7 +337,7 @@ int bt_mics_mute_get(struct bt_conn *conn)
 int bt_mics_aics_state_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_MICS_CLIENT_AICS) &&
-	    conn && bt_mics_client_valid_aics_inst(inst)) {
+	    conn && bt_mics_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_state_get(conn, inst);
 	}
 
@@ -351,7 +351,7 @@ int bt_mics_aics_state_get(struct bt_conn *conn, struct bt_aics *inst)
 int bt_mics_aics_gain_setting_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_MICS_CLIENT_AICS) &&
-	    conn && bt_mics_client_valid_aics_inst(inst)) {
+	    conn && bt_mics_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_gain_setting_get(conn, inst);
 	}
 
@@ -365,7 +365,7 @@ int bt_mics_aics_gain_setting_get(struct bt_conn *conn, struct bt_aics *inst)
 int bt_mics_aics_type_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_MICS_CLIENT_AICS) &&
-	    conn && bt_mics_client_valid_aics_inst(inst)) {
+	    conn && bt_mics_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_type_get(conn, inst);
 	}
 
@@ -379,7 +379,7 @@ int bt_mics_aics_type_get(struct bt_conn *conn, struct bt_aics *inst)
 int bt_mics_aics_status_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_MICS_CLIENT_AICS) &&
-	    conn && bt_mics_client_valid_aics_inst(inst)) {
+	    conn && bt_mics_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_status_get(conn, inst);
 	}
 
@@ -392,7 +392,7 @@ int bt_mics_aics_status_get(struct bt_conn *conn, struct bt_aics *inst)
 int bt_mics_aics_unmute(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_MICS_CLIENT_AICS) &&
-	    conn && bt_mics_client_valid_aics_inst(inst)) {
+	    conn && bt_mics_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_unmute(conn, inst);
 	}
 
@@ -406,7 +406,7 @@ int bt_mics_aics_unmute(struct bt_conn *conn, struct bt_aics *inst)
 int bt_mics_aics_mute(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_MICS_CLIENT_AICS) &&
-	    conn && bt_mics_client_valid_aics_inst(inst)) {
+	    conn && bt_mics_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_mute(conn, inst);
 	}
 
@@ -420,7 +420,7 @@ int bt_mics_aics_mute(struct bt_conn *conn, struct bt_aics *inst)
 int bt_mics_aics_manual_gain_set(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_MICS_CLIENT_AICS) &&
-	    conn && bt_mics_client_valid_aics_inst(inst)) {
+	    conn && bt_mics_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_manual_gain_set(conn, inst);
 	}
 
@@ -434,7 +434,7 @@ int bt_mics_aics_manual_gain_set(struct bt_conn *conn, struct bt_aics *inst)
 int bt_mics_aics_automatic_gain_set(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_MICS_CLIENT_AICS) &&
-	    conn && bt_mics_client_valid_aics_inst(inst)) {
+	    conn && bt_mics_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_automatic_gain_set(conn, inst);
 	}
 
@@ -449,7 +449,7 @@ int bt_mics_aics_gain_set(struct bt_conn *conn, struct bt_aics *inst,
 			  int8_t gain)
 {
 	if (IS_ENABLED(CONFIG_BT_MICS_CLIENT_AICS) &&
-	    conn && bt_mics_client_valid_aics_inst(inst)) {
+	    conn && bt_mics_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_gain_set(conn, inst, gain);
 	}
 
@@ -463,7 +463,7 @@ int bt_mics_aics_gain_set(struct bt_conn *conn, struct bt_aics *inst,
 int bt_mics_aics_description_get(struct bt_conn *conn, struct bt_aics *inst)
 {
 	if (IS_ENABLED(CONFIG_BT_MICS_CLIENT_AICS) &&
-	    conn && bt_mics_client_valid_aics_inst(inst)) {
+	    conn && bt_mics_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_description_get(conn, inst);
 	}
 
@@ -478,7 +478,7 @@ int bt_mics_aics_description_set(struct bt_conn *conn, struct bt_aics *inst,
 				 const char *description)
 {
 	if (IS_ENABLED(CONFIG_BT_MICS_CLIENT_AICS) &&
-	    conn && bt_mics_client_valid_aics_inst(inst)) {
+	    conn && bt_mics_client_valid_aics_inst(conn, inst)) {
 		return bt_aics_description_set(conn, inst, description);
 	}
 
