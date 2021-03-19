@@ -679,6 +679,54 @@ static void test_cp_stop(void)
 	}
 }
 
+static void test_cp_move_relative(void)
+{
+	int err;
+	struct mpl_op_t op;
+
+	/* Assumes that the server is in a state where it is  able to change
+	 * the current track position
+	 * Also assumes position will not change by itself, which is wrong if
+	 * if the player is playing.
+	 */
+	UNSET_FLAG(track_position_read);
+	err = bt_mcc_read_track_position(default_conn);
+	if (err) {
+		FAIL("Failed to read track position: %d\n", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(track_position_read);
+	uint32_t tmp_pos = g_pos;
+
+	op.opcode = MPL_OPC_MOVE_RELATIVE;
+	op.use_param = true;
+	op.param = 1000;  /* Position change, measured in 1/100 of a second */
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("MOVE RELATIVE operation failed\n");
+		return;
+	}
+
+	UNSET_FLAG(track_position_read);
+	err = bt_mcc_read_track_position(default_conn);
+	if (err) {
+		FAIL("Failed to read track position: %d\n", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(track_position_read);
+	if (g_pos == tmp_pos) {
+		/* Position did not change */
+		FAIL("Server did not move track position\n");
+		return;
+	}
+
+	printk("MOVE RELATIVE operation succeeded\n");
+}
+
 /* This function tests all commands in the API in sequence
  * The order of the sequence follows the order of the characterstics in the
  * Media Control Service specification
@@ -1068,6 +1116,10 @@ void test_main(void)
 	test_cp_pause();
 	test_cp_fast_rewind();
 	test_cp_stop();
+
+
+	/* Control point - move relative opcode */
+	test_cp_move_relative();
 
 
 	/* TEST IS COMPLETE */
