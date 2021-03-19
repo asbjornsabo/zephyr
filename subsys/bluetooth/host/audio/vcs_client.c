@@ -261,6 +261,9 @@ static uint8_t internal_read_volume_state_cb(
 	struct vcs_instance_t *vcs_inst = &vcs_insts[bt_conn_index(conn)];
 	uint8_t opcode = vcs_inst->cp_val.cp.opcode;
 
+
+	memset(params, 0, sizeof(*params));
+
 	if (err) {
 		BT_WARN("Volume state read failed: %d", err);
 		cb_err = BT_ATT_ERR_UNLIKELY;
@@ -307,6 +310,7 @@ static void vcs_client_write_vcs_cp_cb(struct bt_conn *conn, uint8_t err,
 	uint8_t opcode = vcs_inst->cp_val.cp.opcode;
 
 	BT_DBG("err: 0x%02X", err);
+	memset(params, 0, sizeof(*params));
 
 	if (err == VCS_ERR_INVALID_COUNTER && vcs_inst->state_handle) {
 		int read_err;
