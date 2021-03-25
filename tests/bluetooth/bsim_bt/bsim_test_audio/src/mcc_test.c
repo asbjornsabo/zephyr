@@ -994,6 +994,174 @@ static void test_cp_goto_track(void)
 	printk("GOTO TRACK operation succeeded\n");
 }
 
+/* Helper function to read the current group object ID, including flag handling
+ * Will FAIL on error reading object ID
+ * Will WAIT until the read is completed (object ID flag read flag is set)
+ */
+static void test_read_current_group_object_id_wait_flags(void)
+{
+	int err;
+
+	UNSET_FLAG(current_group_object_id_read);
+	err = bt_mcc_read_current_group_obj_id(default_conn);
+	if (err) {
+		FAIL("Failed to read current group object ID: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(current_group_object_id_read);
+}
+
+static void test_cp_prev_group(void)
+{
+	uint64_t object_id;
+	struct mpl_op_t op;
+
+	/* Assumes that the server is in a state where it has multiple groups
+	 * and can change between them.
+	 */
+
+	/* To verify that a group change has happeded, the test checks that the
+	 * current group object ID has changed.
+	 */
+
+	op.opcode = MPL_OPC_PREV_GROUP;
+	op.use_param = false;
+
+	test_read_current_group_object_id_wait_flags();
+	object_id = g_current_group_object_id;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("PREV GROUP operation failed\n");
+		return;
+	}
+
+	test_read_current_group_object_id_wait_flags();
+
+	if (g_current_group_object_id == object_id) {
+		/* Group did not change */
+		FAIL("Server did not change group\n");
+		return;
+	}
+
+	printk("PREV GROUP operation succeeded\n");
+}
+
+static void test_cp_next_group(void)
+{
+	uint64_t object_id;
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_NEXT_GROUP;
+	op.use_param = false;
+
+	test_read_current_group_object_id_wait_flags();
+	object_id = g_current_group_object_id;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("NEXT GROUP operation failed\n");
+		return;
+	}
+
+	test_read_current_group_object_id_wait_flags();
+
+	if (g_current_group_object_id == object_id) {
+		FAIL("Server did not change group\n");
+		return;
+	}
+
+	printk("NEXT GROUP operation succeeded\n");
+}
+
+static void test_cp_first_group(void)
+{
+	uint64_t object_id;
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_FIRST_GROUP;
+	op.use_param = false;
+
+	test_read_current_group_object_id_wait_flags();
+	object_id = g_current_group_object_id;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("FIRST GROUP operation failed\n");
+		return;
+	}
+
+	test_read_current_group_object_id_wait_flags();
+
+	if (g_current_group_object_id == object_id) {
+		FAIL("Server did not change group\n");
+		return;
+	}
+
+	printk("FIRST GROUP operation succeeded\n");
+}
+
+static void test_cp_last_group(void)
+{
+	uint64_t object_id;
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_LAST_GROUP;
+	op.use_param = false;
+
+	test_read_current_group_object_id_wait_flags();
+	object_id = g_current_group_object_id;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("LAST GROUP operation failed\n");
+		return;
+	}
+
+	test_read_current_group_object_id_wait_flags();
+
+	if (g_current_group_object_id == object_id) {
+		FAIL("Server did not change group\n");
+		return;
+	}
+
+	printk("LAST GROUP operation succeeded\n");
+}
+
+static void test_cp_goto_group(void)
+{
+	uint64_t object_id;
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_GOTO_GROUP;
+	op.use_param = true;
+	op.param = 2; /* Second group, not the first, maybe not the last */
+
+	test_read_current_group_object_id_wait_flags();
+	object_id = g_current_group_object_id;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("GOTO GROUP operation failed\n");
+		return;
+	}
+
+	test_read_current_group_object_id_wait_flags();
+
+	if (g_current_group_object_id == object_id) {
+		FAIL("Server did not change group\n");
+		return;
+	}
+
+	printk("GOTO GROUP operation succeeded\n");
+}
+
 /* This function tests all commands in the API in sequence
  * The order of the sequence follows the order of the characterstics in the
  * Media Control Service specification
@@ -1404,6 +1572,16 @@ void test_main(void)
 	test_cp_last_track();
 	test_cp_first_track();
 	test_cp_goto_track();
+
+
+	/* Control point - group change opcodes *******************************/
+	/* The tests are ordered to ensure that each operation changes group */
+	/* Assumes we are not starting on the last group */
+	test_cp_next_group();
+	test_cp_prev_group();
+	test_cp_last_group();
+	test_cp_first_group();
+	test_cp_goto_group();
 
 
 	/* TEST IS COMPLETE */
