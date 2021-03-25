@@ -727,6 +727,105 @@ static void test_cp_move_relative(void)
 	printk("MOVE RELATIVE operation succeeded\n");
 }
 
+static void test_cp_prev_segment(void)
+{
+	struct mpl_op_t op;
+
+	/* Assumes that the server is in a state where there is a current
+	 * track that has segments, and where the server may switch between
+	 * these
+	 */
+
+	/* To properly verify track segment changes, the track segments
+	 * object must be downloaded and parsed.  That is somewhat complex,
+	 * and is getting close to what the qualification tests do.
+	 * Alternatively, the track position may be checked, but the server
+	 * implementation does not set that for segment changes yet.
+	 * For now, we will settle for seeing that the opcodes are accepted.
+	 */
+
+	op.opcode = MPL_OPC_PREV_SEGMENT;
+	op.use_param = false;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("PREV SEGMENT operation failed\n");
+		return;
+	}
+
+	printk("PREV SEGMENT operation succeeded\n");
+}
+
+static void test_cp_next_segment(void)
+{
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_NEXT_SEGMENT;
+	op.use_param = false;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("NEXT SEGMENT operation failed\n");
+		return;
+	}
+
+	printk("NEXT SEGMENT operation succeeded\n");
+}
+
+static void test_cp_first_segment(void)
+{
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_FIRST_SEGMENT;
+	op.use_param = false;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("FIRST SEGMENT operation failed\n");
+		return;
+	}
+
+	printk("FIRST SEGMENT operation succeeded\n");
+}
+
+static void test_cp_last_segment(void)
+{
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_LAST_SEGMENT;
+	op.use_param = false;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("LAST SEGMENT operation failed\n");
+		return;
+	}
+
+	printk("LAST SEGMENT operation succeeded\n");
+}
+
+static void test_cp_goto_segment(void)
+{
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_GOTO_SEGMENT;
+	op.use_param = true;
+	op.param = 2;    /* Second segment - not the first, maybe not last */
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("GOTO SEGMENT operation failed\n");
+		return;
+	}
+
+	printk("GOTO SEGMENT operation succeeded\n");
+}
+
 /* This function tests all commands in the API in sequence
  * The order of the sequence follows the order of the characterstics in the
  * Media Control Service specification
@@ -1120,6 +1219,13 @@ void test_main(void)
 
 	/* Control point - move relative opcode */
 	test_cp_move_relative();
+
+	/* Control point - segment change opcodes */
+	test_cp_prev_segment();
+	test_cp_next_segment();
+	test_cp_first_segment();
+	test_cp_last_segment();
+	test_cp_goto_segment();
 
 
 	/* TEST IS COMPLETE */
