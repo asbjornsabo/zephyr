@@ -826,6 +826,174 @@ static void test_cp_goto_segment(void)
 	printk("GOTO SEGMENT operation succeeded\n");
 }
 
+/* Helper function to read the current track object ID, including flag handling
+ * Will FAIL on error reading object ID
+ * Will WAIT until the read is completed (object ID flag read flag is set)
+ */
+static void test_read_current_track_object_id_wait_flags(void)
+{
+	int err;
+
+	UNSET_FLAG(current_track_object_id_read);
+	err = bt_mcc_read_current_track_obj_id(default_conn);
+	if (err) {
+		FAIL("Failed to read current track object ID: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(current_track_object_id_read);
+}
+
+static void test_cp_prev_track(void)
+{
+	uint64_t object_id;
+	struct mpl_op_t op;
+
+	/* Assumes that the server is in a state where it has multiple tracks
+	 * and can change between them.
+	 */
+
+	/* To verify that a track change has happeded, the test checks that the
+	 * current track object ID has changed.
+	 */
+
+	op.opcode = MPL_OPC_PREV_TRACK;
+	op.use_param = false;
+
+	test_read_current_track_object_id_wait_flags();
+	object_id = g_current_track_object_id;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("PREV TRACK operation failed\n");
+		return;
+	}
+
+	test_read_current_track_object_id_wait_flags();
+
+	if (g_current_track_object_id == object_id) {
+		/* Track did not change */
+		FAIL("Server did not change track\n");
+		return;
+	}
+
+	printk("PREV TRACK operation succeeded\n");
+}
+
+static void test_cp_next_track(void)
+{
+	uint64_t object_id;
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_NEXT_TRACK;
+	op.use_param = false;
+
+	test_read_current_track_object_id_wait_flags();
+	object_id = g_current_track_object_id;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("NEXT TRACK operation failed\n");
+		return;
+	}
+
+	test_read_current_track_object_id_wait_flags();
+
+	if (g_current_track_object_id == object_id) {
+		FAIL("Server did not change track\n");
+		return;
+	}
+
+	printk("NEXT TRACK operation succeeded\n");
+}
+
+static void test_cp_first_track(void)
+{
+	uint64_t object_id;
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_FIRST_TRACK;
+	op.use_param = false;
+
+	test_read_current_track_object_id_wait_flags();
+	object_id = g_current_track_object_id;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("FIRST TRACK operation failed\n");
+		return;
+	}
+
+	test_read_current_track_object_id_wait_flags();
+
+	if (g_current_track_object_id == object_id) {
+		FAIL("Server did not change track\n");
+		return;
+	}
+
+	printk("FIRST TRACK operation succeeded\n");
+}
+
+static void test_cp_last_track(void)
+{
+	uint64_t object_id;
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_LAST_TRACK;
+	op.use_param = false;
+
+	test_read_current_track_object_id_wait_flags();
+	object_id = g_current_track_object_id;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("LAST TRACK operation failed\n");
+		return;
+	}
+
+	test_read_current_track_object_id_wait_flags();
+
+	if (g_current_track_object_id == object_id) {
+		FAIL("Server did not change track\n");
+		return;
+	}
+
+	printk("LAST TRACK operation succeeded\n");
+}
+
+static void test_cp_goto_track(void)
+{
+	uint64_t object_id;
+	struct mpl_op_t op;
+
+	op.opcode = MPL_OPC_GOTO_TRACK;
+	op.use_param = true;
+	op.param = 2; /* Second track, not the first, maybe not the last */
+
+	test_read_current_track_object_id_wait_flags();
+	object_id = g_current_track_object_id;
+
+	test_set_cp_wait_flags(op);
+
+	if (g_control_point_result != MPL_OPC_NTF_SUCCESS) {
+		FAIL("GOTO TRACK operation failed\n");
+		return;
+	}
+
+	test_read_current_track_object_id_wait_flags();
+
+	if (g_current_track_object_id == object_id) {
+		FAIL("Server did not change track\n");
+		return;
+	}
+
+	printk("GOTO TRACK operation succeeded\n");
+}
+
 /* This function tests all commands in the API in sequence
  * The order of the sequence follows the order of the characterstics in the
  * Media Control Service specification
@@ -1226,6 +1394,16 @@ void test_main(void)
 	test_cp_first_segment();
 	test_cp_last_segment();
 	test_cp_goto_segment();
+
+
+	/* Control point - track change opcodes */
+	/* The tests are ordered to ensure that each operation changes track */
+	/* Assumes we are not starting on the last track */
+	test_cp_next_track();
+	test_cp_prev_track();
+	test_cp_last_track();
+	test_cp_first_track();
+	test_cp_goto_track();
 
 
 	/* TEST IS COMPLETE */
