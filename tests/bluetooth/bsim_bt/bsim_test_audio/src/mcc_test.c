@@ -38,12 +38,14 @@ static uint64_t g_current_track_object_id;
 static uint64_t g_next_track_object_id;
 static uint64_t g_current_group_object_id;
 static uint64_t g_parent_group_object_id;
+static uint64_t g_search_results_object_id;
 
 static int32_t g_pos;
 static int8_t  g_pb_speed;
 static uint8_t g_playing_order;
 static uint8_t g_state;
 static uint8_t g_control_point_result;
+static uint8_t g_search_control_point_result;
 
 CREATE_FLAG(ble_is_initialized);
 CREATE_FLAG(ble_link_is_ready);
@@ -64,6 +66,7 @@ CREATE_FLAG(current_track_object_id_read);
 CREATE_FLAG(next_track_object_id_read);
 CREATE_FLAG(current_group_object_id_read);
 CREATE_FLAG(parent_group_object_id_read);
+CREATE_FLAG(search_results_object_id_read);
 CREATE_FLAG(playing_order_read);
 CREATE_FLAG(playing_order_set);
 CREATE_FLAG(playing_orders_supported_read);
@@ -71,6 +74,8 @@ CREATE_FLAG(ccid_read);
 CREATE_FLAG(media_state_read);
 CREATE_FLAG(control_point_set);
 CREATE_FLAG(control_point_notified);
+CREATE_FLAG(search_control_point_set);
+CREATE_FLAG(search_control_point_notified);
 CREATE_FLAG(object_selected);
 CREATE_FLAG(metadata_read);
 CREATE_FLAG(object_read);
@@ -330,6 +335,41 @@ static void mcc_cp_ntf_cb(struct bt_conn *conn, int err, struct mpl_op_ntf_t ntf
 	SET_FLAG(control_point_notified);
 }
 
+static void mcc_scp_set_cb(struct bt_conn *conn, int err,
+			   struct mpl_search_t search)
+{
+	if (err) {
+		FAIL("Search Control Point set failed (%d)", err);
+		return;
+	}
+
+	SET_FLAG(search_control_point_set);
+}
+
+static void mcc_scp_ntf_cb(struct bt_conn *conn, int err, uint8_t result_code)
+{
+	if (err) {
+		FAIL("Search Control Point notification error (%d), result code: %u",
+		     err, result_code);
+		return;
+	}
+
+	g_search_control_point_result = result_code;
+	SET_FLAG(search_control_point_notified);
+}
+
+static void mcc_search_results_obj_id_read_cb(struct bt_conn *conn, int err,
+					      uint64_t id)
+{
+	if (err) {
+		FAIL("Search Results Object ID read failed (%d)", err);
+		return;
+	}
+
+	g_search_results_object_id = id;
+	SET_FLAG(search_results_object_id_read);
+}
+
 static void mcc_content_control_id_read_cb(struct bt_conn *conn, int err, uint8_t ccid)
 {
 	if (err) {
@@ -452,6 +492,9 @@ int do_mcc_init(void)
 	mcc_cb.media_state_read = &mcc_media_state_read_cb;
 	mcc_cb.cp_set           = &mcc_cp_set_cb;
 	mcc_cb.cp_ntf           = &mcc_cp_ntf_cb;
+	mcc_cb.scp_set          = &mcc_scp_set_cb;
+	mcc_cb.scp_ntf          = &mcc_scp_ntf_cb;
+	mcc_cb.search_results_obj_id_read = &mcc_search_results_obj_id_read_cb;
 	mcc_cb.content_control_id_read = &mcc_content_control_id_read_cb;
 	mcc_cb.otc_obj_selected = &mcc_otc_obj_selected_cb;
 	mcc_cb.otc_obj_metadata = &mcc_otc_obj_metadata_cb;
@@ -1162,6 +1205,84 @@ static void test_cp_goto_group(void)
 	printk("GOTO GROUP operation succeeded\n");
 }
 
+static void test_scp(void)
+{
+	struct mpl_search_t search;
+	struct mpl_sci_t sci = {0};
+	int err;
+
+	/* Test outline:
+	 * - verify that the search results object ID is zero before search
+	 * - write a search (one search control item) to the search control point,
+	 *   get write callback and notification
+	 * - verify that the search results object ID is non-zero
+	 */
+
+	UNSET_FLAG(search_results_object_id_read);
+	err = bt_mcc_read_search_results_obj_id(default_conn);
+
+	if (err) {
+		FAIL("Failed to read search results object ID: %d", err);
+		return;
+	}
+
+	WAIT_FOR_FLAG(search_results_object_id_read);
+
+	if (g_search_results_object_id != 0) {
+		FAIL("Search results object ID not zero before search\n");
+		return;
+	}
+
+	/* Set up the search control item, then the search
+	 *  Note: As of now, the server implementation only fakes the search,
+	 * so it makes no difference what we search for.  The result is the
+	 * same anyway.
+	 */
+	sci.type = MPL_SEARCH_TYPE_TRACK_NAME;
+	strcpy(sci.param, "Some track name");
+	/* Length is length of type, plus length of param w/o termination */
+	sci.len = sizeof(sci.type) + strlen(sci.param);
+
+	search.len = 0;
+	memcpy(&search.search[search.len], &sci.len, sizeof(sci.len));
+	search.len += sizeof(sci.len);
+
+	memcpy(&search.search[search.len], &sci.type, sizeof(sci.type));
+	search.len += sizeof(sci.type);
+
+	memcpy(&search.search[search.len], &sci.param, strlen(sci.param));
+	search.len += strlen(sci.param);
+
+	UNSET_FLAG(search_control_point_set);
+	UNSET_FLAG(search_control_point_notified);
+	UNSET_FLAG(search_results_object_id_read);
+
+	err = bt_mcc_set_scp(default_conn, search);
+	if (err) {
+		FAIL("Failed to write to search control point\n");
+		return;
+	}
+
+	WAIT_FOR_FLAG(search_control_point_set);
+	WAIT_FOR_FLAG(search_control_point_notified);
+
+	if (g_search_control_point_result != MPL_SCP_NTF_SUCCESS) {
+		FAIL("SEARCH operation failed\n");
+		return;
+	}
+
+	/* A search results object will have been created and the search
+	 * results object ID will have been notified if the search gave results
+	 */
+	WAIT_FOR_FLAG(search_results_object_id_read);
+	if (g_search_results_object_id == 0) {
+		FAIL("No search results\n");
+		return;
+	}
+
+	printk("SEARCH operation succeeded\n");
+}
+
 /* This function tests all commands in the API in sequence
  * The order of the sequence follows the order of the characterstics in the
  * Media Control Service specification
@@ -1582,6 +1703,10 @@ void test_main(void)
 	test_cp_last_group();
 	test_cp_first_group();
 	test_cp_goto_group();
+
+
+	/* Search control point */
+	test_scp();
 
 
 	/* TEST IS COMPLETE */
