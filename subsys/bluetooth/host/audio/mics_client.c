@@ -32,6 +32,7 @@ struct mics_instance_t {
 	uint16_t end_handle;
 	uint16_t mute_handle;
 	struct bt_gatt_subscribe_params mute_sub_params;
+	struct bt_gatt_discover_params mute_sub_disc_params;
 
 	bool busy;
 	uint8_t write_buf[1];
@@ -269,16 +270,15 @@ static uint8_t mics_discover_func(struct bt_conn *conn,
 			BT_DBG("Mute");
 			mics_inst->mute_handle = chrc->value_handle;
 			sub_params = &mics_inst->mute_sub_params;
+			sub_params->disc_params = &mics_inst->mute_sub_disc_params;
 		}
 
 		if (sub_params) {
+			/* With ccc_handle == 0 it will use auto discovery */
+			sub_params->ccc_handle = 0;
+			sub_params->end_handle = mics_inst->end_handle;
 			sub_params->value = BT_GATT_CCC_NOTIFY;
 			sub_params->value_handle = chrc->value_handle;
-			/*
-			 * TODO: Don't assume that CCC is at handle + 2;
-			 * do proper discovery;
-			 */
-			sub_params->ccc_handle = attr->handle + 2;
 			sub_params->notify = mute_notify_handler;
 			bt_gatt_subscribe(conn, sub_params);
 		}

@@ -47,7 +47,8 @@ endif # BT_MICS
 
 config BT_MICS_CLIENT
 	bool "Microphone Control Profile Support"
-	default n
+	select BT_GATT_CLIENT
+	select BT_GATT_AUTO_DISCOVER_CCC
 	help
 	  This option enables support for Microphone Control Profile.
 
