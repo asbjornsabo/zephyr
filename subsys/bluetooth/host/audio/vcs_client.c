@@ -40,7 +40,9 @@ struct vcs_instance_t {
 	uint16_t control_handle;
 	uint16_t flag_handle;
 	struct bt_gatt_subscribe_params state_sub_params;
+	struct bt_gatt_discover_params state_sub_disc_params;
 	struct bt_gatt_subscribe_params flag_sub_params;
+	struct bt_gatt_discover_params flag_sub_disc_params;
 
 	bool busy;
 	struct vcs_control_vol cp_val;
@@ -483,6 +485,7 @@ static uint8_t vcs_discover_func(struct bt_conn *conn,
 			BT_DBG("Volume state");
 			vcs_inst->state_handle = chrc->value_handle;
 			sub_params = &vcs_inst->state_sub_params;
+			sub_params->disc_params = &vcs_inst->state_sub_disc_params;
 		} else if (!bt_uuid_cmp(chrc->uuid, BT_UUID_VCS_CONTROL)) {
 			BT_DBG("Control Point");
 			vcs_inst->control_handle = chrc->value_handle;
@@ -490,16 +493,15 @@ static uint8_t vcs_discover_func(struct bt_conn *conn,
 			BT_DBG("Flags");
 			vcs_inst->flag_handle = chrc->value_handle;
 			sub_params = &vcs_inst->flag_sub_params;
+			sub_params->disc_params = &vcs_inst->flag_sub_disc_params;
 		}
 
 		if (sub_params) {
+			/* With ccc_handle == 0 it will use auto discovery */
+			sub_params->ccc_handle = 0;
+			sub_params->end_handle = vcs_inst->end_handle;
 			sub_params->value = BT_GATT_CCC_NOTIFY;
 			sub_params->value_handle = chrc->value_handle;
-			/*
-			 * TODO: Don't assume that CCC is at handle + 2;
-			 * do proper discovery;
-			 */
-			sub_params->ccc_handle = attr->handle + 2;
 			sub_params->notify = vcs_notify_handler;
 			bt_gatt_subscribe(conn, sub_params);
 		}
