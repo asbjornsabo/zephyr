@@ -81,7 +81,7 @@ struct csis_instance_t {
 	uint8_t set_lock;
 	uint8_t rank;
 	bool adv_enabled;
-	struct k_delayed_work set_lock_timer;
+	struct k_work_delayable set_lock_timer;
 	bt_addr_le_t lock_client_addr;
 	const struct bt_gatt_service_static *service_p;
 	struct csis_pending_notifications_t pend_notify[CONFIG_BT_MAX_PAIRED];
@@ -452,12 +452,12 @@ static ssize_t write_set_lock(struct bt_conn *conn,
 			bt_addr_le_copy(&csis_inst.lock_client_addr,
 					bt_conn_get_dst(conn));
 		}
-		k_delayed_work_submit(&csis_inst.set_lock_timer,
-				      CSIS_SET_LOCK_TIMER_VALUE);
+		(void)k_work_reschedule(&csis_inst.set_lock_timer,
+					CSIS_SET_LOCK_TIMER_VALUE);
 	} else {
 		memset(&csis_inst.lock_client_addr, 0,
 		       sizeof(csis_inst.lock_client_addr));
-		k_delayed_work_cancel(&csis_inst.set_lock_timer);
+		(void)k_work_cancel_delayable(&csis_inst.set_lock_timer);
 	}
 
 	BT_DBG("%u", csis_inst.set_lock);
@@ -776,8 +776,8 @@ static int bt_csis_init(const struct device *unused)
 	bt_conn_cb_register(&conn_callbacks);
 	bt_conn_auth_cb_register(&auth_callbacks);
 
-	k_delayed_work_init(&csis_inst.set_lock_timer,
-			    set_lock_timer_handler);
+	k_work_init_delayable(&csis_inst.set_lock_timer,
+			      set_lock_timer_handler);
 	csis_inst.service_p = &csis_svc;
 	csis_inst.rank = CONFIG_BT_CSIS_SET_RANK;
 	csis_inst.set_size = CONFIG_BT_CSIS_SET_SIZE;

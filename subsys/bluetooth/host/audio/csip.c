@@ -77,7 +77,7 @@ static struct bt_gatt_discover_params discover_params;
 static struct csis_instance_t *cur_inst;
 static struct bt_csip_set_t cur_set;
 static bool busy;
-static struct k_delayed_work discover_members_timer;
+static struct k_work_delayable discover_members_timer;
 
 static struct bt_uuid_16 uuid = BT_UUID_INIT_16(0);
 
@@ -704,7 +704,7 @@ static bool csis_found(struct bt_data *data, void *user_data)
 			       members_found, cur_set.set_size);
 
 			if (members_found == cur_set.set_size) {
-				k_delayed_work_cancel(&discover_members_timer);
+				(void)k_work_cancel_delayable(&discover_members_timer);
 				bt_le_scan_stop();
 				busy = false;
 				cur_inst = NULL;
@@ -1389,8 +1389,8 @@ int bt_csip_discover(struct bt_conn *conn, bool subscribe)
 
 	memset(&set_members, 0, sizeof(set_members));
 
-	k_delayed_work_init(&discover_members_timer,
-			    discover_members_timer_handler);
+	k_work_init_delayable(&discover_members_timer,
+			      discover_members_timer_handler);
 
 	set_members[0].conn = conn;
 	memcpy(&set_member_addrs[0].addr,
@@ -1457,8 +1457,12 @@ int bt_csip_discover_members(struct bt_csip_set_t *set)
 	memcpy(&cur_set, set, sizeof(cur_set));
 	members_found = 0;
 
-	k_delayed_work_submit(&discover_members_timer,
-			      CSIP_DISCOVER_TIMER_VALUE);
+	err = k_work_reschedule(&discover_members_timer,
+				CSIP_DISCOVER_TIMER_VALUE);
+	if (err < 0) { /* Can return 0, 1 and 2 for success */
+		BT_DBG("Could not schedule discover_members_timer %d", err);
+		return err;
+	}
 
 
 	/*
