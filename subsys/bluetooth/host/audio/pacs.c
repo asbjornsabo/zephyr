@@ -26,6 +26,8 @@
 #include "capabilities.h"
 #include "pacs_internal.h"
 
+#if defined(CONFIG_BT_BAP)
+
 #define PAC_INDICATE_TIMEOUT	K_MSEC(10)
 
 #if defined(CONFIG_BT_PAC_SNK) || defined(CONFIG_BT_PAC_SRC)
@@ -380,3 +382,5 @@ void bt_pacs_remove_capability(uint8_t type)
 
 	k_work_reschedule(work, PAC_INDICATE_TIMEOUT);
 }
+
+#endif /* CONFIG_BT_BAP */
