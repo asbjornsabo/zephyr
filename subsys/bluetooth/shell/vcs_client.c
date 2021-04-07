@@ -263,7 +263,7 @@ static void bt_vocs_state_cb(struct bt_conn *conn, struct bt_vocs *inst,
 }
 
 static void bt_vocs_location_cb(struct bt_conn *conn, struct bt_vocs *inst,
-				int err, uint8_t location)
+				int err, uint32_t location)
 {
 	if (err) {
 		shell_error(ctx_shell, "VOCS location get failed (%d) for "

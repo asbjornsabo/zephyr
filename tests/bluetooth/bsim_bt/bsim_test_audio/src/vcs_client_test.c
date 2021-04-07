@@ -85,7 +85,7 @@ static void vocs_state_cb(struct bt_conn *conn, struct bt_vocs *inst, int err,
 }
 
 static void vocs_location_cb(struct bt_conn *conn, struct bt_vocs *inst,
-			     int err, uint8_t location)
+			     int err, uint32_t location)
 {
 	if (err) {
 		FAIL("VOCS location cb err (%d)", err);

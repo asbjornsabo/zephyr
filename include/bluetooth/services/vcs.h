@@ -20,7 +20,7 @@
 
 #include <zephyr/types.h>
 #include <bluetooth/services/aics.h>
-#include <bluetooth/services/vocs.h>
+#include <bluetooth/audio/vocs.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -41,7 +41,7 @@ extern "C" {
 /** @brief Initializing structure for Volume Control Service */
 struct bt_vcs_init {
 	/** Initializing structure for Volume Offset Control Services */
-	struct bt_vocs_init vocs_init[VCS_VOCS_CNT];
+	struct bt_vocs_init_param vocs_init[VCS_VOCS_CNT];
 
 	/** Initializing structure for Audio Input Control Services */
 	struct bt_aics_init aics_init[VCS_AICS_CNT];

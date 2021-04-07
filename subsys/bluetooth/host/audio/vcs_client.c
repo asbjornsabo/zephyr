@@ -18,7 +18,7 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/services/vcs.h>
-#include <bluetooth/services/vocs.h>
+#include <bluetooth/audio/vocs.h>
 
 #include "vcs_internal.h"
 #include "aics_internal.h"
