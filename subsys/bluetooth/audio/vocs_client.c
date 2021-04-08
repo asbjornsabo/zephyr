@@ -255,10 +255,10 @@ static void vcs_client_write_vocs_cp_cb(struct bt_conn *conn, uint8_t err,
 		cb_err = bt_gatt_read(conn, &inst->cli.read_params);
 		if (cb_err) {
 			BT_WARN("Could not read Volume state: %d", cb_err);
+		} else {
+			/* Wait for read callback */
+			return;
 		}
-	} else {
-		BT_DBG("Invalid location");
-		cb_err = BT_ATT_ERR_UNLIKELY;
 	}
 
 	inst->cli.busy = false;

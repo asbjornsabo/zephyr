@@ -31,7 +31,7 @@ static volatile uint8_t g_volume;
 static volatile uint8_t g_mute;
 static volatile uint8_t g_flags;
 static volatile int16_t g_vocs_offset;
-static volatile uint8_t g_vocs_location;
+static volatile uint32_t g_vocs_location;
 static char g_vocs_desc[VOCS_DESC_SIZE];
 static volatile int8_t g_aics_gain;
 static volatile uint8_t g_aics_input_mute;
@@ -445,7 +445,7 @@ static int test_aics(void)
 static int test_vocs(void)
 {
 	int err;
-	uint8_t expected_location;
+	uint32_t expected_location;
 	int16_t expected_offset;
 	char expected_description[VOCS_DESC_SIZE];
 
