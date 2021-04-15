@@ -19,7 +19,8 @@
 #include <bluetooth/gatt.h>
 #include <bluetooth/services/mics.h>
 
-#include "aics_internal.h"
+/* TODO: Update path when upstreaming */
+#include "../../audio/aics_internal.h"
 
 #define BT_DBG_ENABLED IS_ENABLED(CONFIG_BT_DEBUG_MICS_CLIENT)
 #define LOG_MODULE_NAME bt_mics_client
