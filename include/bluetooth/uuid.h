@@ -1506,15 +1506,6 @@ struct bt_uuid_128 {
  */
 #define BT_UUID_VOCS_DESCRIPTION \
 	BT_UUID_DECLARE_16(BT_UUID_VOCS_DESCRIPTION_VAL)
-/** @def BT_UUID_VCS_VAL
- *  @brief Volume Control Service value
- */
-#define BT_UUID_VCS_VAL 0x8fd1
-/** @def BT_UUID_VCS
- *  @brief Volume Control Service
- */
-#define BT_UUID_VCS \
-	BT_UUID_DECLARE_16(BT_UUID_VCS_VAL)
 /** @def BT_UUID_VCS_STATE_VAL
  *  @brief Volume Control Setting value
  */
