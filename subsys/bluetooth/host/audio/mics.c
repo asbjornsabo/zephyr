@@ -15,7 +15,7 @@
 #include <bluetooth/conn.h>
 #include <bluetooth/gatt.h>
 #include <bluetooth/services/mics.h>
-#include <bluetooth/services/aics.h>
+#include <bluetooth/audio/aics.h>
 
 #include "mics_internal.h"
 
