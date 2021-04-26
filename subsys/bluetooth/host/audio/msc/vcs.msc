@@ -1,0 +1,25 @@
+# Overview over Volume Control Service
+
+msc {
+
+    app, L_vcs, L_vcs_client, R_vcs;
+    |||;
+
+    L_vcs box L_vcs [ label = "set up GATT server" ];
+    R_vcs box R_vcs [ label = "set up GATT server" ];
+    ...;
+
+    app box L_vcs [ label = "local read" ];
+    app=>L_vcs [ label = "read" ];
+    app<<=L_vcs  [ label = "read results" ];
+    ...;
+
+    |||;
+    app box R_vcs [ label = "remote read" ];
+    app=>L_vcs [ label = "remote read" ];
+    L_vcs=>L_vcs_client [ label = "read" ];
+    L_vcs_client=>R_vcs [ label = "read" ];
+    L_vcs_client<<=R_vcs  [ label = "read results" ];
+    app<<=L_vcs_client  [ label = "read results" ];
+
+}

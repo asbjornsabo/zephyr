@@ -1,0 +1,30 @@
+# Overview over Media Control Service as it currently is
+
+msc {
+
+    L_app, L_mpl, L_mcc, R_mcs, R_mpl, R_app;
+    |||;
+
+    R_mcs box R_mcs [ label = "set up GATT server" ];
+    ...;
+
+    L_app box L_mpl [ label = "local read" ];
+    L_app=>L_mpl [ label = "read" ];
+    L_app<<L_mpl  [ label = "read results" ];
+    ...;
+
+    R_mpl box R_app [ label = "local read" ];
+    R_mpl<=R_app [ label = "read" ];
+    R_mpl>>R_app [ label = "read results" ];
+    ...;
+
+    |||;
+    L_app box R_mpl [ label = "remote read" ];
+    L_app=>L_mcc [ label = "read" ];
+    L_mcc=>R_mcs [ label = "read" ];
+    R_mcs=>R_mpl [ label = "read" ];
+    R_mcs<<R_mpl  [ label = "read results" ];
+    L_mcc<<=R_mcs  [ label = "read results" ];
+    L_app<<=L_mcc  [ label = "read results" ];
+
+}
