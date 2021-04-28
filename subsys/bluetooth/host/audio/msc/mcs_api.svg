@@ -1,0 +1,260 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1"
+ width="600px" height="499px"
+ viewBox="0 0 600 499"
+ xmlns="http://www.w3.org/2000/svg" shape-rendering="crispEdges"
+ stroke-width="1" text-rendering="geometricPrecision">
+<polygon fill="white" points="32,7 66,7 66,16 32,16"/>
+<text x="50" y="16" textLength="33" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+L_app
+</text>
+<polygon fill="white" points="132,7 166,7 166,16 132,16"/>
+<text x="150" y="16" textLength="33" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+L_mpl
+</text>
+<polygon fill="white" points="231,7 267,7 267,16 231,16"/>
+<text x="250" y="16" textLength="35" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+L_mcc
+</text>
+<polygon fill="white" points="330,7 368,7 368,16 330,16"/>
+<text x="350" y="16" textLength="37" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+R_mcs
+</text>
+<polygon fill="white" points="431,7 467,7 467,16 431,16"/>
+<text x="450" y="16" textLength="35" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+R_mpl
+</text>
+<polygon fill="white" points="531,7 567,7 567,16 531,16"/>
+<text x="550" y="16" textLength="35" font-family="Helvetica" font-size="12" fill="black" text-anchor="middle">
+
+R_app
+</text>
+<line x1="50" y1="22" x2="50" y2="39" stroke="black"/>
+<line x1="150" y1="22" x2="150" y2="39" stroke="black"/>
+<line x1="250" y1="22" x2="250" y2="39" stroke="black"/>
+<line x1="350" y1="22" x2="350" y2="39" stroke="black"/>
+<line x1="450" y1="22" x2="450" y2="39" stroke="black"/>
+<line x1="550" y1="22" x2="550" y2="39" stroke="black"/>
+<line x1="50" y1="39" x2="50" y2="67" stroke="black"/>
+<line x1="150" y1="39" x2="150" y2="67" stroke="black"/>
+<line x1="250" y1="39" x2="250" y2="67" stroke="black"/>
+<line x1="350" y1="39" x2="350" y2="67" stroke="black"/>
+<line x1="450" y1="39" x2="450" y2="67" stroke="black"/>
+<line x1="550" y1="39" x2="550" y2="67" stroke="black"/>
+<polygon fill="white" points="308,39 392,39 392,61 308,61"/>
+<line x1="308" y1="39" x2="392" y2="39" stroke="black"/>
+<line x1="308" y1="61" x2="392" y2="61" stroke="black"/>
+<line x1="308" y1="39" x2="308" y2="61" stroke="black"/>
+<line x1="392" y1="39" x2="392" y2="61" stroke="black"/>
+<polygon fill="white" points="314,40 384,40 384,49 314,49"/>
+<text x="315" y="49" textLength="68" font-family="Helvetica" font-size="12" fill="black">
+set up GATT
+</text>
+<polygon fill="white" points="332,51 367,51 367,60 332,60"/>
+<text x="333" y="60" textLength="33" font-family="Helvetica" font-size="12" fill="black">
+server
+</text>
+<line x1="50" y1="67" x2="50" y2="84" stroke="black" stroke-dasharray="2,2"/>
+<line x1="150" y1="67" x2="150" y2="84" stroke="black" stroke-dasharray="2,2"/>
+<line x1="250" y1="67" x2="250" y2="84" stroke="black" stroke-dasharray="2,2"/>
+<line x1="350" y1="67" x2="350" y2="84" stroke="black" stroke-dasharray="2,2"/>
+<line x1="450" y1="67" x2="450" y2="84" stroke="black" stroke-dasharray="2,2"/>
+<line x1="550" y1="67" x2="550" y2="84" stroke="black" stroke-dasharray="2,2"/>
+<line x1="50" y1="84" x2="50" y2="112" stroke="black"/>
+<line x1="150" y1="84" x2="150" y2="112" stroke="black"/>
+<line x1="250" y1="84" x2="250" y2="112" stroke="black"/>
+<line x1="350" y1="84" x2="350" y2="112" stroke="black"/>
+<line x1="450" y1="84" x2="450" y2="112" stroke="black"/>
+<line x1="550" y1="84" x2="550" y2="112" stroke="black"/>
+<polygon fill="white" points="8,84 192,84 192,106 8,106"/>
+<line x1="8" y1="84" x2="192" y2="84" stroke="black"/>
+<line x1="8" y1="106" x2="192" y2="106" stroke="black"/>
+<line x1="8" y1="84" x2="8" y2="106" stroke="black"/>
+<line x1="192" y1="84" x2="192" y2="106" stroke="black"/>
+<polygon fill="white" points="72,91 126,91 126,100 72,100"/>
+<text x="73" y="100" textLength="52" font-family="Helvetica" font-size="12" fill="black">
+local read
+</text>
+<line x1="50" y1="112" x2="50" y2="140" stroke="black"/>
+<line x1="150" y1="112" x2="150" y2="140" stroke="black"/>
+<line x1="250" y1="112" x2="250" y2="140" stroke="black"/>
+<line x1="350" y1="112" x2="350" y2="140" stroke="black"/>
+<line x1="450" y1="112" x2="450" y2="140" stroke="black"/>
+<line x1="550" y1="112" x2="550" y2="140" stroke="black"/>
+<line x1="50" y1="123" x2="150" y2="123" stroke="black"/>
+<polygon fill="black" points="150,123 140,129 140,117"/>
+<polygon fill="white" points="86,113 112,113 112,122 86,122"/>
+<text x="87" y="122" textLength="24" font-family="Helvetica" font-size="12" fill="black">
+read
+</text>
+<line x1="50" y1="140" x2="50" y2="168" stroke="black"/>
+<line x1="150" y1="140" x2="150" y2="168" stroke="black"/>
+<line x1="250" y1="140" x2="250" y2="168" stroke="black"/>
+<line x1="350" y1="140" x2="350" y2="168" stroke="black"/>
+<line x1="450" y1="140" x2="450" y2="168" stroke="black"/>
+<line x1="550" y1="140" x2="550" y2="168" stroke="black"/>
+<line x1="150" y1="151" x2="50" y2="151" stroke="black" stroke-dasharray="2,2"/>
+<polygon fill="black" points="50,151 60,157 60,145"/>
+<polygon fill="white" points="67,141 132,141 132,150 67,150"/>
+<text x="68" y="150" textLength="63" font-family="Helvetica" font-size="12" fill="black">
+read results
+</text>
+<line x1="50" y1="168" x2="50" y2="185" stroke="black" stroke-dasharray="2,2"/>
+<line x1="150" y1="168" x2="150" y2="185" stroke="black" stroke-dasharray="2,2"/>
+<line x1="250" y1="168" x2="250" y2="185" stroke="black" stroke-dasharray="2,2"/>
+<line x1="350" y1="168" x2="350" y2="185" stroke="black" stroke-dasharray="2,2"/>
+<line x1="450" y1="168" x2="450" y2="185" stroke="black" stroke-dasharray="2,2"/>
+<line x1="550" y1="168" x2="550" y2="185" stroke="black" stroke-dasharray="2,2"/>
+<line x1="50" y1="185" x2="50" y2="213" stroke="black"/>
+<line x1="150" y1="185" x2="150" y2="213" stroke="black"/>
+<line x1="250" y1="185" x2="250" y2="213" stroke="black"/>
+<line x1="350" y1="185" x2="350" y2="213" stroke="black"/>
+<line x1="450" y1="185" x2="450" y2="213" stroke="black"/>
+<line x1="550" y1="185" x2="550" y2="213" stroke="black"/>
+<polygon fill="white" points="408,185 592,185 592,207 408,207"/>
+<line x1="408" y1="185" x2="592" y2="185" stroke="black"/>
+<line x1="408" y1="207" x2="592" y2="207" stroke="black"/>
+<line x1="408" y1="185" x2="408" y2="207" stroke="black"/>
+<line x1="592" y1="185" x2="592" y2="207" stroke="black"/>
+<polygon fill="white" points="472,192 526,192 526,201 472,201"/>
+<text x="473" y="201" textLength="52" font-family="Helvetica" font-size="12" fill="black">
+local read
+</text>
+<line x1="50" y1="213" x2="50" y2="241" stroke="black"/>
+<line x1="150" y1="213" x2="150" y2="241" stroke="black"/>
+<line x1="250" y1="213" x2="250" y2="241" stroke="black"/>
+<line x1="350" y1="213" x2="350" y2="241" stroke="black"/>
+<line x1="450" y1="213" x2="450" y2="241" stroke="black"/>
+<line x1="550" y1="213" x2="550" y2="241" stroke="black"/>
+<line x1="550" y1="224" x2="450" y2="224" stroke="black"/>
+<polygon fill="black" points="450,224 460,230 460,218"/>
+<polygon fill="white" points="486,214 512,214 512,223 486,223"/>
+<text x="487" y="223" textLength="24" font-family="Helvetica" font-size="12" fill="black">
+read
+</text>
+<line x1="50" y1="241" x2="50" y2="269" stroke="black"/>
+<line x1="150" y1="241" x2="150" y2="269" stroke="black"/>
+<line x1="250" y1="241" x2="250" y2="269" stroke="black"/>
+<line x1="350" y1="241" x2="350" y2="269" stroke="black"/>
+<line x1="450" y1="241" x2="450" y2="269" stroke="black"/>
+<line x1="550" y1="241" x2="550" y2="269" stroke="black"/>
+<line x1="450" y1="252" x2="550" y2="252" stroke="black" stroke-dasharray="2,2"/>
+<polygon fill="black" points="550,252 540,258 540,246"/>
+<polygon fill="white" points="467,242 532,242 532,251 467,251"/>
+<text x="468" y="251" textLength="63" font-family="Helvetica" font-size="12" fill="black">
+read results
+</text>
+<line x1="50" y1="269" x2="50" y2="286" stroke="black" stroke-dasharray="2,2"/>
+<line x1="150" y1="269" x2="150" y2="286" stroke="black" stroke-dasharray="2,2"/>
+<line x1="250" y1="269" x2="250" y2="286" stroke="black" stroke-dasharray="2,2"/>
+<line x1="350" y1="269" x2="350" y2="286" stroke="black" stroke-dasharray="2,2"/>
+<line x1="450" y1="269" x2="450" y2="286" stroke="black" stroke-dasharray="2,2"/>
+<line x1="550" y1="269" x2="550" y2="286" stroke="black" stroke-dasharray="2,2"/>
+<line x1="50" y1="286" x2="50" y2="303" stroke="black"/>
+<line x1="150" y1="286" x2="150" y2="303" stroke="black"/>
+<line x1="250" y1="286" x2="250" y2="303" stroke="black"/>
+<line x1="350" y1="286" x2="350" y2="303" stroke="black"/>
+<line x1="450" y1="286" x2="450" y2="303" stroke="black"/>
+<line x1="550" y1="286" x2="550" y2="303" stroke="black"/>
+<line x1="50" y1="303" x2="50" y2="331" stroke="black"/>
+<line x1="150" y1="303" x2="150" y2="331" stroke="black"/>
+<line x1="250" y1="303" x2="250" y2="331" stroke="black"/>
+<line x1="350" y1="303" x2="350" y2="331" stroke="black"/>
+<line x1="450" y1="303" x2="450" y2="331" stroke="black"/>
+<line x1="550" y1="303" x2="550" y2="331" stroke="black"/>
+<polygon fill="white" points="8,303 492,303 492,325 8,325"/>
+<line x1="8" y1="303" x2="492" y2="303" stroke="black"/>
+<line x1="8" y1="325" x2="492" y2="325" stroke="black"/>
+<line x1="8" y1="303" x2="8" y2="325" stroke="black"/>
+<line x1="492" y1="303" x2="492" y2="325" stroke="black"/>
+<polygon fill="white" points="216,310 283,310 283,319 216,319"/>
+<text x="217" y="319" textLength="65" font-family="Helvetica" font-size="12" fill="black">
+remote read
+</text>
+<line x1="50" y1="331" x2="50" y2="359" stroke="black"/>
+<line x1="150" y1="331" x2="150" y2="359" stroke="black"/>
+<line x1="250" y1="331" x2="250" y2="359" stroke="black"/>
+<line x1="350" y1="331" x2="350" y2="359" stroke="black"/>
+<line x1="450" y1="331" x2="450" y2="359" stroke="black"/>
+<line x1="550" y1="331" x2="550" y2="359" stroke="black"/>
+<line x1="50" y1="342" x2="250" y2="342" stroke="black"/>
+<polygon fill="black" points="250,342 240,348 240,336"/>
+<polygon fill="white" points="136,332 162,332 162,341 136,341"/>
+<text x="137" y="341" textLength="24" font-family="Helvetica" font-size="12" fill="black">
+read
+</text>
+<line x1="50" y1="359" x2="50" y2="387" stroke="black"/>
+<line x1="150" y1="359" x2="150" y2="387" stroke="black"/>
+<line x1="250" y1="359" x2="250" y2="387" stroke="black"/>
+<line x1="350" y1="359" x2="350" y2="387" stroke="black"/>
+<line x1="450" y1="359" x2="450" y2="387" stroke="black"/>
+<line x1="550" y1="359" x2="550" y2="387" stroke="black"/>
+<line x1="250" y1="370" x2="350" y2="370" stroke="black"/>
+<polygon fill="black" points="350,370 340,376 340,364"/>
+<polygon fill="white" points="286,360 312,360 312,369 286,369"/>
+<text x="287" y="369" textLength="24" font-family="Helvetica" font-size="12" fill="black">
+read
+</text>
+<line x1="50" y1="387" x2="50" y2="415" stroke="black"/>
+<line x1="150" y1="387" x2="150" y2="415" stroke="black"/>
+<line x1="250" y1="387" x2="250" y2="415" stroke="black"/>
+<line x1="350" y1="387" x2="350" y2="415" stroke="black"/>
+<line x1="450" y1="387" x2="450" y2="415" stroke="black"/>
+<line x1="550" y1="387" x2="550" y2="415" stroke="black"/>
+<line x1="350" y1="398" x2="450" y2="398" stroke="black"/>
+<polygon fill="black" points="450,398 440,404 440,392"/>
+<polygon fill="white" points="386,388 412,388 412,397 386,397"/>
+<text x="387" y="397" textLength="24" font-family="Helvetica" font-size="12" fill="black">
+read
+</text>
+<line x1="50" y1="415" x2="50" y2="443" stroke="black"/>
+<line x1="150" y1="415" x2="150" y2="443" stroke="black"/>
+<line x1="250" y1="415" x2="250" y2="443" stroke="black"/>
+<line x1="350" y1="415" x2="350" y2="443" stroke="black"/>
+<line x1="450" y1="415" x2="450" y2="443" stroke="black"/>
+<line x1="550" y1="415" x2="550" y2="443" stroke="black"/>
+<line x1="450" y1="426" x2="350" y2="426" stroke="black" stroke-dasharray="2,2"/>
+<polygon fill="black" points="350,426 360,432 360,420"/>
+<polygon fill="white" points="367,416 432,416 432,425 367,425"/>
+<text x="368" y="425" textLength="63" font-family="Helvetica" font-size="12" fill="black">
+read results
+</text>
+<line x1="50" y1="443" x2="50" y2="471" stroke="black"/>
+<line x1="150" y1="443" x2="150" y2="471" stroke="black"/>
+<line x1="250" y1="443" x2="250" y2="471" stroke="black"/>
+<line x1="350" y1="443" x2="350" y2="471" stroke="black"/>
+<line x1="450" y1="443" x2="450" y2="471" stroke="black"/>
+<line x1="550" y1="443" x2="550" y2="471" stroke="black"/>
+<line x1="350" y1="454" x2="250" y2="454" stroke="black"/>
+<line x1="250" y1="454" x2="260" y2="460" stroke="black"/>
+<line x1="250" y1="454" x2="260" y2="448" stroke="black"/>
+<polygon fill="white" points="267,444 332,444 332,453 267,453"/>
+<text x="268" y="453" textLength="63" font-family="Helvetica" font-size="12" fill="black">
+read results
+</text>
+<line x1="50" y1="471" x2="50" y2="499" stroke="black"/>
+<line x1="150" y1="471" x2="150" y2="499" stroke="black"/>
+<line x1="250" y1="471" x2="250" y2="499" stroke="black"/>
+<line x1="350" y1="471" x2="350" y2="499" stroke="black"/>
+<line x1="450" y1="471" x2="450" y2="499" stroke="black"/>
+<line x1="550" y1="471" x2="550" y2="499" stroke="black"/>
+<line x1="250" y1="482" x2="50" y2="482" stroke="black"/>
+<line x1="50" y1="482" x2="60" y2="488" stroke="black"/>
+<line x1="50" y1="482" x2="60" y2="476" stroke="black"/>
+<polygon fill="white" points="117,472 182,472 182,481 117,481"/>
+<text x="118" y="481" textLength="63" font-family="Helvetica" font-size="12" fill="black">
+read results
+</text>
+<line x1="50" y1="493" x2="50" y2="499" stroke="black"/>
+<line x1="150" y1="493" x2="150" y2="499" stroke="black"/>
+<line x1="250" y1="493" x2="250" y2="499" stroke="black"/>
+<line x1="350" y1="493" x2="350" y2="499" stroke="black"/>
+<line x1="450" y1="493" x2="450" y2="499" stroke="black"/>
+<line x1="550" y1="493" x2="550" y2="499" stroke="black"/>
+</svg>
