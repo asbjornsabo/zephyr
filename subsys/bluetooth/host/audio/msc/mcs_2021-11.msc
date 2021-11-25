@@ -1,0 +1,32 @@
+# Overview over Media Control Service in the VCS pattern
+
+msc {
+
+    app, L_mproxy, L_mpl, L_mcc, R_mcs, R_mproxy, R_mpl;
+    |||;
+
+    R_mcs box R_mcs [ label = "set up GATT server" ];
+    ...;
+
+    app box L_mpl [ label = "local read" ];
+    app=>L_mproxy [ label = "read" ];
+    L_mproxy=>L_mpl [ label = "read" ];
+    L_mproxy<<L_mpl  [ label = "read results" ];
+    app<<=L_mproxy [ label = "read" ];
+    ...;
+
+
+    |||;
+    app box R_mpl [ label = "remote read" ];
+    app=>L_mproxy [ label = "read" ];
+    L_mproxy=>L_mcc [ label = "read" ];
+    L_mcc=>R_mcs [ label = "read" ];
+    R_mcs=>R_mproxy [ label = "read" ];
+    R_mproxy=>R_mpl [ label = "read" ];
+    R_mproxy<<R_mpl  [ label = "read results" ];
+    R_mcs<<R_mproxy  [ label = "read results" ];
+    L_mcc<<=R_mcs  [ label = "read results" ];
+    L_mproxy<<=L_mcc  [ label = "read results" ];
+    app<<=L_mproxy  [ label = "read results" ];
+
+}
