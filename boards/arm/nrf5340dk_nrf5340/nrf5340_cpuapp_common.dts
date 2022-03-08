@@ -150,11 +150,11 @@
 &uart0 {
 	status = "okay";
 	current-speed = <115200>;
-	tx-pin = <20>;
-	rx-pin = <22>;
+	tx-pin = <37>;
+	rx-pin = <36>;
 	rx-pull-up;
-	rts-pin = <19>;
-	cts-pin = <21>;
+	rts-pin = <39>;
+	cts-pin = <38>;
 	cts-pull-up;
 };
 
