@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<diagram program="umlet" version="13.3">
+  <zoom_level>7</zoom_level>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>70</x>
+      <y>336</y>
+      <w>294</w>
+      <h>49</h>
+    </coordinates>
+    <panel_attributes>bg=blue
+media_proxy.h
+
+Interface for media controllers and media players</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>70</x>
+      <y>385</y>
+      <w>294</w>
+      <h>56</h>
+    </coordinates>
+    <panel_attributes>
+Media proxy - media_proxy.c
+
+Kconfig.mctl</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>91</x>
+      <y>203</y>
+      <w>252</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>Application 
+
+(Local controller</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>168</x>
+      <y>252</y>
+      <w>35</w>
+      <h>98</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+ Call</panel_attributes>
+    <additional_attributes>10.0;120.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>266</x>
+      <y>252</y>
+      <w>63</w>
+      <h>98</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+ Callback</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;120.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>98</x>
+      <y>504</y>
+      <w>266</w>
+      <h>49</h>
+    </coordinates>
+    <panel_attributes>bg=blue
+mcc.h
+</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>98</x>
+      <y>553</y>
+      <w>266</w>
+      <h>77</h>
+    </coordinates>
+    <panel_attributes>Media control GATT client - mcc.c
+
+Control of remote players via Bluetooth/GATT
+
+Kconfig.mcs</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>168</x>
+      <y>434</y>
+      <w>35</w>
+      <h>84</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+ Call</panel_attributes>
+    <additional_attributes>10.0;100.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>266</x>
+      <y>434</y>
+      <w>63</w>
+      <h>84</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+ Callback</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;100.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>357</x>
+      <y>553</y>
+      <w>105</w>
+      <h>28</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+ Call</panel_attributes>
+    <additional_attributes>130.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>448</x>
+      <y>553</y>
+      <w>70</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>GATT</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>357</x>
+      <y>581</y>
+      <w>105</w>
+      <h>28</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+ Callback</panel_attributes>
+    <additional_attributes>10.0;20.0;130.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>833</x>
+      <y>147</y>
+      <w>245</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>Media control GATT service - mcs.c
+
+(Remote controller via Bluetooth/GATT)
+
+Kconfig.mcs</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>693</x>
+      <y>147</y>
+      <w>70</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>GATT</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>511</x>
+      <y>161</y>
+      <w>196</w>
+      <h>427</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;.</panel_attributes>
+    <additional_attributes>260.0;10.0;120.0;10.0;120.0;590.0;10.0;590.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>511</x>
+      <y>182</y>
+      <w>196</w>
+      <h>427</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;.</panel_attributes>
+    <additional_attributes>10.0;590.0;150.0;590.0;150.0;10.0;260.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>756</x>
+      <y>154</y>
+      <w>91</w>
+      <h>28</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+ Call</panel_attributes>
+    <additional_attributes>110.0;20.0;10.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>756</x>
+      <y>175</y>
+      <w>91</w>
+      <h>28</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+ Callback</panel_attributes>
+    <additional_attributes>10.0;20.0;110.0;20.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>777</x>
+      <y>336</y>
+      <w>308</w>
+      <h>49</h>
+    </coordinates>
+    <panel_attributes>bg=blue
+media_proxy_internal.h
+
+Interface for media control service as controller</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>952</x>
+      <y>203</y>
+      <w>98</w>
+      <h>147</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-&gt;&gt;
+Call/return value</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;190.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1085</x>
+      <y>336</y>
+      <w>301</w>
+      <h>49</h>
+    </coordinates>
+    <panel_attributes>bg=blue
+media_proxy.h
+
+Interface for media controllers and media players</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>777</x>
+      <y>385</y>
+      <w>609</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>
+Media proxy - media_proxy.c
+
+Kconfig.mctl</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1078</x>
+      <y>441</y>
+      <w>98</w>
+      <h>70</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-&gt;&gt;
+Call/return value</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;80.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>945</x>
+      <y>497</y>
+      <w>259</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>
+(Dummy) media player - mpl.c
+
+Kconfig.mpl</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1267</x>
+      <y>203</y>
+      <w>63</w>
+      <h>147</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+ Callback</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;190.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>1120</x>
+      <y>147</y>
+      <w>252</w>
+      <h>63</h>
+    </coordinates>
+    <panel_attributes>Application 
+
+(Local controller)</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1190</x>
+      <y>203</y>
+      <w>35</w>
+      <h>147</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+ Call</panel_attributes>
+    <additional_attributes>10.0;190.0;10.0;10.0</additional_attributes>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>658</x>
+      <y>84</y>
+      <w>770</w>
+      <h>602</h>
+    </coordinates>
+    <panel_attributes>Media Control Server device</panel_attributes>
+    <additional_attributes/>
+  </element>
+  <element>
+    <id>UMLClass</id>
+    <coordinates>
+      <x>42</x>
+      <y>84</y>
+      <w>518</w>
+      <h>595</h>
+    </coordinates>
+    <panel_attributes>Media Control Client device</panel_attributes>
+    <additional_attributes/>
+  </element>
+</diagram>
