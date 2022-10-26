@@ -46,25 +46,25 @@ Kconfig.mctl</panel_attributes>
     <id>Relation</id>
     <coordinates>
       <x>168</x>
-      <y>252</y>
+      <y>259</y>
       <w>35</w>
-      <h>98</h>
+      <h>91</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;-
  Call</panel_attributes>
-    <additional_attributes>10.0;120.0;10.0;10.0</additional_attributes>
+    <additional_attributes>10.0;110.0;10.0;10.0</additional_attributes>
   </element>
   <element>
     <id>Relation</id>
     <coordinates>
       <x>266</x>
-      <y>252</y>
+      <y>259</y>
       <w>63</w>
-      <h>98</h>
+      <h>91</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;-
  Callback</panel_attributes>
-    <additional_attributes>10.0;10.0;10.0;120.0</additional_attributes>
+    <additional_attributes>10.0;10.0;10.0;110.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
@@ -242,13 +242,14 @@ Interface for media control service as controller</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>952</x>
+      <x>861</x>
       <y>203</y>
       <w>98</w>
       <h>147</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;-&gt;&gt;
-Call/return value</panel_attributes>
+Call/return value
+(Reads/writes)</panel_attributes>
     <additional_attributes>10.0;10.0;10.0;190.0</additional_attributes>
   </element>
   <element>
@@ -282,20 +283,21 @@ Kconfig.mctl</panel_attributes>
   <element>
     <id>Relation</id>
     <coordinates>
-      <x>1078</x>
+      <x>980</x>
       <y>441</y>
       <w>98</w>
-      <h>70</h>
+      <h>105</h>
     </coordinates>
     <panel_attributes>lt=&lt;&lt;-&gt;&gt;
-Call/return value</panel_attributes>
-    <additional_attributes>10.0;10.0;10.0;80.0</additional_attributes>
+Call/return value
+(Reads/writes)</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;130.0</additional_attributes>
   </element>
   <element>
     <id>UMLClass</id>
     <coordinates>
       <x>945</x>
-      <y>497</y>
+      <y>532</y>
       <w>259</w>
       <h>63</h>
     </coordinates>
@@ -363,5 +365,31 @@ Kconfig.mpl</panel_attributes>
     </coordinates>
     <panel_attributes>Media Control Client device</panel_attributes>
     <additional_attributes/>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>980</x>
+      <y>203</y>
+      <w>84</w>
+      <h>147</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+ Callback
+ (Notifications)</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;190.0</additional_attributes>
+  </element>
+  <element>
+    <id>Relation</id>
+    <coordinates>
+      <x>1099</x>
+      <y>441</y>
+      <w>84</w>
+      <h>105</h>
+    </coordinates>
+    <panel_attributes>lt=&lt;&lt;-
+ Callback
+ (Notifications)</panel_attributes>
+    <additional_attributes>10.0;10.0;10.0;130.0</additional_attributes>
   </element>
 </diagram>
