@@ -1,0 +1,4 @@
+This is a file with a single line with no error in it.
+Here is a second line,
+and also a third line.
+And the fourth line comes here.
