@@ -8,7 +8,21 @@
 #include <zephyr/bluetooth/conn.h>
 #include <zephyr/bluetooth/gatt.h>
 #include <zephyr/bluetooth/uuid.h>
+#include <zephyr/drivers/gpio.h>
 #include <zephyr/sys/util.h>
+
+
+/*
+ * Get button configuration from the devicetree sw0 alias. This is mandatory.
+ */
+#define SW0_NODE	DT_ALIAS(sw0)
+#if !DT_NODE_HAS_STATUS(SW0_NODE, okay)
+#error "Unsupported board: sw0 devicetree alias is not defined"
+#endif
+static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET_OR(SW0_NODE, gpios,
+							      {0});
+static struct gpio_callback button_cb_data;
+
 
 #define NAME_LEN 30
 #define DEVICE_ID 0 /* Temporary hack to identify a device - must be set to */
@@ -23,8 +37,13 @@ static struct bt_le_per_adv_sync *default_sync;
 static struct __packed {
 	uint8_t subevent;
 	uint8_t response_slot;
-
 } pawr_timing;
+
+void button_pressed(const struct device *dev, struct gpio_callback *cb,
+		    uint32_t pins)
+{
+	printk("Button pressed at %" PRIu32 "\n", k_cycle_get_32());
+}
 
 static void sync_cb(struct bt_le_per_adv_sync *sync, struct bt_le_per_adv_sync_synced_info *info)
 {
@@ -205,6 +224,31 @@ int main(void)
 	int err;
 
 	printk("Starting Periodic Advertising with Responses Synchronization Demo\n");
+
+	if (!gpio_is_ready_dt(&button)) {
+		printk("Error: button device %s is not ready\n",
+		       button.port->name);
+		return 0;
+	}
+
+	err = gpio_pin_configure_dt(&button, GPIO_INPUT);
+	if (err != 0) {
+		printk("Error %d: failed to configure %s pin %d\n",
+		       err, button.port->name, button.pin);
+		return 0;
+	}
+
+	err = gpio_pin_interrupt_configure_dt(&button,
+					      GPIO_INT_EDGE_TO_ACTIVE);
+	if (err != 0) {
+		printk("Error %d: failed to configure interrupt on %s pin %d\n",
+			err, button.port->name, button.pin);
+		return 0;
+	}
+
+	gpio_init_callback(&button_cb_data, button_pressed, BIT(button.pin));
+	gpio_add_callback(button.port, &button_cb_data);
+	printk("Set up button at %s pin %d\n", button.port->name, button.pin);
 
 	err = bt_enable(NULL);
 	if (err) {
