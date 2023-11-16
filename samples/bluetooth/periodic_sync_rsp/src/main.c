@@ -205,6 +205,9 @@ int main(void)
 
 	printk("Starting Periodic Advertising with Responses Synchronization Demo\n");
 
+	/* Use different response slot for each device */
+	pawr_timing.response_slot = DEVICE_ID;
+
 	err = bt_enable(NULL);
 	if (err) {
 		printk("Bluetooth init failed (err %d)\n", err);
