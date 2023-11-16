@@ -65,7 +65,7 @@ static void request_cb(struct bt_le_ext_adv *adv, const struct bt_le_per_adv_dat
 	if (err) {
 		printk("Failed to set subevent data (err %d)\n", err);
 	} else {
-		printk("Subevent data set %d\n", counter);
+		printk("Subevent data set 0x%02X\n", counter);
 	}
 }
 
