@@ -363,7 +363,8 @@ int main(void)
 			goto disconnect;
 		}
 
-		printk("PAwR config written to sync %d, disconnecting\n", num_synced - 1);
+		printk("PAwR config written to sync %d, - subevent %d, response %d - disconnecting\n",
+		       num_synced - 1, sync_config.subevent, sync_config.response_slot);
 
 disconnect:
 		err = bt_conn_disconnect(default_conn, BT_HCI_ERR_REMOTE_USER_TERM_CONN);
