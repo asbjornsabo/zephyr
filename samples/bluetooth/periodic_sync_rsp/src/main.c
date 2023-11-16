@@ -11,6 +11,8 @@
 #include <zephyr/sys/util.h>
 
 #define NAME_LEN 30
+#define DEVICE_ID 0 /* Temporary hack to identify a device - must be set to */
+                    /* separate value for each device */
 
 static K_SEM_DEFINE(sem_per_adv, 0, 1);
 static K_SEM_DEFINE(sem_per_sync, 0, 1);
@@ -91,9 +93,11 @@ static void recv_cb(struct bt_le_per_adv_sync *sync,
 	int err;
 
 	if (buf && buf->len) {
-		/* Echo the data back to the advertiser */
+		/* Echo the data back to the advertiser, excdept that */
+		/* that we modify the third byte according to which device we are */
 		net_buf_simple_reset(&rsp_buf);
 		net_buf_simple_add_mem(&rsp_buf, buf->data, buf->len);
+		rsp_buf.data[3] = DEVICE_ID;
 
 		rsp_params.request_event = info->periodic_event_counter;
 		rsp_params.request_subevent = info->subevent;
