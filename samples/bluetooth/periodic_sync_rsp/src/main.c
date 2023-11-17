@@ -39,10 +39,23 @@ static struct __packed {
 	uint8_t response_slot;
 } pawr_timing;
 
+static struct {
+	bool connected;       /* Whether we are currently connected to the periodic advertiser */
+	bool conn_requested;  /* Whether we want to connect to the periodic advertiser */
+} conn_state;
+
 void button_pressed(const struct device *dev, struct gpio_callback *cb,
 		    uint32_t pins)
 {
 	printk("Button pressed at %" PRIu32 "\n", k_cycle_get_32());
+	if (conn_state.connected) {
+		printk("Already connected\n)");
+	} else if (conn_state.conn_requested) {
+		printk("Connection already requested\n");
+	} else {
+		printk("Not connected - scheduling connection\n");
+		conn_state.conn_requested = true;
+	}
 }
 
 static void sync_cb(struct bt_le_per_adv_sync *sync, struct bt_le_per_adv_sync_synced_info *info)
