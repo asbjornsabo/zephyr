@@ -126,10 +126,17 @@ static void recv_cb(struct bt_le_per_adv_sync *sync,
 
 	if (buf && buf->len) {
 		/* Echo the data back to the advertiser, excdept that */
-		/* that we modify the third byte according to which device we are */
+		/* that we modify the second byte according to which device we are */
+		/* (This overwrites the Nordic manufactuerer ID. */
+		/* And we set the third byte to indicate whether we request a connection. */
 		net_buf_simple_reset(&rsp_buf);
 		net_buf_simple_add_mem(&rsp_buf, buf->data, buf->len);
-		rsp_buf.data[3] = DEVICE_ID;
+		rsp_buf.data[2] = DEVICE_ID;
+		if (conn_state.conn_requested) {
+			rsp_buf.data[3] = 1;
+		} else {
+			rsp_buf.data[3] = 0;
+		}
 
 		rsp_params.request_event = info->periodic_event_counter;
 		rsp_params.request_subevent = info->subevent;
