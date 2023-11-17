@@ -42,6 +42,7 @@ static struct __packed {
 static struct {
 	bool connected;       /* Whether we are currently connected to the periodic advertiser */
 	bool conn_requested;  /* Whether we want to connect to the periodic advertiser */
+	bool connecting;      /* Whether we are currently trying to connect */
 } conn_state;
 
 static void conn_requested_handler(struct k_work *work)
@@ -231,6 +232,8 @@ void connected(struct bt_conn *conn, uint8_t err)
 	}
 
 	default_conn = bt_conn_ref(conn);
+	conn_state.connecting = false;
+	conn_state.connected = true;
 }
 
 void disconnected(struct bt_conn *conn, uint8_t reason)
@@ -239,6 +242,8 @@ void disconnected(struct bt_conn *conn, uint8_t reason)
 	default_conn = NULL;
 
 	printk("Disconnected (reason 0x%02X)\n", reason);
+	conn_state.connected = false;
+	conn_state.connecting = false;
 }
 
 BT_CONN_CB_DEFINE(conn_cb) = {
@@ -298,6 +303,7 @@ int main(void)
 	}
 
 	do {
+		conn_state.connecting = true;
 		err = bt_le_adv_start(
 			BT_LE_ADV_PARAM(BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_CONNECTABLE |
 						BT_LE_ADV_OPT_USE_NAME |
@@ -306,6 +312,7 @@ int main(void)
 			NULL, 0, NULL, 0);
 		if (err && err != -EALREADY) {
 			printk("Advertising failed to start (err %d)\n", err);
+			conn_state.connecting = false;
 
 			return 0;
 		}
