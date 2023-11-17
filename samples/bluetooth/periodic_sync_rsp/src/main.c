@@ -45,6 +45,25 @@ static struct {
 	bool connecting;      /* Whether we are currently trying to connect */
 } conn_state;
 
+int advertise_for_connection(void)
+{
+	int err;
+
+	conn_state.connecting = true;
+	err = bt_le_adv_start(
+		BT_LE_ADV_PARAM(BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_CONNECTABLE |
+				BT_LE_ADV_OPT_USE_NAME |
+				BT_LE_ADV_OPT_FORCE_NAME_IN_AD,
+				BT_GAP_ADV_FAST_INT_MIN_2, BT_GAP_ADV_FAST_INT_MAX_2, NULL),
+		NULL, 0, NULL, 0);
+	if (err && err != -EALREADY) {
+		printk("Advertising failed to start (err %d)\n", err);
+		conn_state.connecting = false;
+	}
+
+	return err;
+}
+
 static void conn_requested_handler(struct k_work *work)
 {
 	printk("conn_requested_handler called\n");
@@ -303,17 +322,9 @@ int main(void)
 	}
 
 	do {
-		conn_state.connecting = true;
-		err = bt_le_adv_start(
-			BT_LE_ADV_PARAM(BT_LE_ADV_OPT_ONE_TIME | BT_LE_ADV_OPT_CONNECTABLE |
-						BT_LE_ADV_OPT_USE_NAME |
-						BT_LE_ADV_OPT_FORCE_NAME_IN_AD,
-					BT_GAP_ADV_FAST_INT_MIN_2, BT_GAP_ADV_FAST_INT_MAX_2, NULL),
-			NULL, 0, NULL, 0);
-		if (err && err != -EALREADY) {
-			printk("Advertising failed to start (err %d)\n", err);
-			conn_state.connecting = false;
+		err = advertise_for_connection();
 
+		if (err) {
 			return 0;
 		}
 
