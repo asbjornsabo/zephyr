@@ -42,6 +42,11 @@ BUILD_ASSERT(ARRAY_SIZE(backing_store) == ARRAY_SIZE(subevent_data_params));
 
 static uint8_t counter;
 
+static struct {
+	bool connected;       /* Whether we are currently connected to the periodic advertiser */
+	bool conn_requested;  /* Whether we want to connect to the periodic advertiser */
+} conn_state;
+
 static void request_cb(struct bt_le_ext_adv *adv, const struct bt_le_per_adv_data_request *request)
 {
 	int err;
@@ -76,6 +81,20 @@ static bool print_ad_field(struct bt_data *data, void *user_data)
 	printk("    0x%02X: ", data->type);
 	for (size_t i = 0; i < data->data_len; i++) {
 		printk("%02X", data->data[i]);
+	}
+
+	printk("    ");
+
+	/* Interpret the data returned (abusing the AD format) */
+	/* The first octet should be the device id of the responder */
+	printk("Device ID: %d", data->data[0]);
+	if (data->data[1] == 1) {
+		printk(": Connection requested");
+		if (conn_state.connected) {
+			printk(" - ignored (already connected");
+		} else {
+			conn_state.conn_requested = true;
+		}
 	}
 
 	printk("\n");
