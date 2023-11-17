@@ -44,6 +44,13 @@ static struct {
 	bool conn_requested;  /* Whether we want to connect to the periodic advertiser */
 } conn_state;
 
+static void conn_requested_handler(struct k_work *work)
+{
+	printk("conn_requested_handler called\n");
+}
+
+static K_WORK_DEFINE(conn_requested_work, conn_requested_handler);
+
 void button_pressed(const struct device *dev, struct gpio_callback *cb,
 		    uint32_t pins)
 {
@@ -55,6 +62,7 @@ void button_pressed(const struct device *dev, struct gpio_callback *cb,
 	} else {
 		printk("Not connected - scheduling connection\n");
 		conn_state.conn_requested = true;
+		k_work_submit(&conn_requested_work);
 	}
 }
 
