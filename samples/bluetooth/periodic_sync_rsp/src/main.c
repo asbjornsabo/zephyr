@@ -66,7 +66,20 @@ int advertise_for_connection(void)
 
 static void conn_requested_handler(struct k_work *work)
 {
-	printk("conn_requested_handler called\n");
+	int err = 0;
+
+	printk("conn_requested_handler called.");
+		if (conn_state.connected) {
+			printk(" Already connected.");
+		} else if (conn_state.connecting) {
+			printk(" Already connecting.");
+		} else {
+			printk(" Starting advertising.");
+			err = advertise_for_connection();
+			/* In main, we "return 0;" to exit in this situation. Not possible her. */
+			__ASSERT(err == 0, "Unable to advertise");
+		}
+		printk("\n");
 }
 
 static K_WORK_DEFINE(conn_requested_work, conn_requested_handler);
